@@ -475,20 +475,7 @@ const GreedyKingGame = () => {
           </div>
         </div>
 
-        {/* Ranking */}
-        <div className="w-full mt-3 mb-6 rounded-2xl px-4 py-3 flex items-center gap-3" style={{ background: "hsla(0, 0%, 100%, 0.9)" }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "hsl(210, 70%, 92%)" }}>
-            <Trophy className="h-5 w-5" style={{ color: "hsl(210, 60%, 50%)" }} />
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-sm" style={{ color: "hsl(0, 0%, 15%)" }}>Today's Betting Ranking</p>
-            <div className="flex items-center gap-1">
-              <Diamond className="h-3 w-3 text-primary" />
-              <span className="text-xs font-semibold" style={{ color: "hsl(0, 0%, 50%)" }}>6,471,680</span>
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5" style={{ color: "hsl(0, 0%, 70%)" }} />
-        </div>
+        {/* Ranking removed — real bets shown in Result panel above */}
       </div>
 
       {/* Result Panel */}
