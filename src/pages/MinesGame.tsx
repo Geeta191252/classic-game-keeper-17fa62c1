@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { playBetSound, playWinSound, playLoseSound, playResultReveal, startBgMusic, stopBgMusic } from "@/hooks/useGameSounds";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
+import GameCurrencyChips from "@/components/GameCurrencyChips";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
 
 const GRID_SIZE = 5;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
@@ -62,7 +64,9 @@ const MinesGame = () => {
   const gameDollarBalance = dollarBalance + dollarWinning + localDollarAdj;
   const gameStarBalance = starBalance + starWinning + localStarAdj;
 
-  const [activeWallet, setActiveWallet] = useState<"dollar" | "star">("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const activeWallet = modeToWallet(currencyMode);
+  const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
   const [selectedBet, setSelectedBet] = useState(1);
   const [mineCount, setMineCount] = useState(3);
   const [phase, setPhase] = useState<GamePhase>("betting");
@@ -79,7 +83,9 @@ const MinesGame = () => {
     return () => { stopBgMusic(); };
   }, [soundOn]);
 
-  const currentBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const nativeBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const currentBalance = currencyMode === "INR" ? nativeBalance * INR_RATE : nativeBalance;
+  const nativeBetFor = (v: number) => toNativeAmount(v, currencyMode);
 
   // Track remaining mines to place and revealed safe cells for lazy mine placement
   const remainingMinesRef = useRef(0);
@@ -88,9 +94,10 @@ const MinesGame = () => {
   const startGame = useCallback(() => {
     if (currentBalance < selectedBet) return;
 
-    // Deduct bet
-    if (activeWallet === "dollar") setLocalDollarAdj(p => p - selectedBet);
-    else setLocalStarAdj(p => p - selectedBet);
+    // Deduct bet in native wallet units
+    const nBet = nativeBetFor(selectedBet);
+    if (activeWallet === "dollar") setLocalDollarAdj(p => p - nBet);
+    else setLocalStarAdj(p => p - nBet);
     if (soundRef.current) playBetSound();
 
     // Lazy mine placement: mines are decided on each click, not upfront
@@ -161,7 +168,7 @@ const MinesGame = () => {
       setPhase("lost");
       if (soundRef.current) playLoseSound();
       setRound(r => r + 1);
-      reportGameResult({ betAmount: selectedBet, winAmount: 0, currency: activeWallet, game: "mines" })
+      reportGameResult({ betAmount: nativeBetFor(selectedBet), winAmount: 0, currency: activeWallet, game: "mines" })
         .then(() => { setLocalDollarAdj(0); setLocalStarAdj(0); refreshBalance(); }).catch(console.error);
     } else {
       // Safe pick
@@ -181,7 +188,7 @@ const MinesGame = () => {
         setPhase("cashed");
         if (soundRef.current) playWinSound();
         setRound(r => r + 1);
-        reportGameResult({ betAmount: selectedBet, winAmount: prize, currency: activeWallet, game: "mines" })
+        reportGameResult({ betAmount: nativeBetFor(selectedBet), winAmount: nativeBetFor(prize), currency: activeWallet, game: "mines" })
           .then(() => { setLocalDollarAdj(0); setLocalStarAdj(0); refreshBalance(); }).catch(console.error);
       }
     }
@@ -203,7 +210,7 @@ const MinesGame = () => {
     if (soundRef.current) playWinSound();
     setRound(r => r + 1);
     // Report cashout win to backend
-    reportGameResult({ betAmount: selectedBet, winAmount: prize, currency: activeWallet, game: "mines" })
+    reportGameResult({ betAmount: nativeBetFor(selectedBet), winAmount: nativeBetFor(prize), currency: activeWallet, game: "mines" })
       .then(() => { setLocalDollarAdj(0); setLocalStarAdj(0); refreshBalance(); }).catch(console.error);
   }, [phase, safePicks, selectedBet, currentMultiplier, activeWallet, grid, minePositions, refreshBalance]);
 
@@ -228,6 +235,7 @@ const MinesGame = () => {
           <p className="text-[10px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
           <p className="font-bold text-sm leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
         </div>
+        <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting" && phase !== "lost" && phase !== "cashed"} />
       </div>
 
       {/* Title */}
