@@ -390,18 +390,19 @@ const MinesClassicGame = () => {
   // Safe cell revealed sequence
   const handleSafeCell = (idx: number) => {
     audioRef.current.playStar();
-    
-    const nextRevealed = { ...revealedCells, [idx]: "safe" as CellState };
-    setRevealedCells(nextRevealed);
 
-    // If successfully clicked all safe cells, trigger auto-cashout victory
-    const revealedCount = Object.keys(nextRevealed).length;
-    if (revealedCount === 25 - bombsCount) {
-      const maxMult = multipliersList[multipliersList.length - 1];
-      const parsedBet = parseFloat(betInputStr) || 0;
-      handleWinCashout(maxMult.toFixed(2) + "x", parsedBet * maxMult);
-    }
+    setRevealedCells(prev => {
+      const nextRevealed = { ...prev, [idx]: "safe" as CellState };
+      const revealedCount = Object.keys(nextRevealed).length;
+      if (revealedCount === 25 - bombsCount) {
+        const maxMult = multipliersList[multipliersList.length - 1];
+        const parsedBet = parseFloat(betInputStr) || 0;
+        setTimeout(() => handleWinCashout(maxMult.toFixed(2) + "x", parsedBet * maxMult), 0);
+      }
+      return nextRevealed;
+    });
   };
+
 
   // Trigger cashout to collect winnings
   const triggerCashout = () => {
