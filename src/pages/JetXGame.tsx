@@ -50,6 +50,9 @@ const JetXGame = () => {
   const lastRoundRef = useRef(0);
 
   const totalBal = currency === "dollar" ? dollarBalance + dollarWinning : starBalance + starWinning;
+  const displayBalance = toDisplayAmount(totalBal, currencyMode);
+  const modeSymbol = currencySymbol(currencyMode);
+  const fmtMode = (v: number) => `${modeSymbol}${v.toFixed(2)}`;
 
   // Poll server state
   useEffect(() => {
