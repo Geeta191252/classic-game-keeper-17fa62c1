@@ -282,15 +282,15 @@ const MinesClassicGame = () => {
     }
 
     const parsedBet = parseFloat(betInputStr) || 0;
-    const minLimit = currency === "dollar" ? 0.1 : 10;
-    const maxLimit = currency === "dollar" ? 1000 : 10000;
+    const minLimit = currencyMode === "USD" ? 0.1 : currencyMode === "INR" ? 10 : 10;
+    const maxLimit = currencyMode === "USD" ? 1000 : currencyMode === "INR" ? 100000 : 10000;
 
     if (parsedBet < minLimit) {
-      toast.error(`Minimum bet is ${currency === "dollar" ? "$0.10" : "10 Stars"}`);
+      toast.error(`Minimum bet is ${currencySymbol(currencyMode)}${minLimit}`);
       return;
     }
     if (parsedBet > maxLimit) {
-      toast.error(`Maximum bet is ${currency === "dollar" ? "$1,000" : "10,000 Stars"}`);
+      toast.error(`Maximum bet is ${currencySymbol(currencyMode)}${maxLimit}`);
       return;
     }
     const nativeBet = toNativeAmount(parsedBet, currencyMode);
@@ -312,6 +312,7 @@ const MinesClassicGame = () => {
       toast.error("Connection failed, please try again.");
       return;
     }
+
 
     // Generate random bomb index positions upfront
     const positions = new Set<number>();
