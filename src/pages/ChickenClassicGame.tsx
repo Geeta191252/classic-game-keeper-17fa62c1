@@ -135,10 +135,12 @@ const DIFFICULTY_CONFIG: Record<
   }
 };
 
-const PRESETS_BY_CURRENCY: Record<CurrencyType, number[]> = {
-  dollar: [0.5, 1, 2, 7],
-  star: [10, 25, 50, 100]
+const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
+  USD: [0.5, 1, 2, 7],
+  INR: [50, 100, 200, 500],
+  STAR: [10, 25, 50, 100],
 };
+
 
 const ChickenClassicGame = () => {
   const navigate = useNavigate();
@@ -175,10 +177,11 @@ const ChickenClassicGame = () => {
   const scrollRowRef = useRef<HTMLDivElement | null>(null);
   const audioUnlockedRef = useRef(false);
 
-  // Sync bet presets on currency change
+  // Sync bet presets on currency mode change
   useEffect(() => {
-    setBetAmount(currency === "dollar" ? 0.5 : 10);
-  }, [currency]);
+    setBetAmount(currencyMode === "USD" ? 0.5 : currencyMode === "INR" ? 50 : 10);
+  }, [currencyMode]);
+
 
 
   const unlockAudio = () => {
@@ -545,15 +548,16 @@ const ChickenClassicGame = () => {
 
         {/* Quick select presets */}
         <div className="play-row-amounts">
-          {PRESETS_BY_CURRENCY[currency].map(val => (
+          {PRESETS_BY_MODE[currencyMode].map(val => (
             <button 
               key={val} 
               className="amount-btn" 
               onClick={() => handlePresetSelect(val)}
               disabled={phase !== "betting"}
             >
-              {currency === "dollar" ? `$${val}` : val}
+              {currencyMode === "STAR" ? `${val} ⭐` : `${currencySymbol(currencyMode)}${val}`}
             </button>
+
           ))}
         </div>
 
@@ -646,7 +650,7 @@ const ChickenClassicGame = () => {
             <div className="cashout-mult">{cashoutDetails.multiplier}</div>
             <div className="cashout-sub">Winnings:</div>
             <div className="cashout-winnings">
-              {currency === "dollar" ? `$${cashoutDetails.winAmount.toFixed(2)}` : `★${Math.floor(cashoutDetails.winAmount).toLocaleString()}`}
+              {currencyMode === "STAR" ? `★${Math.floor(cashoutDetails.winAmount).toLocaleString()}` : `${currencySymbol(currencyMode)}${cashoutDetails.winAmount.toFixed(2)}`}
             </div>
             <button className="cashout-ok-btn" onClick={closeWinModal}>
               Collect
