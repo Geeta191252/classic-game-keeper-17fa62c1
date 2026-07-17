@@ -154,9 +154,8 @@ const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
 const MinesClassicGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
-  useEffect(() => { setCurrency(modeToWallet(currencyMode)); }, [currencyMode]);
+  const currency: CurrencyType = modeToWallet(currencyMode);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalRupee = rupeeBalance + rupeeWinning;

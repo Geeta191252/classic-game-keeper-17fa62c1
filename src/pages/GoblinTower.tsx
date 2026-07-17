@@ -161,12 +161,10 @@ type CrateStateType = null | "safe" | "goblin" | "unrevealed-safe" | "unrevealed
 const GoblinTower = () => {
   const navigate = useNavigate();
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const currency: CurrencyType = modeToWallet(currencyMode);
   useEffect(() => {
-    const newC = modeToWallet(currencyMode);
-    setCurrency(newC);
-    setBet(currencyMode === "INR" ? 100 : newC === "star" ? 30 : 3);
+    setBet(currencyMode === "INR" ? 100 : currency === "star" ? 30 : 3);
   }, [currencyMode]);
 
   // States

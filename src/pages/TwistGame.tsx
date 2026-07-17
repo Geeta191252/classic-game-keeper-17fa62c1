@@ -265,12 +265,10 @@ const TwistGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const tgUser = getTelegramUser();
 
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const currency: CurrencyType = modeToWallet(currencyMode);
   useEffect(() => {
-    const newC = modeToWallet(currencyMode);
-    setCurrency(newC);
-    setBet(currencyMode === "INR" ? 100 : newC === "star" ? 30 : 3);
+    setBet(currencyMode === "INR" ? 100 : currency === "star" ? 30 : 3);
   }, [currencyMode]);
   const [bet, setBet] = useState(3);
   const [lastWin, setLastWin] = useState<number | null>(null);

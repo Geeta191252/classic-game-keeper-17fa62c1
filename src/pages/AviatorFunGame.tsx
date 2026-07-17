@@ -248,8 +248,8 @@ const INITIAL_HISTORY = [
 const AviatorFunGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [displayMode, setDisplayMode] = useState<GameCurrencyMode>("USD");
+  const currency: CurrencyType = modeToWallet(displayMode);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalRupee = rupeeBalance + rupeeWinning;
@@ -1001,7 +1001,6 @@ const AviatorFunGame = () => {
                 onClick={() => {
                   if (gameState !== "FLYING") {
                     setDisplayMode("USD");
-                    setCurrency(modeToWallet("USD"));
                     setPanel1(prev => ({ ...prev, amount: 3 }));
                     setPanel2(prev => ({ ...prev, amount: 3 }));
                   }
@@ -1017,7 +1016,6 @@ const AviatorFunGame = () => {
                 onClick={() => {
                   if (gameState !== "FLYING") {
                     setDisplayMode("INR");
-                    setCurrency(modeToWallet("INR"));
                     setPanel1(prev => ({ ...prev, amount: 100 }));
                     setPanel2(prev => ({ ...prev, amount: 100 }));
                   }
@@ -1033,7 +1031,6 @@ const AviatorFunGame = () => {
                 onClick={() => {
                   if (gameState !== "FLYING") {
                     setDisplayMode("STAR");
-                    setCurrency(modeToWallet("STAR"));
                     setPanel1(prev => ({ ...prev, amount: 30 }));
                     setPanel2(prev => ({ ...prev, amount: 30 }));
                   }

@@ -147,9 +147,8 @@ const ChickenClassicGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
 
   // Wallet currency selector
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
-  useEffect(() => { setCurrency(modeToWallet(currencyMode)); }, [currencyMode]);
+  const currency: CurrencyType = modeToWallet(currencyMode);
 
   // Real balance — always from context (no fake demo balance)
   const totalDollar = dollarBalance + dollarWinning;

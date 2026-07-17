@@ -49,9 +49,8 @@ const AviatorGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance } = useBalanceContext();
   const tgUser = getTelegramUser();
 
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
-  useEffect(() => { setCurrency(modeToWallet(currencyMode)); }, [currencyMode]);
+  const currency: CurrencyType = modeToWallet(currencyMode);
   const [phase, setPhase] = useState<Phase>("betting");
   const [multiplier, setMultiplier] = useState(1);
   const [crashAt, setCrashAt] = useState(2);

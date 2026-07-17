@@ -29,10 +29,9 @@ const JetXGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance } = useBalanceContext();
   const tgUser = getTelegramUser();
 
-  const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const currency: CurrencyType = modeToWallet(currencyMode);
   useEffect(() => {
-    setCurrency(modeToWallet(currencyMode));
     setBetAmount(currencyMode === "INR" ? 10 : currencyMode === "STAR" ? 10 : 1);
   }, [currencyMode]);
   const [phase, setPhase] = useState<Phase>("betting");
