@@ -76,6 +76,19 @@ const GROUPS: Group[] = [
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAdminAuthed()) navigate("/admin/login", { replace: true });
+    const onUnauth = () => navigate("/admin/login", { replace: true });
+    window.addEventListener("admin:unauthorized", onUnauth);
+    return () => window.removeEventListener("admin:unauthorized", onUnauth);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    adminLogout();
+    navigate("/admin/login", { replace: true });
+  };
 
   const activeCrumb = useMemo(() => {
     for (const g of GROUPS) {
