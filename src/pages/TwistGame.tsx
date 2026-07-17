@@ -1036,7 +1036,7 @@ const TwistGame = () => {
         // Add winnings to database
         await reportGameResult({
           betAmount: 0,
-          winAmount: winnings,
+          winAmount: toNativeAmount(winnings, currencyMode),
           currency,
           game: "twist"
         });
@@ -1046,7 +1046,7 @@ const TwistGame = () => {
         setIsRoundActive(false);
         
         synthRef.current.playCashoutSuccess();
-        toast.success(`Won ${currency === "star" ? "★" : "$"}${winnings.toFixed(2)} !`);
+        toast.success(`Won ${currencySymbol(currencyMode)}${winnings.toFixed(2)} !`);
         
         saveHistoryRecord(mult.toFixed(2) + "x", winnings, "Full");
         
@@ -1087,7 +1087,7 @@ const TwistGame = () => {
         // Report part winnings to backend
         await reportGameResult({
           betAmount: 0,
-          winAmount: totalPartWinnings,
+          winAmount: toNativeAmount(totalPartWinnings, currencyMode),
           currency,
           game: "twist"
         });
@@ -1097,7 +1097,7 @@ const TwistGame = () => {
         setLastWin(totalPartWinnings);
         
         synthRef.current.playCashoutSuccess();
-        toast.success(`Secured ${currency === "star" ? "★" : "$"}${totalPartWinnings.toFixed(2)} !`);
+        toast.success(`Secured ${currencySymbol(currencyMode)}${totalPartWinnings.toFixed(2)} !`);
         
         saveHistoryRecord(totalPartMult.toFixed(2) + "x", totalPartWinnings, "Part");
       } catch {
