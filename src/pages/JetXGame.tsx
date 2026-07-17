@@ -246,13 +246,13 @@ const JetXGame = () => {
               className="p-3 rounded-lg bg-white/5 active:scale-90"><Plus className="h-4 w-4" /></button>
           </div>
           <div className="grid grid-cols-6 gap-1.5 mt-3">
-            {PRESETS[currency].map((p) => (
+            {(currencyMode === "INR" ? PRESETS.dollar.map(p => p * INR_RATE) : PRESETS[currency]).map((p) => (
               <button
                 key={p}
                 onClick={() => setBetAmount(p)}
                 className="text-[11px] font-bold py-1.5 rounded-md bg-white/5 hover:bg-white/10"
               >
-                {p}
+                {modeSymbol}{p}
               </button>
             ))}
           </div>
