@@ -435,7 +435,7 @@ const MinesGame = () => {
           )}
         </div>
         <button
-          onClick={() => setActiveWallet(prev => prev === "dollar" ? "star" : "dollar")}
+          onClick={() => setActiveWallet(activeWallet === "dollar" ? "star" : "dollar")}
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 active:scale-90"
           style={{ background: "hsla(0, 0%, 100%, 0.95)", borderColor: "hsl(45, 80%, 55%)" }}>
           <span className="text-xs">🔄</span>
