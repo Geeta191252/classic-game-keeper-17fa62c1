@@ -785,14 +785,8 @@ const AviatorFunGame = () => {
     if (panel.status !== "NONE") return;
 
     if (balance < panel.amount) {
-      // Suggest switching to a currency the user actually has funds in.
-      if (displayMode !== "STAR" && totalDollar <= 0 && totalStar > 0) {
-        toast.error("No $ / ₹ balance — switch to STARS to bet.");
-      } else if (displayMode === "STAR" && totalStar <= 0 && totalDollar > 0) {
-        toast.error("No STAR balance — switch to $ or ₹ to bet.");
-      } else {
-        toast.error("Insufficient Balance!");
-      }
+      const unit = displayMode === "USD" ? "$" : displayMode === "INR" ? "₹" : "★";
+      toast.error(`Insufficient ${unit} balance!`);
       return;
     }
 
