@@ -861,6 +861,11 @@ const AviatorFunGame = () => {
     toast.success(`Cashed Out at ${mult.toFixed(2)}x! Won ${formatMoney(winAmt)}`);
   };
 
+  // Display-mode-aware step & presets
+  const stepUnit = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
+  const presets = displayMode === "USD" ? [5, 10, 20, 50] : displayMode === "INR" ? [100, 500, 1000, 2500] : [50, 100, 250, 500];
+  const unitLabel = displayMode === "USD" ? "USD" : displayMode === "INR" ? "INR" : "STR";
+
   // Manual Adjustments
   const adjustBet = (panelId: "panel-1" | "panel-2", amountChange: number) => {
     audioRef.current.playClick();
