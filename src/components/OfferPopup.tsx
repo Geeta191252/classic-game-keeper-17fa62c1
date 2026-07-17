@@ -119,6 +119,7 @@ const OfferPopup = () => {
           className="fixed inset-0 z-[60] flex items-center justify-center p-4"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           style={{ background: "hsla(260, 50%, 6%, 0.88)", backdropFilter: "blur(8px)" }}
+          onClick={close}
         >
           <motion.div
             initial={{ scale: 0.85, opacity: 0, y: 30 }}
@@ -126,6 +127,7 @@ const OfferPopup = () => {
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", damping: 22, stiffness: 280 }}
             className="w-full max-w-sm relative pt-10"
+            onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={close}
