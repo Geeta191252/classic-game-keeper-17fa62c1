@@ -171,9 +171,9 @@ const App = () => {
                   <Route path="/twist" element={framed(<TwistGame />)} />
                   <Route path="/goblin-tower" element={framed(<GoblinTower />)} />
                   <Route path="/admin-legacy" element={<AdminPanel />} />
+                  <Route path="/admin" element={<AdminLogin />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<AdminLogin />} />
                     <Route path="dashboard" element={<AdminPages.Dashboard />} />
                     <Route path="users" element={<AdminPages.Users />} />
                     <Route path="games" element={<AdminPages.Games />} />
