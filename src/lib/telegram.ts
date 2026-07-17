@@ -205,7 +205,7 @@ export const fetchTransactions = async (): Promise<Array<{
 /**
  * Fetch user winnings (only from game wins)
  */
-export const fetchWinnings = async (): Promise<{ dollarWinnings: number; starWinnings: number; dollarDeposits: number; starDeposits: number }> => {
+export const fetchWinnings = async (): Promise<{ dollarWinnings: number; rupeeWinnings: number; starWinnings: number; dollarDeposits: number; rupeeDeposits: number; starDeposits: number }> => {
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id;
 
@@ -219,7 +219,7 @@ export const fetchWinnings = async (): Promise<{ dollarWinnings: number; starWin
     throw new Error("Failed to fetch winnings");
   }
 
-  return publishBalancePayload(await res.json());
+  return res.json();
 };
 
 /**
@@ -248,7 +248,7 @@ export const reportGameResult = async (data: {
     throw new Error("Failed to report game result");
   }
 
-  return res.json();
+  return publishBalancePayload(await res.json());
 };
 
 /**
@@ -279,7 +279,7 @@ export interface GreedyKingState {
 export const fetchGreedyKingState = async (currency: CurrencyType): Promise<GreedyKingState> => {
   const res = await fetch(`${API_BASE_URL}/greedy-king/state?currency=${currency}`);
   if (!res.ok) throw new Error("Failed to fetch game state");
-  return res.json();
+  return publishBalancePayload(await res.json());
 };
 
 export const placeGreedyKingBet = async (data: {
@@ -410,7 +410,7 @@ export const cancelAviatorBet = async (userId: number | string, currency: Curren
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || "Failed to cancel bet");
-  return json;
+  return publishBalancePayload(json);
 };
 
 
