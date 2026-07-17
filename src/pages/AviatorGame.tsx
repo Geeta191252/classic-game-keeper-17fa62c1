@@ -453,6 +453,11 @@ const BetPanel = ({
     }
   }, [roundNumber]);
 
+  // Reset bet amount when currency mode changes
+  useEffect(() => {
+    setBetAmount(currencyMode === "INR" ? defaultAmount * INR_RATE : currencyMode === "STAR" ? defaultAmount * 10 : defaultAmount);
+  }, [currencyMode, defaultAmount]);
+
   // Lost-bet toast on crash
   useEffect(() => {
     if (phase !== lastPhaseRef.current) {
