@@ -95,24 +95,25 @@ const JetXGame = () => {
   const handleBet = useCallback(async () => {
     if (!canBet) return;
     if (betAmount <= 0) return toast.error("Enter amount");
-    if (betAmount > totalBal) return toast.error("Insufficient balance");
+    const nativeBet = toNativeAmount(betAmount, currencyMode);
+    if (nativeBet > totalBal) return toast.error(`Insufficient ${modeSymbol} balance`);
     setPlacing(true);
     try {
       await placeJetXBet({
         userId: tgUser?.id || "demo",
-        amount: betAmount,
+        amount: nativeBet,
         currency,
         firstName: tgUser?.first_name,
       });
       setMyBet({ amount: betAmount, cashedOutAt: null, winAmount: 0 });
       refreshBalance();
-      toast.success(`Bet ${fmt(betAmount, currency)} placed`);
+      toast.success(`Bet ${fmtMode(betAmount)} placed`);
     } catch (e: any) {
       toast.error(e?.message || "Bet failed");
     } finally {
       setPlacing(false);
     }
-  }, [canBet, betAmount, totalBal, tgUser, currency, refreshBalance]);
+  }, [canBet, betAmount, totalBal, tgUser, currency, currencyMode, modeSymbol, refreshBalance]);
 
   const handleCashout = useCallback(async () => {
     if (!canCashout) return;
