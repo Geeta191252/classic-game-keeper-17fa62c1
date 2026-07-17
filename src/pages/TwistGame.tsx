@@ -1244,7 +1244,7 @@ const TwistGame = () => {
                   CASHOUT 
                   {currentPayoutMult > 0 && (
                     <span className="cashout-amount">
-                      {currency === "dollar" ? `$${currentPayoutVal.toFixed(2)}` : `★${currentPayoutVal}`}
+                      {currencyMode === "STAR" ? `★${currentPayoutVal}` : `${currencySymbol(currencyMode)}${currentPayoutVal.toFixed(2)}`}
                     </span>
                   )}
                 </button>
