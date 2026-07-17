@@ -21,13 +21,44 @@ const cryptoMins: Record<string, number> = {
   btc: 18, ltc: 4, ton: 4, sol: 4, trx: 4, doge: 6,
 };
 
-const fallbackTransactions = [
+type WalletTransaction = {
+  type?: string | null;
+  game?: string | null;
+  amount?: string | number | null;
+  currency?: string | null;
+  time?: string | number | Date | null;
+  description?: string | null;
+};
+
+const fallbackTransactions: WalletTransaction[] = [
   { type: "win", game: "Greedy King", amount: "+250", currency: "💲", time: "2 min ago" },
   { type: "bet", game: "Greedy King", amount: "-100", currency: "💲", time: "5 min ago" },
   { type: "win", game: "Lucky Slots", amount: "+80", currency: "⭐", time: "1 hr ago" },
   { type: "bonus", game: "Daily Login", amount: "+50", currency: "💲", time: "3 hr ago" },
   { type: "bet", game: "Dice Master", amount: "-200", currency: "⭐", time: "5 hr ago" },
 ];
+
+const safeText = (value: unknown, fallback = "") => {
+  if (value === null || value === undefined) return fallback;
+  return String(value);
+};
+
+const formatTransactionAmount = (value: unknown, isPositive: boolean) => {
+  const raw = safeText(value, "0").trim() || "0";
+  if (raw.startsWith("-") || raw.startsWith("+")) return raw;
+  return `${isPositive ? "+" : "-"}${raw}`;
+};
+
+const formatTransactionTime = (value: unknown) => {
+  const raw = safeText(value, "Just now");
+  try {
+    if (raw.includes("T") || raw.includes("-") || typeof value === "number" || value instanceof Date) {
+      const date = new Date(value as string | number | Date);
+      return isNaN(date.getTime()) ? raw : date.toLocaleString();
+    }
+  } catch { /* ignore */ }
+  return raw;
+};
 
 type CurrencyOption = "dollar" | "star";
 
@@ -206,7 +237,7 @@ const WalletScreen = () => {
     return () => clearInterval(interval);
   }, [cryptoPayment?.orderId]);
 
-  const { data: transactions = fallbackTransactions } = useQuery({
+  const { data: transactions = fallbackTransactions } = useQuery<WalletTransaction[]>({
     queryKey: ["transactions"],
     queryFn: fetchTransactions,
     placeholderData: fallbackTransactions,
@@ -962,18 +993,13 @@ const WalletScreen = () => {
         </h3>
         <div className="space-y-2">
           {transactions.slice(0, 10).map((tx, i) => {
-            const isPositive = tx.type === "win" || tx.type === "deposit" || tx.type === "bonus" || tx.type === "refund";
-            const isCancelled = tx.type.toLowerCase().includes("cancel");
-            const displayAmount = tx.amount.startsWith("-") || tx.amount.startsWith("+") ? tx.amount : (isPositive ? `+${tx.amount}` : `-${tx.amount}`);
-            const currencySymbol = tx.currency || "💲";
-
-            let timeDisplay = tx.time;
-            try {
-              if (tx.time.includes("T") || tx.time.includes("-")) {
-                const date = new Date(tx.time);
-                timeDisplay = isNaN(date.getTime()) ? tx.time : date.toLocaleString();
-              }
-            } catch { /* ignore */ }
+            const txType = safeText(tx?.type, "transaction").toLowerCase();
+            const title = safeText(tx?.game || tx?.description || tx?.type, "Transaction");
+            const isPositive = txType === "win" || txType === "deposit" || txType === "bonus" || txType === "refund";
+            const isCancelled = txType.includes("cancel");
+            const displayAmount = formatTransactionAmount(tx?.amount, isPositive);
+            const currencySymbol = safeText(tx?.currency, "💲");
+            const timeDisplay = formatTransactionTime(tx?.time);
 
             const iconColor = isCancelled ? "bg-amber-500/10 border border-amber-500/20" : isPositive ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-red-500/10 border border-red-500/20";
             const textColor = isCancelled ? "text-amber-400" : isPositive ? "text-emerald-400" : "text-red-400";
@@ -997,7 +1023,7 @@ const WalletScreen = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-xs text-white truncate">
-                    {isCancelled ? `Cancelled: ${tx.type}` : (tx.game || tx.type)}
+                    {isCancelled ? `Cancelled: ${safeText(tx?.type, "Transaction")}` : title}
                   </h4>
                   <p className="text-[9px] text-slate-400 mt-0.5">{timeDisplay}</p>
                 </div>
