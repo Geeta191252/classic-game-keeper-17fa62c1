@@ -294,7 +294,7 @@ const CarnivalSpinGame = () => {
                   color: selectedBet === bet ? "hsl(0, 0%, 100%)" : "hsl(0, 0%, 80%)",
                   border: selectedBet === bet ? "1px solid hsl(50, 90%, 55%)" : "1px solid hsla(0, 0%, 40%, 0.5)",
                 }}>
-                {activeWallet === "dollar" ? `$${bet}` : `${bet} ⭐`}
+                {currencyMode === "STAR" ? `${bet} ⭐` : `${currencySymbol(currencyMode)}${bet}`}
               </button>
             ))}
           </div>
