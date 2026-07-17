@@ -375,7 +375,7 @@ const ChickenClassicGame = () => {
     try {
       await reportGameResult({
         betAmount: 0,
-        winAmount: winAmt,
+        winAmount: toNativeAmount(winAmt, currencyMode),
         currency,
         game: "chicken_classic"
       });
