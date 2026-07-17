@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, Image as ImageIcon, ShieldCheck, MessageSquare,
   Megaphone, KeyRound, Wallet, ArrowDownToLine, ArrowUpFromLine, Coins,
   BarChart3, PiggyBank, LineChart, Network, DollarSign, Palette, TrendingUp,
   Target, CalendarClock, Crown, ShieldAlert, Type, Gift, Plane, Clock, Ticket,
   Settings, Layers, MinusCircle, UserCircle2, ChevronLeft, ChevronRight,
-  Bell, Search, Sparkles, type LucideIcon,
+  Bell, Search, Sparkles, LogOut, type LucideIcon,
 } from "lucide-react";
+import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
 
 type Item = { to: string; label: string; icon: LucideIcon };
