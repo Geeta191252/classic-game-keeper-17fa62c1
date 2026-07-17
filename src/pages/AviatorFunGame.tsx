@@ -244,14 +244,18 @@ const INITIAL_HISTORY = [
   20.67, 5.90, 66.12, 5.13, 1.25, 2.80, 1.10, 8.44, 1.95, 12.30
 ];
 
+const INR_RATE = 85; // 1 USD = 85 INR
+
 const AviatorFunGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
+  const [displayMode, setDisplayMode] = useState<"USD" | "INR" | "STAR">("USD");
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalStar = starBalance + starWinning;
-  const balance = currency === "dollar" ? totalDollar : totalStar;
+  // Balance in the DISPLAY unit (INR = dollars * 85, USD = dollars, STAR = stars)
+  const balance = displayMode === "STAR" ? totalStar : displayMode === "INR" ? totalDollar * INR_RATE : totalDollar;
 
   // Settings
   const [roundSpeedMultiplier, setRoundSpeedMultiplier] = useState(1.0);
@@ -325,11 +329,12 @@ const AviatorFunGame = () => {
     bgImgRef.current = bgImg;
   }, []);
 
-  // Format Helper
+  // Format Helper — val is in the display unit (INR/USD/STAR)
   const formatMoney = useCallback((val: number) => {
-    if (currency === "star") return `★${Math.floor(val).toLocaleString()}`;
+    if (displayMode === "STAR") return `★${Math.floor(val).toLocaleString()}`;
+    if (displayMode === "INR") return `₹${val.toFixed(2)}`;
     return `$${val.toFixed(2)}`;
-  }, [currency]);
+  }, [displayMode]);
 
   // Balance Auto Refill (Disabled for real money mode)
   useEffect(() => {
@@ -763,6 +768,11 @@ const AviatorFunGame = () => {
     };
   }, [startWaitingRound]);
 
+  // Convert a display-unit amount to the backend currency unit
+  const toBackendAmount = useCallback((displayVal: number) => {
+    return displayMode === "INR" ? displayVal / INR_RATE : displayVal;
+  }, [displayMode]);
+
   // Place Bet
   const placeBetUser = async (panelId: "panel-1" | "panel-2") => {
     audioRef.current.init();
@@ -778,7 +788,7 @@ const AviatorFunGame = () => {
 
     try {
       await reportGameResult({
-        betAmount: panel.amount,
+        betAmount: toBackendAmount(panel.amount),
         winAmount: 0,
         currency,
         game: "aviator"
@@ -805,7 +815,7 @@ const AviatorFunGame = () => {
     try {
       await reportGameResult({
         betAmount: 0,
-        winAmount: panel.amount,
+        winAmount: toBackendAmount(panel.amount),
         currency,
         game: "aviator"
       });
@@ -834,7 +844,7 @@ const AviatorFunGame = () => {
     try {
       await reportGameResult({
         betAmount: 0,
-        winAmount: winAmt,
+        winAmount: toBackendAmount(winAmt),
         currency,
         game: "aviator"
       });
@@ -851,14 +861,19 @@ const AviatorFunGame = () => {
     toast.success(`Cashed Out at ${mult.toFixed(2)}x! Won ${formatMoney(winAmt)}`);
   };
 
+  // Display-mode-aware step & presets
+  const stepUnit = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
+  const presets = displayMode === "USD" ? [5, 10, 20, 50] : displayMode === "INR" ? [100, 500, 1000, 2500] : [50, 100, 250, 500];
+  const unitLabel = displayMode === "USD" ? "USD" : displayMode === "INR" ? "INR" : "STR";
+
   // Manual Adjustments
   const adjustBet = (panelId: "panel-1" | "panel-2", amountChange: number) => {
     audioRef.current.playClick();
     const updater = panelId === "panel-1" ? setPanel1 : setPanel2;
     updater(prev => {
       if (prev.status !== "NONE") return prev;
-      const minVal = currency === "dollar" ? 1 : 10;
-      const maxVal = currency === "dollar" ? 1000 : 10000;
+      const minVal = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
+      const maxVal = displayMode === "USD" ? 1000 : displayMode === "INR" ? 100000 : 10000;
       const next = Math.max(minVal, Math.min(maxVal, prev.amount + amountChange));
       return { ...prev, amount: next };
     });
@@ -979,9 +994,10 @@ const AviatorFunGame = () => {
             <div className="balance-display-container flex items-center gap-1">
               {/* Dollar (USD) Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-[#00a2e8] bg-[#00a2e8]/10" : "bg-slate-900 opacity-60"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "USD" ? "ring-1 ring-[#00a2e8] bg-[#00a2e8]/10" : "bg-slate-900 opacity-60"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("USD");
                     setCurrency("dollar");
                     setPanel1(prev => ({ ...prev, amount: 3 }));
                     setPanel2(prev => ({ ...prev, amount: 3 }));
@@ -994,24 +1010,26 @@ const AviatorFunGame = () => {
               
               {/* INR Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "INR" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("INR");
                     setCurrency("dollar");
-                    setPanel1(prev => ({ ...prev, amount: 3 }));
-                    setPanel2(prev => ({ ...prev, amount: 3 }));
+                    setPanel1(prev => ({ ...prev, amount: 100 }));
+                    setPanel2(prev => ({ ...prev, amount: 100 }));
                   }
                 }}
               >
-                <span className="balance-amount">₹{(totalDollar * 85).toFixed(2)}</span>
+                <span className="balance-amount">₹{(totalDollar * INR_RATE).toFixed(2)}</span>
                 <span className="balance-currency font-black text-[9px]">INR</span>
               </div>
 
               {/* Star Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "star" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "STAR" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("STAR");
                     setCurrency("star");
                     setPanel1(prev => ({ ...prev, amount: 30 }));
                     setPanel2(prev => ({ ...prev, amount: 30 }));
@@ -1199,18 +1217,17 @@ const AviatorFunGame = () => {
                 <div className="panel-body">
                   <div className="control-left">
                     <div className="bet-input-box">
-                      <button className="value-change-btn minus" onClick={() => adjustBet("panel-1", currency === "dollar" ? -1 : -10)} disabled={panel1.status !== "NONE"}>&minus;</button>
+                      <button className="value-change-btn minus" onClick={() => adjustBet("panel-1", -stepUnit)} disabled={panel1.status !== "NONE"}>&minus;</button>
                       <div className="input-wrapper">
                         <input type="number" readOnly value={panel1.amount} />
-                        <span className="input-currency">{currency === "dollar" ? "USD" : "STR"}</span>
+                        <span className="input-currency">{unitLabel}</span>
                       </div>
-                      <button className="value-change-btn plus" onClick={() => adjustBet("panel-1", currency === "dollar" ? 1 : 10)} disabled={panel1.status !== "NONE"}>+</button>
+                      <button className="value-change-btn plus" onClick={() => adjustBet("panel-1", stepUnit)} disabled={panel1.status !== "NONE"}>+</button>
                     </div>
                     <div className="quick-bets-grid">
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-1", currency === "dollar" ? 5 : 50)} disabled={panel1.status !== "NONE"}>{currency === "dollar" ? "5" : "50"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-1", currency === "dollar" ? 10 : 100)} disabled={panel1.status !== "NONE"}>{currency === "dollar" ? "10" : "100"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-1", currency === "dollar" ? 20 : 250)} disabled={panel1.status !== "NONE"}>{currency === "dollar" ? "20" : "250"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-1", currency === "dollar" ? 50 : 500)} disabled={panel1.status !== "NONE"}>{currency === "dollar" ? "50" : "500"}</button>
+                      {presets.map((v, i) => (
+                        <button key={i} className="quick-btn" onClick={() => handleQuickPreset("panel-1", v)} disabled={panel1.status !== "NONE"}>{v}</button>
+                      ))}
                     </div>
                   </div>
                   
@@ -1280,18 +1297,17 @@ const AviatorFunGame = () => {
                 <div className="panel-body collapse-target">
                   <div className="control-left">
                     <div className="bet-input-box">
-                      <button className="value-change-btn minus" onClick={() => adjustBet("panel-2", currency === "dollar" ? -1 : -10)} disabled={panel2.status !== "NONE"}>&minus;</button>
+                      <button className="value-change-btn minus" onClick={() => adjustBet("panel-2", -stepUnit)} disabled={panel2.status !== "NONE"}>&minus;</button>
                       <div className="input-wrapper">
                         <input type="number" readOnly value={panel2.amount} />
-                        <span className="input-currency">{currency === "dollar" ? "USD" : "STR"}</span>
+                        <span className="input-currency">{unitLabel}</span>
                       </div>
-                      <button className="value-change-btn plus" onClick={() => adjustBet("panel-2", currency === "dollar" ? 1 : 10)} disabled={panel2.status !== "NONE"}>+</button>
+                      <button className="value-change-btn plus" onClick={() => adjustBet("panel-2", stepUnit)} disabled={panel2.status !== "NONE"}>+</button>
                     </div>
                     <div className="quick-bets-grid">
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-2", currency === "dollar" ? 5 : 50)} disabled={panel2.status !== "NONE"}>{currency === "dollar" ? "5" : "50"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-2", currency === "dollar" ? 10 : 100)} disabled={panel2.status !== "NONE"}>{currency === "dollar" ? "10" : "100"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-2", currency === "dollar" ? 20 : 250)} disabled={panel2.status !== "NONE"}>{currency === "dollar" ? "20" : "250"}</button>
-                      <button className="quick-btn" onClick={() => handleQuickPreset("panel-2", currency === "dollar" ? 50 : 500)} disabled={panel2.status !== "NONE"}>{currency === "dollar" ? "50" : "500"}</button>
+                      {presets.map((v, i) => (
+                        <button key={i} className="quick-btn" onClick={() => handleQuickPreset("panel-2", v)} disabled={panel2.status !== "NONE"}>{v}</button>
+                      ))}
                     </div>
                   </div>
                   
@@ -1405,7 +1421,7 @@ const AviatorFunGame = () => {
             <span className="modal-desc">Enter amount to add in currency values:</span>
             <div className="modal-input-container">
               <input type="number" min="10" max="100000" value={depositAmount} onChange={(e) => setDepositAmount(parseInt(e.target.value) || 0)} />
-              <span className="modal-currency">{currency === "dollar" ? "USD" : "STR"}</span>
+              <span className="modal-currency">{unitLabel}</span>
             </div>
             <div className="modal-presets">
               <button className="preset-btn" onClick={() => setDepositAmount(p => p + (currency === "dollar" ? 10 : 100))}>+{currency === "dollar" ? "10" : "100"}</button>
@@ -1427,7 +1443,7 @@ const AviatorFunGame = () => {
             <span className="modal-desc">Enter amount to withdraw:</span>
             <div className="modal-input-container">
               <input type="number" min="10" max="100000" value={withdrawAmount} onChange={(e) => setWithdrawAmount(parseInt(e.target.value) || 0)} />
-              <span className="modal-currency">{currency === "dollar" ? "USD" : "STR"}</span>
+              <span className="modal-currency">{unitLabel}</span>
             </div>
             <div className="modal-presets">
               <button className="preset-btn" onClick={() => setWithdrawAmount(currency === "dollar" ? 10 : 100)}>{currency === "dollar" ? "10" : "100"}</button>
