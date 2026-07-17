@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdownBeep, playResultReveal, startBgMusic, stopBgMusic } from "@/hooks/useGameSounds";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { getTelegram, fetchGreedyKingState, placeGreedyKingBet, fetchMyGreedyKingBets, type CurrencyType, type GreedyKingState } from "@/lib/telegram";
+import GameCurrencyChips from "@/components/GameCurrencyChips";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
 
 const FOOD_ITEMS = [
   { emoji: "🌭", name: "Hot Dog", multiplier: 10 },
@@ -59,7 +61,9 @@ const GreedyKingGame = () => {
   const gameDollarBalance = dollarBalance + dollarWinning;
   const gameStarBalance = starBalance + starWinning;
   const [todayProfits, setTodayProfits] = useState(0);
-  const [activeWallet, setActiveWallet] = useState<"dollar" | "star">("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const activeWallet = modeToWallet(currencyMode);
+  const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<"dollar" | "star">("dollar");
   const [selectedBet, setSelectedBet] = useState(10);
