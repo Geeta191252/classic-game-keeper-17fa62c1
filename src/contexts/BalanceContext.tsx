@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useBalance } from "@/hooks/useBalance";
 import { useQueryClient } from "@tanstack/react-query";
+import { type BalancePayload, isBalancePayload } from "@/lib/telegram";
 
 interface BalanceContextType {
   dollarBalance: number;
@@ -42,6 +43,18 @@ export const BalanceProvider = ({ children }: { children: React.ReactNode }) => 
       return next;
     });
   };
+
+  useEffect(() => {
+    const handleBalanceUpdate = (event: Event) => {
+      const payload = (event as CustomEvent<BalancePayload>).detail;
+      if (isBalancePayload(payload)) {
+        queryClient.setQueryData(["balance"], payload);
+      }
+    };
+
+    window.addEventListener("game:balance", handleBalanceUpdate);
+    return () => window.removeEventListener("game:balance", handleBalanceUpdate);
+  }, [queryClient]);
 
   const refreshBalance = () => {
     queryClient.invalidateQueries({ queryKey: ["balance"] });
