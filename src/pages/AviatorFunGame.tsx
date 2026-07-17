@@ -989,9 +989,10 @@ const AviatorFunGame = () => {
             <div className="balance-display-container flex items-center gap-1">
               {/* Dollar (USD) Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-[#00a2e8] bg-[#00a2e8]/10" : "bg-slate-900 opacity-60"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "USD" ? "ring-1 ring-[#00a2e8] bg-[#00a2e8]/10" : "bg-slate-900 opacity-60"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("USD");
                     setCurrency("dollar");
                     setPanel1(prev => ({ ...prev, amount: 3 }));
                     setPanel2(prev => ({ ...prev, amount: 3 }));
@@ -1004,24 +1005,26 @@ const AviatorFunGame = () => {
               
               {/* INR Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "INR" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("INR");
                     setCurrency("dollar");
-                    setPanel1(prev => ({ ...prev, amount: 3 }));
-                    setPanel2(prev => ({ ...prev, amount: 3 }));
+                    setPanel1(prev => ({ ...prev, amount: 100 }));
+                    setPanel2(prev => ({ ...prev, amount: 100 }));
                   }
                 }}
               >
-                <span className="balance-amount">₹{(totalDollar * 85).toFixed(2)}</span>
+                <span className="balance-amount">₹{(totalDollar * INR_RATE).toFixed(2)}</span>
                 <span className="balance-currency font-black text-[9px]">INR</span>
               </div>
 
               {/* Star Balance */}
               <div 
-                className={`balance-display cursor-pointer transition-all ${currency === "star" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
+                className={`balance-display cursor-pointer transition-all ${displayMode === "STAR" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
                 onClick={() => {
                   if (gameState !== "FLYING") {
+                    setDisplayMode("STAR");
                     setCurrency("star");
                     setPanel1(prev => ({ ...prev, amount: 30 }));
                     setPanel2(prev => ({ ...prev, amount: 30 }));
