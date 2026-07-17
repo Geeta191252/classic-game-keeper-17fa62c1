@@ -165,7 +165,7 @@ const GoblinTower = () => {
   useEffect(() => {
     const newC = currencyMode === "STAR" ? "star" : "dollar";
     setCurrency(newC);
-    setBet(newC === "star" ? 30 : 3);
+    setBet(currencyMode === "INR" ? 3 * INR_RATE : newC === "star" ? 30 : 3);
   }, [currencyMode]);
 
   // States
