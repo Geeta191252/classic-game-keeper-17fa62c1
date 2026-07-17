@@ -268,7 +268,7 @@ const TwistGame = () => {
   useEffect(() => {
     const newC = currencyMode === "STAR" ? "star" : "dollar";
     setCurrency(newC);
-    setBet(newC === "star" ? 30 : 3);
+    setBet(currencyMode === "INR" ? 3 * INR_RATE : newC === "star" ? 30 : 3);
   }, [currencyMode]);
   const [bet, setBet] = useState(3);
   const [lastWin, setLastWin] = useState<number | null>(null);
