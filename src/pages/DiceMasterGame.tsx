@@ -60,14 +60,18 @@ const DiceMasterGame = () => {
     };
   }, []);
 
-  const currentBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  // INR is a display layer over the dollar wallet, so balance/bet compare
+  // in display units (INR shows $ balance × 85).
+  const nativeBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const currentBalance = currencyMode === "INR" ? nativeBalance * INR_RATE : nativeBalance;
 
   const rollDice = () => {
     if (phase !== "betting" || currentBalance < selectedBet) return;
 
-    // Deduct bet
-    if (activeWallet === "dollar") setLocalDollarAdj(p => p - selectedBet);
-    else setLocalStarAdj(p => p - selectedBet);
+    // Bet in native wallet units (INR display → $ backend)
+    const nativeBet = toNativeAmount(selectedBet, currencyMode);
+    if (activeWallet === "dollar") setLocalDollarAdj(p => p - nativeBet);
+    else setLocalStarAdj(p => p - nativeBet);
 
     if (soundRef.current) playBetSound();
     setPhase("rolling");
@@ -119,8 +123,8 @@ const DiceMasterGame = () => {
         setTotalLost(selectedBet);
         if (soundRef.current) playLoseSound();
       }
-      // Report result to backend
-      reportGameResult({ betAmount: selectedBet, winAmount: prize, currency: activeWallet, game: "dice-master" })
+      // Report result to backend in NATIVE wallet units
+      reportGameResult({ betAmount: toNativeAmount(selectedBet, currencyMode), winAmount: toNativeAmount(prize, currencyMode), currency: activeWallet, game: "dice-master" })
         .then(() => { setLocalDollarAdj(0); setLocalStarAdj(0); refreshBalance(); }).catch(console.error);
 
       setPhase("result");
