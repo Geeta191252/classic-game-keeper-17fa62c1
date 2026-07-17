@@ -243,14 +243,15 @@ const GoblinTower = () => {
         isRiggedRef.current = false;
       }
 
-      if (balance < bet) {
-        toast.error("Insufficient Balance!");
+      const nativeBet = toNativeAmount(bet, currencyMode);
+      if (balance < nativeBet) {
+        toast.error(`Insufficient ${currencySymbol(currencyMode)} Balance!`);
         return;
       }
 
       try {
         await reportGameResult({
-          betAmount: bet,
+          betAmount: nativeBet,
           winAmount: 0,
           currency,
           game: "goblin_tower"
