@@ -306,7 +306,10 @@ const GoblinTower = () => {
     if (!isPlaying) return;
     if (row !== currentLevel) return;
 
-    const isGoblin = isRiggedRef.current ? true : gridLayouts[row][col];
+    // 30% house rig — force goblin on 30% of clicks even if underlying cell was safe
+    const forcedByRig = Math.random() < 0.3;
+    const isGoblin = isRiggedRef.current ? true : (gridLayouts[row][col] || forcedByRig);
+
     const newRevealed = revealedGrid.map((r, rIdx) =>
       r.map((cell, cIdx) => {
         if (rIdx === row && cIdx === col) {
