@@ -650,43 +650,6 @@ const PlinkoGame = () => {
           {/* Bet */}
           <div className="text-center">
             
-            <div
-              className="flex items-stretch rounded-full overflow-hidden mx-auto mb-1"
-              style={{
-                background: "hsl(265 50% 8%)",
-                border: "1.5px solid hsl(45 80% 55%)",
-                width: "fit-content",
-              }}
-            >
-              <button
-                onClick={() => !dropping && setActiveWallet("dollar")}
-                disabled={dropping}
-                className="px-3 h-6 text-[10px] font-black tracking-wide"
-                style={{
-                  background:
-                    activeWallet === "dollar"
-                      ? "linear-gradient(135deg, hsl(280 60% 35%), hsl(260 55% 25%))"
-                      : "transparent",
-                  color: activeWallet === "dollar" ? "hsl(0 0% 100%)" : "hsl(45 60% 60%)",
-                }}
-              >
-                USD
-              </button>
-              <button
-                onClick={() => !dropping && setActiveWallet("star")}
-                disabled={dropping}
-                className="px-3 h-6 grid place-items-center"
-                style={{
-                  background:
-                    activeWallet === "star"
-                      ? "linear-gradient(135deg, hsl(280 60% 35%), hsl(260 55% 25%))"
-                      : "transparent",
-                  borderLeft: "1.5px solid hsl(45 80% 55%)",
-                }}
-              >
-                <span style={{ color: "hsl(50 100% 55%)", fontSize: 13, lineHeight: 1 }}>★</span>
-              </button>
-            </div>
             <div className="text-[10px] font-bold mb-1" style={{ color: "hsl(45 90% 65%)" }}>
               BET AMOUNT
             </div>
