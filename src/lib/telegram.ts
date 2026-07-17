@@ -63,6 +63,27 @@ export interface BalancePayload {
   starWinning: number;
 }
 
+const balanceKeys: Array<keyof BalancePayload> = [
+  "dollarBalance",
+  "rupeeBalance",
+  "starBalance",
+  "dollarWinning",
+  "rupeeWinning",
+  "starWinning",
+];
+
+export const isBalancePayload = (data: unknown): data is BalancePayload => {
+  if (!data || typeof data !== "object") return false;
+  return balanceKeys.every((key) => typeof (data as Record<string, unknown>)[key] === "number");
+};
+
+const publishBalancePayload = <T>(data: T): T => {
+  if (isBalancePayload(data)) {
+    window.dispatchEvent(new CustomEvent<BalancePayload>("game:balance", { detail: data }));
+  }
+  return data;
+};
+
 interface InvoiceResponse {
   invoiceUrl: string;
 }
@@ -150,7 +171,7 @@ export const fetchBalance = async (): Promise<BalancePayload & { referralCount: 
     throw new Error("Failed to fetch balance");
   }
 
-  return res.json();
+  return publishBalancePayload(await res.json());
 };
 
 /**
@@ -198,7 +219,7 @@ export const fetchWinnings = async (): Promise<{ dollarWinnings: number; starWin
     throw new Error("Failed to fetch winnings");
   }
 
-  return res.json();
+  return publishBalancePayload(await res.json());
 };
 
 /**
@@ -319,7 +340,7 @@ export const placeJetXBet = async (data: {
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || "Failed to place bet");
-  return json;
+  return publishBalancePayload(json);
 };
 
 export const cashOutJetX = async (userId: number | string, currency: CurrencyType): Promise<{ success: boolean; multiplier: number; winAmount: number } & Partial<BalancePayload>> => {
@@ -330,7 +351,7 @@ export const cashOutJetX = async (userId: number | string, currency: CurrencyTyp
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || "Failed to cash out");
-  return json;
+  return publishBalancePayload(json);
 };
 
 // ============================================
@@ -367,7 +388,7 @@ export const placeAviatorBet = async (data: {
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || "Failed to place bet");
-  return json;
+  return publishBalancePayload(json);
 };
 
 export const cashOutAviator = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; multiplier: number; winAmount: number } & Partial<BalancePayload>> => {
@@ -378,7 +399,7 @@ export const cashOutAviator = async (userId: number | string, currency: Currency
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error || "Failed to cash out");
-  return json;
+  return publishBalancePayload(json);
 };
 
 export const cancelAviatorBet = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; refunded: number } & Partial<BalancePayload>> => {

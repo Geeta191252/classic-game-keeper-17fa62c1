@@ -69,9 +69,11 @@ async function getOrCreateUser(telegramUserId) {
 }
 
 function normalizeCurrency(currency) {
-  if (currency === "star") return "star";
-  if (currency === "rupee" || currency === "inr") return "rupee";
-  return "dollar";
+  const value = String(currency || "").toLowerCase();
+  if (value === "star") return "star";
+  if (value === "rupee" || value === "inr") return "rupee";
+  if (value === "dollar" || value === "usd") return "dollar";
+  throw new Error(`Invalid currency: ${currency}`);
 }
 
 function getCurrencyFields(currency) {
@@ -1462,7 +1464,7 @@ app.post("/api/winnings", async (req, res) => {
 
     const numericId = Number(userId);
     if (!numericId || isNaN(numericId)) {
-      return res.json({ dollarWinnings: 0, starWinnings: 0 });
+      return res.json({ dollarWinnings: 0, rupeeWinnings: 0, starWinnings: 0, dollarDeposits: 0, rupeeDeposits: 0, starDeposits: 0 });
     }
 
     // Winnings = ONLY sum of win transactions
@@ -1477,6 +1479,11 @@ app.post("/api/winnings", async (req, res) => {
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
+    const rupeeWins = await Transaction.aggregate([
+      { $match: { telegramId: numericId, type: "win", currency: "rupee", status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
     const dollarDeposits = await Transaction.aggregate([
       { $match: { telegramId: numericId, type: "deposit", currency: "dollar", status: "completed" } },
       { $group: { _id: null, total: { $sum: "$amount" } } }
@@ -1487,10 +1494,17 @@ app.post("/api/winnings", async (req, res) => {
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
+    const rupeeDeposits = await Transaction.aggregate([
+      { $match: { telegramId: numericId, type: "deposit", currency: "rupee", status: "completed" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
     return res.json({
       dollarWinnings: Math.max(0, dollarWins[0]?.total || 0),
+      rupeeWinnings: Math.max(0, rupeeWins[0]?.total || 0),
       starWinnings: Math.max(0, starWins[0]?.total || 0),
       dollarDeposits: Math.max(0, dollarDeposits[0]?.total || 0),
+      rupeeDeposits: Math.max(0, rupeeDeposits[0]?.total || 0),
       starDeposits: Math.max(0, starDeposits[0]?.total || 0),
     });
   } catch (error) {
