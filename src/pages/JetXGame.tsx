@@ -13,7 +13,7 @@ import {
   type JetXState,
 } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode } from "@/lib/gameCurrency";
+import { GameCurrencyMode, toNativeAmount, toDisplayAmount, currencySymbol, INR_RATE } from "@/lib/gameCurrency";
 import gameJetx from "@/assets/game-jetx.jpg";
 
 type Phase = "betting" | "flying" | "crashed";
