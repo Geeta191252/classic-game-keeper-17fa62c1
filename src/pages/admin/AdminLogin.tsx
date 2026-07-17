@@ -1,12 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, ShieldCheck, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Lock, ShieldCheck, Sparkles, Eye, EyeOff, Loader2 } from "lucide-react";
+import { adminLogin, isAdminAuthed } from "@/lib/adminApi";
 import "@/styles/admin.css";
 
 export default function AdminLogin() {
   const nav = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [remember, setRemember] = useState(true);
+  const [email, setEmail] = useState("admin@gmail.com");
+  const [password, setPassword] = useState("Admin@123");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAdminAuthed()) nav("/admin/dashboard", { replace: true });
+  }, [nav]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await adminLogin(email.trim(), password);
+      nav("/admin/dashboard", { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="admin-scope">
@@ -23,8 +46,12 @@ export default function AdminLogin() {
                   <span className="h-2 w-2 rounded-full" style={{ background: "var(--a-green)" }} />
                   Status: Control room online
                 </div>
-                <div className="mt-2 text-[13px]" style={{ color: "var(--a-text-dim)" }}>Last security sweep: 4 mins ago</div>
-                <div className="mt-1 text-[13px]" style={{ color: "var(--a-text-dim)" }}>Whitelisted devices: 14</div>
+                <div className="mt-2 text-[13px]" style={{ color: "var(--a-text-dim)" }}>
+                  Backend: {import.meta.env.VITE_API_BASE_URL || "local"}
+                </div>
+                <div className="mt-1 text-[13px]" style={{ color: "var(--a-text-dim)" }}>
+                  Works in Chrome and Telegram Mini App
+                </div>
               </div>
 
               <div className="mt-10 a-card-tight a-card flex items-center gap-3">
@@ -40,7 +67,7 @@ export default function AdminLogin() {
 
             {/* Right */}
             <form
-              onSubmit={(e) => { e.preventDefault(); nav("/admin/dashboard"); }}
+              onSubmit={onSubmit}
               className="a-card"
               style={{ background: "linear-gradient(180deg,rgba(15,22,38,0.9),rgba(8,12,22,0.9))" }}
             >
@@ -56,38 +83,59 @@ export default function AdminLogin() {
               </div>
 
               <div className="mt-6">
-                <div className="flex items-baseline justify-between"><label className="a-label">Email</label><span className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>Use your control room email</span></div>
-                <input className="a-input" placeholder="admin@example.com" defaultValue="admin@gmail.com" />
+                <label className="a-label">Email</label>
+                <input
+                  className="a-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  autoComplete="username"
+                  required
+                />
               </div>
 
               <div className="mt-4">
-                <div className="flex items-baseline justify-between"><label className="a-label">Password</label><span className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>Code optional; password or code suffices</span></div>
+                <label className="a-label">Password</label>
                 <div className="relative">
-                  <input className="a-input pr-10" type={showPw ? "text" : "password"} defaultValue="Admin@123" />
+                  <input
+                    className="a-input pr-10"
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
                   <button type="button" onClick={() => setShowPw((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "var(--a-text-mute)" }}>
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
 
-              <div className="mt-4">
-                <div className="flex items-baseline justify-between"><label className="a-label">One-time code (optional)</label><span className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>6-digit or recovery code if you use 2FA</span></div>
-                <input className="a-input" placeholder="6-digit code" />
-              </div>
+              {error && (
+                <div className="mt-4 p-3 rounded-lg text-[13px]"
+                     style={{ background: "rgba(255,80,80,0.1)", border: "1px solid rgba(255,80,80,0.35)", color: "#ff9b9b" }}>
+                  {error}
+                </div>
+              )}
 
               <label className="mt-4 flex items-center gap-2 text-[13px]" style={{ color: "var(--a-text-dim)" }}>
-                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)}
-                       className="h-4 w-4 rounded" />
+                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded" />
                 Remember this console
               </label>
 
-              <button type="submit" className="a-btn a-btn-primary w-full mt-5 justify-center py-3 text-[13px] tracking-[0.2em] font-bold">
-                <Lock size={14} /> UNLOCK CONSOLE
+              <button
+                type="submit"
+                disabled={loading}
+                className="a-btn a-btn-primary w-full mt-5 justify-center py-3 text-[13px] tracking-[0.2em] font-bold"
+              >
+                {loading ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+                {loading ? "SIGNING IN…" : "UNLOCK CONSOLE"}
               </button>
 
               <div className="mt-4 flex items-center justify-between text-[11px]">
                 <div className="flex items-center gap-2" style={{ color: "var(--a-text-dim)" }}>
-                  <Sparkles size={12} style={{ color: "var(--a-yellow)" }} /> Protected by biometric confirm
+                  <Sparkles size={12} style={{ color: "var(--a-yellow)" }} /> HMAC-signed session (30d)
                 </div>
                 <div style={{ color: "var(--a-text-mute)", letterSpacing: "0.2em" }}>V 3.4</div>
               </div>

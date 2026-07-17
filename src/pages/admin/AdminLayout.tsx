@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, Image as ImageIcon, ShieldCheck, MessageSquare,
   Megaphone, KeyRound, Wallet, ArrowDownToLine, ArrowUpFromLine, Coins,
   BarChart3, PiggyBank, LineChart, Network, DollarSign, Palette, TrendingUp,
   Target, CalendarClock, Crown, ShieldAlert, Type, Gift, Plane, Clock, Ticket,
   Settings, Layers, MinusCircle, UserCircle2, ChevronLeft, ChevronRight,
-  Bell, Search, Sparkles, type LucideIcon,
+  Bell, Search, Sparkles, LogOut, type LucideIcon,
 } from "lucide-react";
+import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
 
 type Item = { to: string; label: string; icon: LucideIcon };
@@ -75,6 +76,19 @@ const GROUPS: Group[] = [
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isAdminAuthed()) navigate("/admin/login", { replace: true });
+    const onUnauth = () => navigate("/admin/login", { replace: true });
+    window.addEventListener("admin:unauthorized", onUnauth);
+    return () => window.removeEventListener("admin:unauthorized", onUnauth);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    adminLogout();
+    navigate("/admin/login", { replace: true });
+  };
 
   const activeCrumb = useMemo(() => {
     for (const g of GROUPS) {
@@ -174,6 +188,14 @@ export default function AdminLayout() {
               <button className="h-10 w-10 rounded-xl flex items-center justify-center"
                       style={{ background: "rgba(20,28,46,0.6)", border: "1px solid var(--a-border)" }}>
                 <Bell size={16} />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="h-10 px-3 rounded-xl flex items-center gap-2 text-[12px]"
+                style={{ background: "rgba(20,28,46,0.6)", border: "1px solid var(--a-border)" }}
+                title="Sign out"
+              >
+                <LogOut size={14} /> Logout
               </button>
               <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full"
                    style={{ background: "rgba(20,28,46,0.6)", border: "1px solid var(--a-border)" }}>
