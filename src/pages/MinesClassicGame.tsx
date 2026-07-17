@@ -144,10 +144,12 @@ const CUSTOM_MULTIPLIERS: Record<number, number[]> = {
   24: [23.75]
 };
 
-const PRESETS_BY_CURRENCY: Record<CurrencyType, number[]> = {
-  dollar: [1, 5, 10],
-  star: [100, 500, 1000]
+const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
+  USD: [1, 5, 10],
+  INR: [100, 500, 1000],
+  STAR: [100, 500, 1000],
 };
+
 
 const MinesClassicGame = () => {
   const navigate = useNavigate();
