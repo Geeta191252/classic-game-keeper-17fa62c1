@@ -570,7 +570,7 @@ const PlinkoGame = () => {
                 </div>
                 <div className="font-black text-base" style={{ color: "hsl(0 0% 100%)" }}>
                   {lastWin >= bet ? "+ " : ""}
-                  {activeWallet === "dollar" ? "$" : ""}
+                  {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}
                   {lastWin.toFixed(2)}
                   {activeWallet === "star" ? " ⭐" : ""}
                 </div>
@@ -734,7 +734,7 @@ const PlinkoGame = () => {
                 border: "1px solid hsla(45,80%,55%,0.35)",
               }}
             >
-              +{p}{activeWallet === "dollar" ? "$" : "⭐"}
+              +{p}{currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : "⭐"}
             </button>
           ))}
           <button

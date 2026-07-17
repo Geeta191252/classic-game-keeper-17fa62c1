@@ -177,7 +177,7 @@ const ChickenRoadGame = () => {
     if (currentBalance < selectedBet) {
       toast({
         title: "Insufficient balance",
-        description: `Need ${activeWallet === "dollar" ? "$" : ""}${selectedBet}${
+        description: `Need ${currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}${selectedBet}${
           activeWallet === "star" ? " ⭐" : ""
         } to play`,
         variant: "destructive",
@@ -788,7 +788,7 @@ const ChickenRoadGame = () => {
                     color: "#1a1d26",
                   }}
                 >
-                  {activeWallet === "dollar" ? "$" : "⭐"}
+                  {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : "⭐"}
                 </span>
               </button>
             );
@@ -867,7 +867,7 @@ const ChickenRoadGame = () => {
             >
               <div className="text-[9px] tracking-wider">CASH OUT</div>
               <div className="text-[14px] leading-tight">
-                {(selectedBet * currentMultiplier).toFixed(0)} {activeWallet === "dollar" ? "$" : "⭐"}
+                {(selectedBet * currentMultiplier).toFixed(0)} {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : "⭐"}
               </div>
             </motion.button>
           )}

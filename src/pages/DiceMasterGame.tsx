@@ -315,7 +315,7 @@ const DiceMasterGame = () => {
           }}
         >
           {phase === "betting"
-            ? `🎲 Roll Dice - Bet ${activeWallet === "dollar" ? "$" : ""}${selectedBet}${activeWallet === "star" ? " ⭐" : ""}`
+            ? `🎲 Roll Dice - Bet ${currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}${selectedBet}${activeWallet === "star" ? " ⭐" : ""}`
             : phase === "rolling" ? "Rolling..." : `Next in ${resultTimer}s`}
         </motion.button>
       </div>
