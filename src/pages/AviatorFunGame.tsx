@@ -1056,7 +1056,7 @@ const AviatorFunGame = () => {
             
             <div className="bets-stats-header">
               <div className="bets-count">
-                <span className="count-value">{simPlayers.length}/{simPlayers.length + 10}</span>
+                <span className="count-value">{serverBets.length}</span>
                 <span className="count-label">Bets</span>
                 <div className="indicator-bar">
                   <div className="indicator-fill" style={{ width: "85%" }}></div>
