@@ -556,17 +556,18 @@ const MinesClassicGame = () => {
 
         {/* Quick select presets */}
         <div className="presets-row">
-          {PRESETS_BY_CURRENCY[currency].map(val => (
+          {PRESETS_BY_MODE[currencyMode].map(val => (
             <button 
               key={val} 
               className="preset-btn" 
               onClick={() => handlePresetSelect(val)}
               disabled={phase !== "betting"}
             >
-              {currency === "dollar" ? `$${val}` : val}
+              {currencyMode === "STAR" ? `${val} ⭐` : `${currencySymbol(currencyMode)}${val}`}
             </button>
           ))}
         </div>
+
 
         {/* Bombs selection count */}
         <div className="control-label">Number Of Bombs</div>
