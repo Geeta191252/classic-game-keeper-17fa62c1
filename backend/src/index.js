@@ -3388,6 +3388,338 @@ app.post("/api/admin/reject-deposit", async (req, res) => {
   }
 });
 
+// ============================================================
+// ADMIN PANEL — Token auth + real-data endpoints
+// ============================================================
+const crypto = require("crypto");
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@gmail.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Admin@123";
+const ADMIN_TOKEN_SECRET =
+  process.env.ADMIN_TOKEN_SECRET ||
+  crypto.randomBytes(32).toString("hex"); // rotates on restart if env unset
+const ADMIN_OWNER_ID = "6965488457"; // matches legacy owner-id checks
+
+function b64url(buf) {
+  return Buffer.from(buf).toString("base64")
+    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function signAdminToken(payload) {
+  const body = b64url(JSON.stringify({ ...payload, iat: Date.now() }));
+  const sig = b64url(crypto.createHmac("sha256", ADMIN_TOKEN_SECRET).update(body).digest());
+  return `${body}.${sig}`;
+}
+
+function verifyAdminToken(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const [body, sig] = token.split(".");
+  const expected = b64url(crypto.createHmac("sha256", ADMIN_TOKEN_SECRET).update(body).digest());
+  if (expected !== sig) return null;
+  try {
+    const decoded = JSON.parse(Buffer.from(body.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString());
+    // 30-day expiry
+    if (Date.now() - (decoded.iat || 0) > 30 * 24 * 60 * 60 * 1000) return null;
+    return decoded;
+  } catch { return null; }
+}
+
+function requireAdmin(req, res, next) {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+  const decoded = verifyAdminToken(token);
+  if (!decoded || decoded.role !== "admin") {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  req.admin = decoded;
+  next();
+}
+
+// --- Basic login rate limit ---
+const loginAttempts = new Map();
+function loginRateLimit(req, res, next) {
+  const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
+  const now = Date.now();
+  const entry = loginAttempts.get(ip) || { count: 0, resetAt: now + 60_000 };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + 60_000; }
+  entry.count += 1;
+  loginAttempts.set(ip, entry);
+  if (entry.count > 10) return res.status(429).json({ error: "Too many attempts. Wait a minute." });
+  next();
+}
+
+// POST /api/admin/auth/login
+app.post("/api/admin/auth/login", loginRateLimit, (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+  if (String(email).toLowerCase() !== ADMIN_EMAIL.toLowerCase() || String(password) !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+  const token = signAdminToken({ email: ADMIN_EMAIL, role: "admin", ownerId: ADMIN_OWNER_ID });
+  return res.json({ token, admin: { email: ADMIN_EMAIL, role: "admin" } });
+});
+
+// GET /api/admin/auth/me
+app.get("/api/admin/auth/me", requireAdmin, (req, res) => {
+  res.json({ email: req.admin.email, role: req.admin.role });
+});
+
+// GET /api/admin/summary — dashboard aggregates (real data)
+app.get("/api/admin/summary", requireAdmin, async (req, res) => {
+  try {
+    const [totalUsers, totalTx, deposits, withdrawals, pendingWithdraws, pendingDeposits, bets, wins, activeUsers] = await Promise.all([
+      User.countDocuments(),
+      Transaction.countDocuments(),
+      Transaction.aggregate([
+        { $match: { type: "deposit", status: "completed" } },
+        { $group: { _id: "$currency", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { type: "withdraw", status: "completed" } },
+        { $group: { _id: "$currency", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      ]),
+      Transaction.countDocuments({ type: "withdraw", status: "pending" }),
+      Transaction.countDocuments({ type: "deposit", status: "pending" }),
+      Transaction.aggregate([
+        { $match: { type: "bet", status: "completed" } },
+        { $group: { _id: "$currency", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      ]),
+      Transaction.aggregate([
+        { $match: { type: "win", status: "completed" } },
+        { $group: { _id: "$currency", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+      ]),
+      User.countDocuments({ lastActive: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } }),
+    ]);
+
+    const byCurrency = (rows) => {
+      const out = { dollar: 0, rupee: 0, star: 0 };
+      for (const r of rows || []) if (r._id && out[r._id] !== undefined) out[r._id] = r.total || 0;
+      return out;
+    };
+
+    const balances = await User.aggregate([
+      {
+        $group: {
+          _id: null,
+          dollar: { $sum: "$dollarBalance" },
+          rupee: { $sum: "$rupeeBalance" },
+          star: { $sum: "$starBalance" },
+          dollarW: { $sum: "$dollarWinning" },
+          rupeeW: { $sum: "$rupeeWinning" },
+          starW: { $sum: "$starWinning" },
+        },
+      },
+    ]);
+    const bal = balances[0] || {};
+
+    const recent = await Transaction.find().sort({ createdAt: -1 }).limit(15).lean();
+
+    res.json({
+      totals: {
+        users: totalUsers,
+        activeUsers,
+        transactions: totalTx,
+        pendingWithdrawals: pendingWithdraws,
+        pendingDeposits,
+      },
+      deposits: byCurrency(deposits),
+      withdrawals: byCurrency(withdrawals),
+      bets: byCurrency(bets),
+      wins: byCurrency(wins),
+      balances: {
+        dollar: bal.dollar || 0, rupee: bal.rupee || 0, star: bal.star || 0,
+        dollarW: bal.dollarW || 0, rupeeW: bal.rupeeW || 0, starW: bal.starW || 0,
+      },
+      recent,
+    });
+  } catch (e) {
+    console.error("admin/summary error:", e);
+    res.status(500).json({ error: "Failed to load summary" });
+  }
+});
+
+// GET /api/admin/users-list?search=&limit=&skip=
+app.get("/api/admin/users-list", requireAdmin, async (req, res) => {
+  try {
+    const search = String(req.query.search || "").trim();
+    const limit = Math.min(200, Number(req.query.limit) || 50);
+    const skip = Number(req.query.skip) || 0;
+    const q = {};
+    if (search) {
+      const asNum = Number(search);
+      q.$or = [
+        ...(Number.isFinite(asNum) ? [{ telegramId: asNum }] : []),
+        { username: { $regex: search, $options: "i" } },
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+      ];
+    }
+    const [users, total] = await Promise.all([
+      User.find(q).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      User.countDocuments(q),
+    ]);
+    res.json({ users, total, limit, skip });
+  } catch (e) {
+    console.error("admin/users-list error:", e);
+    res.status(500).json({ error: "Failed to list users" });
+  }
+});
+
+// GET /api/admin/transactions-list?type=&status=&currency=&limit=&skip=
+app.get("/api/admin/transactions-list", requireAdmin, async (req, res) => {
+  try {
+    const q = {};
+    if (req.query.type) q.type = String(req.query.type);
+    if (req.query.status) q.status = String(req.query.status);
+    if (req.query.currency) q.currency = String(req.query.currency);
+    if (req.query.telegramId) q.telegramId = Number(req.query.telegramId);
+    const limit = Math.min(200, Number(req.query.limit) || 50);
+    const skip = Number(req.query.skip) || 0;
+    const [items, total] = await Promise.all([
+      Transaction.find(q).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Transaction.countDocuments(q),
+    ]);
+    res.json({ items, total, limit, skip });
+  } catch (e) {
+    console.error("admin/transactions-list error:", e);
+    res.status(500).json({ error: "Failed to list transactions" });
+  }
+});
+
+// POST /api/admin/wallet-adjust — bridge to legacy adjust-balance
+app.post("/api/admin/wallet-adjust", requireAdmin, async (req, res) => {
+  try {
+    const { targetUserId, currency, amount, balanceType, note } = req.body || {};
+    if (!targetUserId || !currency || amount === undefined || !balanceType) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const user = await getOrCreateUser(targetUserId);
+    if (!user || user.telegramId === 0) return res.status(404).json({ error: "User not found" });
+    const { balanceField, winningField, curr } = getCurrencyFields(currency);
+    const field = balanceType === "winning" ? winningField : balanceField;
+    const delta = Number(amount);
+    if (!Number.isFinite(delta)) return res.status(400).json({ error: "Invalid amount" });
+    const current = user[field] || 0;
+    const next = current + delta;
+    if (next < 0) return res.status(400).json({ error: "Balance cannot go negative" });
+    user[field] = next;
+    await user.save();
+    await Transaction.create({
+      telegramId: user.telegramId,
+      type: delta >= 0 ? "bonus" : "bet",
+      currency: curr,
+      amount: Math.abs(delta),
+      status: "completed",
+      description: note || `Admin adjust ${balanceType} ${delta >= 0 ? "+" : "-"}${Math.abs(delta)}`,
+    });
+    res.json({ success: true, balance: balancePayload(user) });
+  } catch (e) {
+    console.error("admin/wallet-adjust error:", e);
+    res.status(500).json({ error: e.message || "Adjust failed" });
+  }
+});
+
+// POST /api/admin/withdrawals/approve   { transactionId }
+app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
+  try {
+    const { transactionId } = req.body || {};
+    if (!transactionId) return res.status(400).json({ error: "transactionId required" });
+    const tx = await Transaction.findById(transactionId);
+    if (!tx) return res.status(404).json({ error: "Transaction not found" });
+    if (tx.type !== "withdraw") return res.status(400).json({ error: "Not a withdrawal" });
+    if (tx.status !== "pending") return res.status(400).json({ error: `Already ${tx.status}` });
+    tx.status = "completed";
+    await tx.save();
+    res.json({ success: true, transaction: tx });
+  } catch (e) {
+    console.error("admin/withdraw approve error:", e);
+    res.status(500).json({ error: "Approve failed" });
+  }
+});
+
+// POST /api/admin/withdrawals/reject   { transactionId }
+app.post("/api/admin/withdrawals/reject", requireAdmin, async (req, res) => {
+  try {
+    const { transactionId, reason } = req.body || {};
+    if (!transactionId) return res.status(400).json({ error: "transactionId required" });
+    const tx = await Transaction.findById(transactionId);
+    if (!tx) return res.status(404).json({ error: "Transaction not found" });
+    if (tx.type !== "withdraw") return res.status(400).json({ error: "Not a withdrawal" });
+    if (tx.status !== "pending") return res.status(400).json({ error: `Already ${tx.status}` });
+    // refund balance
+    const user = await User.findOne({ telegramId: tx.telegramId });
+    if (user) {
+      const { balanceField, curr } = getCurrencyFields(tx.currency);
+      user[balanceField] = (user[balanceField] || 0) + Math.abs(tx.amount);
+      await user.save();
+    }
+    tx.status = "failed";
+    tx.description = reason || tx.description || "Rejected by admin";
+    await tx.save();
+    res.json({ success: true, transaction: tx });
+  } catch (e) {
+    console.error("admin/withdraw reject error:", e);
+    res.status(500).json({ error: "Reject failed" });
+  }
+});
+
+// GET /api/admin/analytics?days=7
+app.get("/api/admin/analytics", requireAdmin, async (req, res) => {
+  try {
+    const days = Math.min(90, Number(req.query.days) || 7);
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    const rows = await Transaction.aggregate([
+      { $match: { createdAt: { $gte: since }, status: "completed" } },
+      {
+        $group: {
+          _id: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            type: "$type",
+            currency: "$currency",
+          },
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+    // pivot: [{ day, deposits:{dollar,rupee,star}, withdrawals:{...}, bets:{...}, wins:{...} }]
+    const byDay = new Map();
+    for (const r of rows) {
+      const d = r._id.day;
+      if (!byDay.has(d)) byDay.set(d, { day: d, deposit: {}, withdraw: {}, bet: {}, win: {} });
+      const bucket = byDay.get(d)[r._id.type];
+      if (bucket) bucket[r._id.currency] = r.total;
+    }
+    res.json({ days, series: [...byDay.values()].sort((a, b) => a.day.localeCompare(b.day)) });
+  } catch (e) {
+    console.error("admin/analytics error:", e);
+    res.status(500).json({ error: "Analytics failed" });
+  }
+});
+
+// GET /api/admin/game-stats — per-game bet/win totals from GameBet
+app.get("/api/admin/game-stats", requireAdmin, async (req, res) => {
+  try {
+    const rows = await Transaction.aggregate([
+      { $match: { type: { $in: ["bet", "win"] }, status: "completed", game: { $ne: null } } },
+      { $group: { _id: { game: "$game", type: "$type", currency: "$currency" }, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+    const games = {};
+    for (const r of rows) {
+      const g = r._id.game || "unknown";
+      if (!games[g]) games[g] = { game: g, bets: { dollar: 0, rupee: 0, star: 0 }, wins: { dollar: 0, rupee: 0, star: 0 }, betCount: 0, winCount: 0 };
+      const amt = Math.abs(r.total || 0);
+      const bucket = r._id.type === "win" ? "wins" : "bets";
+      if (games[g][bucket][r._id.currency] !== undefined) games[g][bucket][r._id.currency] += amt;
+      if (r._id.type === "win") games[g].winCount += r.count; else games[g].betCount += r.count;
+    }
+    res.json({ games: Object.values(games).sort((a, b) => b.betCount - a.betCount) });
+  } catch (e) {
+    console.error("admin/game-stats error:", e);
+    res.status(500).json({ error: "Game stats failed" });
+  }
+});
+
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
