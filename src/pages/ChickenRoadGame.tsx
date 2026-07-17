@@ -820,35 +820,6 @@ const ChickenRoadGame = () => {
           })}
         </div>
 
-        {/* Row 4: Wallet pills ($ and ⭐) */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => phase === "betting" && setActiveWallet("dollar")}
-            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-[16px] font-black"
-            style={{
-              background: "#13161d",
-              border: activeWallet === "dollar" ? "2px solid #22e36a" : "2px solid #1d2029",
-              color: "#eaecf2",
-              boxShadow: activeWallet === "dollar" ? "0 0 12px rgba(34,227,106,0.45)" : "none",
-            }}
-          >
-            <span style={{ color: "#22e36a", fontSize: 18 }}>$</span>
-            <span>{gameDollarBalance.toFixed(2)}</span>
-          </button>
-          <button
-            onClick={() => phase === "betting" && setActiveWallet("star")}
-            className="h-12 rounded-2xl flex items-center justify-center gap-2 text-[16px] font-black"
-            style={{
-              background: "#13161d",
-              border: activeWallet === "star" ? "2px solid #ffd84a" : "2px solid #1d2029",
-              color: "#eaecf2",
-              boxShadow: activeWallet === "star" ? "0 0 12px rgba(255,216,74,0.45)" : "none",
-            }}
-          >
-            <span style={{ color: "#ffd84a", fontSize: 16 }}>⭐</span>
-            <span>{Math.floor(gameStarBalance)}</span>
-          </button>
-        </div>
 
         {/* Row 5: Cash Out + Play */}
         <div className="flex items-center gap-1.5">
