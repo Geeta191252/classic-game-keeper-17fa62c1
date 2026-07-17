@@ -1,0 +1,1055 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-color: #0b0f14;
+  --panel-bg: rgba(20, 26, 35, 0.75);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-secondary: #7f8a96;
+  --water-color: #38bdf8;
+  --water-glow: rgba(56, 189, 248, 0.4);
+  --earth-color: #2ebd59;
+  --earth-glow: rgba(46, 189, 89, 0.4);
+  --fire-color: #f43f5e;
+  --fire-glow: rgba(244, 63, 94, 0.4);
+  --cashout-color: #fcc200;
+  --btn-grey: #242f3d;
+  --btn-grey-hover: #2e3c4e;
+  --danger-color: #ef4444;
+}
+
+.twist-body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-color);
+  background-image: url('/images/twist/background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Header Styling */
+.twist-body header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 10;
+}
+
+.twist-body .logo img {
+  height: 32px;
+  object-fit: contain;
+}
+
+.twist-body .menu-toggle {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.twist-body .menu-toggle:hover {
+  background: var(--btn-grey-hover);
+  transform: scale(1.05);
+}
+
+.twist-body .menu-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-primary);
+}
+
+/* Main Game Layout */
+.twist-body main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  height: 100%;
+}
+
+.twist-body .wheel-container {
+  position: relative;
+  width: 95%;
+  max-width: min(780px, 76vh);
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 260px; /* shift higher up on the screen */
+}
+
+.twist-body canvas#gameCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.twist-body .center-cloud {
+  position: absolute;
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.twist-body .center-cloud img {
+  display: none;
+}
+
+/* Screen shake for crash state */
+.twist-body .shake {
+  animation: shakeEffect 0.4s ease-in-out;
+}
+
+@keyframes shakeEffect {
+  0%, 100% { transform: translate(0, 0); }
+  10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 2px); }
+  20%, 40%, 60%, 80% { transform: translate(4px, -2px); }
+}
+
+/* Control Panel Area */
+.twist-body .controls-wrapper {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 900px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 5;
+}
+
+/* Bottom panel flex rows */
+.twist-body .bottom-panel {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: none;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.twist-body .panel-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Cards within panels */
+.twist-body .info-card.balance-card {
+  background: rgba(22, 27, 34, 0.85); /* Deep slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; /* Symmetric classic rounded corners */
+  padding: 0 20px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: row; /* Horizontal! */
+  justify-content: space-between; /* Space out label and value */
+  align-items: center;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  flex: 1;
+}
+
+.twist-body .card-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.8px;
+  margin-bottom: 2px;
+}
+
+.twist-body .card-value-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.twist-body .card-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.twist-body .currency-icon {
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  color: #0b0f14;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Bet Input Box */
+.twist-body .bet-card {
+  background: rgba(22, 27, 34, 0.85); /* Deep slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px; /* Symmetric classic rounded corners */
+  padding: 8px 16px;
+  min-height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  position: relative;
+  width: 100%;
+  flex: 1; /* split 50/50 */
+}
+
+.twist-body .bet-input-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.twist-body .bet-input-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.twist-body .bet-value-display {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.twist-body .bet-spinners {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  margin: -8px -16px -8px 0;
+  height: 56px;
+  width: 44px;
+  border-radius: 0 16px 16px 0; /* Align with symmetric corners */
+}
+
+.twist-body .spinner-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  width: 100%;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 9px;
+  transition: all 0.2s ease;
+}
+
+.twist-body .spinner-btn:first-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-top-right-radius: 16px;
+  border-top-left-radius: 0;
+}
+
+.twist-body .spinner-btn:last-child {
+  border-bottom-right-radius: 16px;
+  border-bottom-left-radius: 0;
+}
+
+.twist-body .spinner-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+/* Buttons */
+.twist-body .btn-action {
+  font-family: 'Outfit', sans-serif;
+  border: none;
+  font-weight: 800; /* Extra bold for premium feel */
+  font-size: 12px;
+  letter-spacing: 1.5px; /* Clean spacing */
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 56px;
+  width: 100%;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.twist-body .btn-part-cashout.part-cashout-card {
+  background: rgba(22, 27, 34, 0.85); /* Deep slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px 12px 12px 38px;
+  color: var(--text-secondary);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.twist-body .btn-part-cashout.part-cashout-card:not(:disabled) {
+  color: #38bdf8; /* Soft blue highlight when active! */
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.twist-body .btn-part-cashout.part-cashout-card:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.twist-body .btn-cashout.cashout-card {
+  background: rgba(22, 27, 34, 0.85); /* Deep slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 38px 12px 12px 38px;
+  color: var(--text-secondary);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  width: 100%;
+  max-width: 175px;   /* Reduced width */
+  justify-self: start; /* Snug against play circle */
+}
+
+.twist-body .btn-cashout.cashout-card.active {
+  background: linear-gradient(135deg, #facc15 0%, #eab308 100%); /* Rich golden gradient */
+  color: #0b0f14; /* Dark contrast text */
+  border: 1px solid #facc15;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 25px rgba(234, 179, 8, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.twist-body .btn-cashout.cashout-card.active:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(234, 179, 8, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.twist-body .btn-cashout:disabled, .twist-body .btn-part-cashout:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Rectangular Action Buttons in Row 2 */
+.twist-body .btn-rect {
+  font-family: 'Outfit', sans-serif;
+  height: 60px;
+  border-radius: 16px; /* Match symmetric corners of Row 1 */
+  border: none;
+  font-size: 16px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.twist-body .btn-rect:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Play Button (SPIN) */
+.twist-body .play-btn-rect {
+  width: 100%; /* Full width of bottom-panel */
+  background: radial-gradient(circle at 50% 30%, #8bfca7 0%, #4bf97b 45%, #15803d 85%, #022c0e 100%); /* Neon green spherical glossy look inside rect */
+  color: #0d1117;
+  border: 1px solid rgba(75, 249, 123, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.twist-body .play-btn-rect:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(75, 249, 123, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  filter: brightness(1.1);
+}
+
+.twist-body .play-btn-rect.spinning {
+  background: radial-gradient(circle at 50% 30%, #ffca3e 0%, #d97706 60%, #451a03 100%);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #0b0f14;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.4);
+  animation: pulse-orange 1.5s infinite;
+}
+
+.twist-body .btn-rect-label {
+  font-size: 16px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.twist-body .btn-rect-sub {
+  font-size: 8.5px;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.8px;
+  margin-top: 3px;
+}
+
+/* Cashout Row Flex Container */
+.twist-body .cashout-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Part Cashout Rect */
+.twist-body .part-cashout-btn-rect {
+  flex: 1; /* 50/50 split width */
+  background: rgba(22, 27, 34, 0.85); /* Obsidian slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.twist-body .part-cashout-btn-rect:not(:disabled) {
+  color: #38bdf8; /* Soft blue highlight when active! */
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 15px rgba(56, 189, 248, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+
+.twist-body .part-cashout-btn-rect:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Cashout Rect */
+.twist-body .cashout-btn-rect {
+  flex: 1; /* 50/50 split width */
+  background: rgba(22, 27, 34, 0.85); /* Obsidian slate */
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.twist-body .cashout-btn-rect.active {
+  background: linear-gradient(135deg, #facc15 0%, #eab308 100%); /* Rich golden gradient */
+  color: #0b0f14; /* Dark contrast text */
+  border: 1px solid #facc15;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 25px rgba(234, 179, 8, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+
+.twist-body .cashout-btn-rect.active:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(234, 179, 8, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.twist-body .cashout-amount {
+  font-weight: 900;
+  margin-left: 6px;
+  background: rgba(0, 0, 0, 0.12);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.twist-body .cashout-amount.blue-glow {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+@keyframes pulse-orange {
+  0% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 25px rgba(245, 158, 11, 0.6); }
+  100% { transform: scale(1); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); }
+}
+
+/* Autoplay reload option */
+.twist-body .autoplay-toggle-btn {
+  background: var(--btn-grey);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.twist-body .autoplay-toggle-btn:hover {
+  background: var(--btn-grey-hover);
+}
+
+.twist-body .autoplay-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-primary);
+  transition: transform 0.3s ease;
+}
+
+.twist-body .autoplay-toggle-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+}
+
+.twist-body .autoplay-toggle-btn.active svg {
+  fill: #22c55e;
+  transform: rotate(180deg);
+}
+
+/* Bottom Bar */
+.twist-body .footer-bar {
+  background: rgba(5, 7, 10, 0.9);
+  padding: 10px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(255,255,255,0.03);
+  z-index: 5;
+}
+
+.twist-body .footer-bar span {
+  color: var(--text-primary);
+}
+
+/* Sidebar Drawer Dropdown */
+.twist-body .drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.twist-body .drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.twist-body .drawer {
+  position: absolute;
+  top: 75px;
+  right: 24px;
+  width: 290px;
+  max-height: 480px;
+  height: auto;
+  background: rgba(16, 22, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  transform: scale(0.95) translateY(-10px);
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(15px);
+}
+
+.twist-body .drawer-overlay.open .drawer {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+/* User Avatar Section in Menu */
+.twist-body .avatar-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  padding: 4px 0;
+  border-radius: 0;
+}
+
+.twist-body .avatar-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.twist-body .avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+}
+
+.twist-body .avatar-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.twist-body .change-avatar-link {
+  font-size: 12px;
+  color: #42bc42;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.twist-body .change-avatar-link:hover {
+  text-decoration: underline;
+}
+
+/* Toggle Switches */
+.twist-body .setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.twist-body .setting-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.twist-body .setting-label-group svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--text-secondary);
+}
+
+.twist-body .switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+}
+
+.twist-body .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.twist-body .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--btn-grey);
+  transition: .3s;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.twist-body .slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+.twist-body input:checked + .slider {
+  background-color: #22c55e;
+}
+
+.twist-body input:checked + .slider:before {
+  transform: translateX(18px);
+}
+
+/* Menu Navigation Links */
+.twist-body .menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 6px;
+}
+
+.twist-body .menu-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s ease;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.twist-body .menu-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.twist-body .menu-link svg {
+  width: 16px;
+  height: 16px;
+  fill: var(--text-secondary);
+}
+
+.twist-body .drawer-footer {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.twist-body .drawer-footer span {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Modal Content Boxes */
+.twist-body .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(5px);
+  z-index: 200;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.twist-body .modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.twist-body .modal {
+  background: #0d131a;
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.twist-body .modal-overlay.open .modal {
+  transform: scale(1);
+}
+
+.twist-body .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
+}
+
+.twist-body .modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Bet History Table */
+.twist-body .history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.twist-body .history-table th, .twist-body .history-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.twist-body .history-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.twist-body .win-row {
+  color: #22c55e;
+}
+
+.twist-body .loss-row {
+  color: #ef4444;
+}
+
+.twist-body .cashout-type {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.twist-body .type-full {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.twist-body .type-part {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.twist-body .type-lost {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+/* Game Rules detail */
+.twist-body .rules-text, .twist-body .fair-text, .twist-body .help-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.8);
+}
+
+.twist-body .rules-text h4, .twist-body .fair-text h4, .twist-body .help-text h4 {
+  margin-top: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.twist-body .rules-text ul, .twist-body .help-text ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.twist-body .rules-text li, .twist-body .help-text li {
+  margin-bottom: 6px;
+}
+
+.twist-body .seed-box {
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+  margin: 6px 0 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Toast Notification */
+.twist-body .toast {
+  position: fixed;
+  top: 24px; /* Positioned at the top of the screen */
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(16, 22, 30, 0.96);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.twist-body .toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.twist-body .toast.toast-success {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.twist-body .toast.toast-error {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Avatar selectors grid */
+.twist-body .avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.twist-body .avatar-option {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+  background: rgba(255,255,255,0.05);
+}
+
+.twist-body .avatar-option:hover {
+  transform: scale(1.1);
+  background: rgba(255,255,255,0.1);
+}
+
+.twist-body .avatar-option.selected {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .twist-body {
+    background-size: cover;
+  }
+  
+  .twist-body main {
+    padding: 10px 16px;
+  }
+  
+  .twist-body .wheel-container {
+    max-width: min(650px, 72vh);
+    margin-bottom: 210px;
+  }
+
+  .twist-body .drawer {
+    width: 290px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .twist-body .wheel-container {
+    max-width: min(520px, 68vh);
+    margin-bottom: 170px;
+  }
+  
+  .twist-body .hide-mobile {
+    display: none;
+  }
+  
+  .twist-body .btn-rect {
+    height: 52px; /* slightly shorter on mobile for compact view */
+    font-size: 14px;
+  }
+  
+  .twist-body .btn-rect-label {
+    font-size: 14px;
+  }
+
+  /* Prevent balance value from wrapping on mobile viewports */
+  .twist-body .info-card.balance-card {
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+
+  .twist-body .card-value-wrapper {
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .twist-body .card-value {
+    font-size: 15px; /* compact size to guarantee single row */
+  }
+
+  .twist-body .card-label {
+    font-size: 8.5px;
+    letter-spacing: 0.5px;
+  }
+}
