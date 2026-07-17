@@ -632,26 +632,764 @@ export function ProfilePage() {
 
 /* ============= Feature-not-connected placeholders (all remaining pages) ============= */
 
-export function BannersPage()          { return <NotConnected title="Banners" note="Banner CRUD ke liye backend mein Banner model + endpoints add karne honge." />; }
-export function ModeratorsPage()       { return <NotConnected title="Moderators" note="Sirf ek admin abhi supported hai (env se). Multi-admin/roles enable karne ke liye AdminUser model chahiye." />; }
-export function SupportPage()          { return <NotConnected title="Support tickets" note="Support ticket collection abhi backend mein nahi hai." />; }
-export function AnnouncementsPage()    { return <NotConnected title="Announcements" note="Announcements collection abhi backend mein nahi hai." />; }
-export function ForgottenPasswordsPage(){return <NotConnected title="Forgotten passwords" note="Password reset requests track karne ke liye alag collection chahiye." />; }
-export function SpareWalletPage()      { return <NotConnected title="Spare wallet (Wingo/K3/…)" note="Ye games/wallet abhi is app ka part nahi hain." />; }
-export function DailyAnalyticsPage()   { return <NotConnected title="Daily analytics (Wingo/K3/…)" note="Ye analytics category abhi tracked nahi hai. Overall daily data ke liye Analytics page dekhein." />; }
-export function BonusIncomeReportPage(){ return <NotConnected title="Bonus & income report" note="Bonus/commission tracking backend mein enable karne ke baad connect ho jayega." />; }
-export function FinancialsReportPage() { return <NotConnected title="Financials report" note="Aggregated financial report ke liye extra endpoint add karna hoga (abhi Dashboard aur Analytics real-time totals dete hain)." />; }
-export function UserThemePage()        { return <NotConnected title="User theme" note="Per-user theme setting collection chahiye." />; }
-export function DepositPlansPage()     { return <NotConnected title="Deposit plans" note="MLM deposit plans backend mein nahi hai." />; }
-export function BetPlansPage()         { return <NotConnected title="Bet plans" note="MLM bet plans backend mein nahi hai." />; }
-export function SalaryIncomePage()     { return <NotConnected title="Salary income" note="MLM salary system backend mein nahi hai." />; }
-export function RankSystemPage()       { return <NotConnected title="Rank system" note="MLM rank system backend mein nahi hai." />; }
-export function SystemControlsPage()   { return <NotConnected title="System controls" note="Global system flags collection add karne ke baad connect hoga." />; }
-export function SiteLogoPage()         { return <NotConnected title="Site & logo" note="Site config Setting model use kar sakta hai — chahiye to add kar dete hain." />; }
-export function BonusSettingsPage()    { return <NotConnected title="Bonus settings" note="Bonus rules Setting model mein add karne ke baad connect hoga." />; }
-export function AviatorBucketPage()    { return <NotConnected title="Aviator bucket" note="Legacy /admin-legacy panel mein Aviator controls hain (profit %, manual crash queue). Yahaan integrate karna ho to batayein." />; }
-export function CronManagementPage()   { return <NotConnected title="Cron management" note="Backend cron jobs abhi manage karne ke liye endpoint nahi hai." />; }
-export function GiftCodesPage()        { return <NotConnected title="Gift codes" note="GiftCode collection abhi backend mein nahi hai." />; }
-export function SettingsPage()         { return <NotConnected title="Settings" note="Generic Setting collection exist karta hai but read/write UI abhi enable nahi kiya — chahiye to jodenge." />; }
-export function DepositTypePage()      { return <NotConnected title="Deposit type / min" note="Configurable deposit types collection chahiye." />; }
-export function WithdrawLimitPage()    { return <NotConnected title="Withdraw limit" note="Configurable withdraw limits collection chahiye." />; }
+/* ============= Static visual clones (match target admin panel) =============
+   These pages mirror the target admin panel UI 1:1. When the corresponding
+   backend endpoints are wired, swap the static values for live data. */
+
+function PageHeader({ icon, title, subtitle, right, tone = "teal" }:
+  { icon?: ReactNode; title: string; subtitle?: string; right?: ReactNode; tone?: string }) {
+  const bg: Record<string,string> = {
+    teal: "linear-gradient(135deg,#4de3d3,#33d69f)",
+    blue: "linear-gradient(135deg,#4aa8ff,#6a5bff)",
+    purple: "linear-gradient(135deg,#a06bff,#ff6ea8)",
+    orange: "linear-gradient(135deg,#f6a24a,#ff6a4a)",
+    green: "linear-gradient(135deg,#33d69f,#4de3d3)",
+    yellow: "linear-gradient(135deg,#f6c453,#f6a24a)",
+    pink: "linear-gradient(135deg,#ff6ea8,#a06bff)",
+    red: "linear-gradient(135deg,#ff5b6a,#ff6a4a)",
+  };
+  return (
+    <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start gap-3">
+        {icon && (
+          <div className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0"
+               style={{ background: bg[tone] || bg.teal, color: "#04070d" }}>
+            {icon}
+          </div>
+        )}
+        <div>
+          <div className="text-white text-[26px] font-bold leading-tight">{title}</div>
+          {subtitle && <div className="text-[13px] mt-1" style={{ color: "var(--a-text-dim)" }}>{subtitle}</div>}
+        </div>
+      </div>
+      {right}
+    </div>
+  );
+}
+
+const saveBtn = (label = "Save Changes") => (
+  <button className="a-btn a-btn-primary">
+    <Database size={14} /> {label}
+  </button>
+);
+
+/* ---------- Banners ---------- */
+export function BannersPage() {
+  return (
+    <div>
+      <div className="a-card mb-6">
+        <div className="text-white font-bold text-[18px] mb-4">Upload New Banner</div>
+        <div className="a-label">Banner Image</div>
+        <button className="a-btn mb-4"><Database size={14}/> Choose Image</button>
+        <div className="a-label">Alt Text</div>
+        <input className="a-input" placeholder="Enter banner description" />
+        <label className="flex items-center gap-2 mt-4 text-[13px]">
+          <input type="checkbox" defaultChecked /> Active (visible on home page)
+        </label>
+        <button className="a-btn a-btn-primary mt-4" style={{ background: "#3b82f6", color: "#fff" }}>Upload Banner</button>
+      </div>
+      <div className="a-card">
+        <div className="text-white font-bold text-[18px] mb-4">All Banners (0)</div>
+        <div className="text-center py-10 text-[13px]" style={{ color: "var(--a-text-mute)" }}>No banners uploaded yet.</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Moderators ---------- */
+export function ModeratorsPage() {
+  return (
+    <div>
+      <PageHeader title="Moderators" right={<button className="a-btn a-btn-primary" style={{background:"#3b82f6",color:"#fff"}}>+ Add Moderator</button>} />
+      <div className="a-card">
+        <div className="a-eyebrow a-eyebrow-dim">MODERATORS</div>
+        <div className="flex items-center justify-between mt-1 mb-4">
+          <div className="text-white text-[18px] font-bold">Moderator Management</div>
+          <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>Total: 1 moderator</div>
+        </div>
+        <input className="a-input mb-4" placeholder="Search by name, email, or phone…" />
+        <table className="a-table">
+          <thead><tr><th>Moderator</th><th>Phone</th><th>Roles</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><div className="text-white font-medium">Admin</div><div className="text-[11px]" style={{color:"var(--a-text-mute)"}}>admin@gmail.com</div></td>
+              <td>—</td>
+              <td><span className="a-chip a-chip-role">admin</span></td>
+              <td><span className="a-chip a-chip-active">active</span></td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Support ---------- */
+export function SupportPage() {
+  return (
+    <div className="a-card">
+      <div className="a-eyebrow a-eyebrow-dim">SUPPORT</div>
+      <div className="flex items-center justify-between mt-1 mb-4">
+        <div className="text-white text-[18px] font-bold">Support Tickets</div>
+        <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>Total: 0 tickets</div>
+      </div>
+      <div className="flex gap-3 mb-4">
+        <input className="a-input" placeholder="Search by ticket ID, title, user email, phone, or name…" />
+        <button className="a-btn shrink-0"><Search size={14}/> Filters</button>
+      </div>
+      <table className="a-table">
+        <thead><tr><th>Ticket ID</th><th>User</th><th>Title</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody><tr><td colSpan={7} className="text-center py-8" style={{color:"var(--a-text-mute)"}}>No support tickets found</td></tr></tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------- Announcements ---------- */
+export function AnnouncementsPage() {
+  return (
+    <div>
+      <div className="a-card mb-6">
+        <div className="text-white font-bold text-[18px] mb-4">Create New Announcement</div>
+        <div className="a-label">Title</div>
+        <input className="a-input mb-4" placeholder="Enter announcement title" />
+        <div className="a-label">Message</div>
+        <textarea className="a-textarea mb-4" rows={4} placeholder="Enter announcement message" />
+        <div className="a-label">Priority (Higher = shown first)</div>
+        <input className="a-input mb-2" defaultValue="0" />
+        <div className="text-[11px] mb-4" style={{color:"var(--a-text-mute)"}}>Higher priority announcements appear first. Default is 0.</div>
+        <label className="flex items-center gap-2 text-[13px] mb-4"><input type="checkbox" defaultChecked/> Active (visible on web side)</label>
+        <button className="a-btn" style={{background:"#3b82f6",color:"#fff"}}>Create Announcement</button>
+      </div>
+      <div className="a-card">
+        <div className="text-white font-bold text-[18px] mb-4">All Announcements (0)</div>
+        <div className="text-center py-8 text-[13px]" style={{color:"var(--a-text-mute)"}}>No announcements yet.</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Forgotten Passwords / Contact Requests ---------- */
+export function ForgottenPasswordsPage() {
+  return (
+    <div className="a-card">
+      <div className="a-eyebrow a-eyebrow-dim">CONTACT</div>
+      <div className="text-white text-[18px] font-bold mt-1 mb-4">Contact Requests</div>
+      <div className="flex gap-3 mb-4">
+        <input className="a-input" placeholder="Search by name, email, or mobile…" />
+        <button className="a-btn shrink-0">Filters</button>
+      </div>
+      <table className="a-table">
+        <thead><tr><th>Name</th><th>Contact</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody><tr><td colSpan={5} className="text-center py-8" style={{color:"var(--a-text-mute)"}}>No contact requests found</td></tr></tbody>
+      </table>
+    </div>
+  );
+}
+
+/* ---------- Spare Wallet ---------- */
+export function SpareWalletPage() {
+  return (
+    <div>
+      <div className="a-eyebrow mb-2">TODAY · WINGO, K3, K5</div>
+      <div className="a-card mb-4" style={{ borderColor: "rgba(246,164,74,0.35)", background: "linear-gradient(180deg, rgba(60,40,20,0.4), rgba(20,15,10,0.6))" }}>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-[12px]" style={{color:"var(--a-text-dim)"}}>Current spare wallet (today)</div>
+            <div className="text-[32px] font-bold text-white mt-2">₹0</div>
+            <div className="text-[11px] mt-2" style={{color:"var(--a-text-mute)"}}>Wins are paid from this balance only · Resets at midnight IST</div>
+          </div>
+          <div className="h-12 w-12 rounded-2xl flex items-center justify-center" style={{background:"rgba(246,164,74,0.2)",color:"#f6a24a"}}><Coins size={22}/></div>
+        </div>
+      </div>
+      <div className="a-card mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-white font-semibold">Spare target today</div>
+          <div className="text-[12px]" style={{color:"var(--a-text-dim)"}}>0% / 30% goal</div>
+        </div>
+        <div className="a-bar-track"><div className="a-bar-fill" style={{ width: "0%" }} /></div>
+        <div className="text-right text-[11px] mt-2" style={{color:"var(--a-text-mute)"}}>Target spare ₹0</div>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <StatCard label="Today's bet amount" value="₹0" icon={<TrendingUp size={16}/>} tone="teal"/>
+        <StatCard label="Today's in spare" value="₹0" icon={<Coins size={16}/>} tone="yellow"/>
+        <StatCard label="Today's payout" value="₹0" icon={<TrendingDown size={16}/>} tone="green"/>
+      </div>
+      <div className="a-eyebrow mb-2">ALL TIME (LIFETIME)</div>
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard label="Total bet" value="₹0" icon={<TrendingUp size={16}/>} tone="blue"/>
+        <StatCard label="Total in spare" value="₹0" icon={<Coins size={16}/>} tone="yellow"/>
+        <StatCard label="Total payout" value="₹0" icon={<TrendingDown size={16}/>} tone="green"/>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Daily Analytics (Bucket) ---------- */
+export function DailyAnalyticsPage() {
+  return (
+    <div>
+      <PageHeader title="Daily Analytics (Wingo, K3, K5)" subtitle="Bucket amount, daily bets, payouts, profit and history — all timestamps in IST"
+        right={<span className="a-chip"><Activity size={12}/> IST (Asia/Kolkata)</span>} />
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <StatCard label="Bucket amount (Spare)" value="0" icon={<Coins size={16}/>} tone="yellow"/>
+        <StatCard label="Total bet (all time)" value="0" icon={<TrendingUp size={16}/>} tone="blue"/>
+        <StatCard label="Total payout (all time)" value="0" icon={<TrendingDown size={16}/>} tone="teal"/>
+        <StatCard label="Complete profit (all time)" value="0" hint="Target profit %: 30%" icon={<TrendingUp size={16}/>} tone="green"/>
+      </div>
+      <div className="a-card">
+        <div className="flex items-center gap-2 mb-1">
+          <Activity size={16} style={{color:"var(--a-teal)"}}/>
+          <div className="text-white font-bold text-[16px]">Daily history (IST)</div>
+        </div>
+        <div className="text-[12px] mb-4" style={{color:"var(--a-text-mute)"}}>Snapshot saved at daily clear (00:05 IST). Date = day for which stats are recorded.</div>
+        <table className="a-table">
+          <thead><tr><th>Date (IST)</th><th>Daily bet</th><th>Daily payout</th><th>Daily profit</th><th>Spare before reset</th><th>Spare after reset</th><th>Saved at (IST)</th></tr></thead>
+          <tbody><tr><td colSpan={7} className="text-center py-8" style={{color:"var(--a-text-mute)"}}>No history yet</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Bonus & Income Report ---------- */
+export function BonusIncomeReportPage() {
+  const stats = [
+    { label: "SIGNUP BONUS", v: "₹0.00", n: "0", tone: "blue" },
+    { label: "FIRST DEPOSIT BONUS", v: "₹0.00", n: "0", tone: "pink" },
+    { label: "REFERRAL DEPOSIT BONUS", v: "₹0.00", n: "0", tone: "green" },
+    { label: "RANK REWARD", v: "₹0.00", n: "0", tone: "orange" },
+    { label: "GIFT CODE", v: "₹0.00", n: "0", tone: "red" },
+  ] as const;
+  return (
+    <div>
+      <PageHeader title="Bonus & Income Report" subtitle="Complete MLM and bonus overview"
+        right={<div className="flex gap-2"><button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>Download Excel</button><button className="a-btn" style={{background:"#ff5b6a",color:"#fff"}}>Download PDF</button></div>} />
+      <div className="a-card mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="text-white text-[18px] font-bold">MLM & Bonus Report</div>
+            <div className="text-[13px]" style={{color:"var(--a-text-dim)"}}>Complete overview of all bonuses and MLM incomes</div>
+          </div>
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#a06bff,#ff6ea8)"}}><TrendingUp size={16} color="#fff"/></div>
+        </div>
+        <div className="a-eyebrow a-eyebrow-dim mb-3">🎁 Bonus Statistics</div>
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {stats.map(s=>(
+            <div key={s.label} className="a-card a-card-tight">
+              <div className="flex items-start justify-between">
+                <div className="a-stat-label" style={{letterSpacing:"0.16em",textTransform:"uppercase",fontSize:11}}>{s.label}</div>
+                <div className="h-7 w-7 rounded-lg" style={{background:`var(--a-${s.tone==="orange"?"yellow":s.tone})`,opacity:0.9}}/>
+              </div>
+              <div className="text-white text-[22px] font-bold mt-2">{s.v}</div>
+              <div className="flex items-center justify-between mt-3 pt-3 text-[11px]" style={{borderTop:"1px solid var(--a-border)",color:"var(--a-text-mute)"}}>
+                <span>Total Count</span><span className="text-white font-semibold">{s.n}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="a-eyebrow a-eyebrow-dim mb-3">📈 Income Statistics</div>
+        <div className="grid grid-cols-3 gap-4">
+          {["RECHARGE LEVEL","TRADE LEVEL","SALARY (DAILY)","SALARY (WEEKLY)","SALARY (MONTHLY)"].map(l=>(
+            <div key={l} className="a-card a-card-tight">
+              <div className="a-stat-label" style={{letterSpacing:"0.16em",textTransform:"uppercase",fontSize:11}}>{l} INCOME</div>
+              <div className="text-white text-[22px] font-bold mt-2">₹0.00</div>
+              <div className="flex items-center justify-between mt-3 pt-3 text-[11px]" style={{borderTop:"1px solid var(--a-border)",color:"var(--a-text-mute)"}}>
+                <span>Total Count</span><span className="text-white font-semibold">0</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="a-card">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <div className="text-white text-[18px] font-bold">Users Breakdown</div>
+            <div className="text-[13px]" style={{color:"var(--a-text-dim)"}}>Detailed bonus and MLM income per user</div>
+          </div>
+        </div>
+        <input className="a-input mb-4" placeholder="Search users…"/>
+        <div className="text-center py-8 text-[13px]" style={{color:"var(--a-text-mute)"}}>No MLM data yet</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Financials Report ---------- */
+export function FinancialsReportPage() {
+  return (
+    <div>
+      <PageHeader title="Financials Report" subtitle="Complete financial overview"
+        right={<div className="flex gap-2"><button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>Download Excel</button><button className="a-btn" style={{background:"#ff5b6a",color:"#fff"}}>Download PDF</button></div>} />
+      <div className="a-card mb-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <div className="text-white text-[18px] font-bold">Financials Report</div>
+            <div className="text-[13px]" style={{color:"var(--a-text-dim)"}}>Complete financial overview of deposits and withdrawals</div>
+          </div>
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#33d69f,#4de3d3)"}}><Coins size={16} color="#04070d"/></div>
+        </div>
+        <div className="text-white font-semibold mb-3">User Transactions</div>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <StatCard label="TOTAL USER DEPOSITS" value="₹0.00" hint="All user deposits received · Count 0" icon={<ArrowDownToLine size={16}/>} tone="green"/>
+          <StatCard label="TOTAL USER WITHDRAWALS" value="₹0.00" hint="All user withdrawals processed · Count 0" icon={<ArrowUpFromLine size={16}/>} tone="red"/>
+        </div>
+        <div className="text-white font-semibold mb-3">Admin Wallet Adjustments</div>
+        <div className="grid grid-cols-4 gap-4">
+          {["ADMIN CREDITS - MAIN","ADMIN CREDITS - GAMING","ADMIN DEBITS - MAIN","ADMIN DEBITS - GAMING"].map((l,i)=>(
+            <div key={l} className="a-card a-card-tight">
+              <div className="a-stat-label" style={{fontSize:11,textTransform:"uppercase",letterSpacing:"0.14em"}}>{l}</div>
+              <div className="text-white text-[22px] font-bold mt-2">₹0.00</div>
+              <div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>{i<2?"Total admin credits":"Total admin debits"}</div>
+              <div className="flex items-center justify-between mt-3 pt-3 text-[11px]" style={{borderTop:"1px solid var(--a-border)",color:"var(--a-text-mute)"}}>
+                <span>Count</span><span className="text-white font-semibold">0</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="a-card">
+        <div className="a-eyebrow a-eyebrow-dim mb-1">FINANCIALS REPORT</div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-white text-[18px] font-bold">Users Breakdown</div>
+            <div className="text-[13px]" style={{color:"var(--a-text-dim)"}}>Detailed financial transactions per user</div>
+          </div>
+          <div className="text-[12px]" style={{color:"var(--a-text-mute)"}}>Total: 0 users</div>
+        </div>
+        <input className="a-input mb-4" placeholder="Search users…"/>
+        <div className="text-center py-8 text-[13px]" style={{color:"var(--a-text-mute)"}}>No records yet</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- User Theme ---------- */
+export function UserThemePage() {
+  const themes = [
+    { name: "Orange Red", g: "linear-gradient(135deg,#e67302,#ee0a24)", p:"#e67302", s:"#ee0a24", active: true },
+    { name: "Blue Purple", g: "linear-gradient(135deg,#3b82f6,#8b5cf6)", p:"#3b82f6", s:"#8b5cf6" },
+    { name: "Green Teal",  g: "linear-gradient(135deg,#10b981,#14b8a6)", p:"#10b981", s:"#14b8a6" },
+    { name: "Purple Pink", g: "linear-gradient(135deg,#a855f7,#ec4899)", p:"#a855f7", s:"#ec4899" },
+    { name: "Light Golden",g: "linear-gradient(135deg,#c78f2e,#c9a75d)", p:"#c78f2e", s:"#c9a75d" },
+    { name: "Dark Golden", g: "linear-gradient(135deg,#c78f2e,#c9a75d)", p:"#c78f2e", s:"#c9a75d" },
+  ];
+  return (
+    <div>
+      <PageHeader title="User Theme Management" tone="pink" />
+      <div className="a-card mb-6">
+        <div className="a-eyebrow a-eyebrow-dim">USER THEME MANAGEMENT</div>
+        <div className="text-white text-[18px] font-bold mt-1">Select Active Theme</div>
+        <div className="text-[13px] mt-2" style={{color:"var(--a-text-dim)"}}>Choose a theme that will be visible to all users in the web application. The selected theme will be applied globally.</div>
+        <div className="text-[13px] mt-3">Current Active Theme: <span className="text-white font-semibold">Orange Red</span></div>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {themes.map(t=>(
+          <div key={t.name} className="a-card" style={t.active ? { borderColor: "rgba(77,227,211,0.5)" } : {}}>
+            <div className="h-24 rounded-xl" style={{ background: t.g }} />
+            <div className="mt-3 text-white font-semibold">{t.name}</div>
+            <div className="text-[12px]" style={{color:"var(--a-text-mute)"}}>{t.active ? "Currently Active" : "Click to activate"}</div>
+            <div className="flex flex-col gap-1 mt-3 text-[12px]">
+              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded" style={{background:t.p}}/> Primary: {t.p}</div>
+              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded" style={{background:t.s}}/> Secondary: {t.s}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="a-card">
+        <div className="text-white text-[16px] font-bold mb-3">Theme Preview</div>
+        <div className="h-24 rounded-xl flex items-center justify-center text-white text-[22px] font-bold" style={{ background: themes[0].g }}>Orange Red</div>
+        <div className="grid grid-cols-2 gap-4 mt-4 text-[12px]" style={{color:"var(--a-text-dim)"}}>
+          <div>Gradient From<div className="text-white mt-1">#e67302</div></div>
+          <div>Gradient To<div className="text-white mt-1">#ee0a24</div></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- MLM Plans ---------- */
+function PlanCard({ title, subtitle, chip, chipTone, levels, minLabel, minValue, borderTone }:
+  { title: string; subtitle: string; chip: string; chipTone: string; levels: Array<{n:number;p:string}>; minLabel: string; minValue: string; borderTone: string }) {
+  return (
+    <div className="a-card" style={{ borderColor: borderTone }}>
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div className="text-white text-[18px] font-bold flex items-center gap-2">{title} <span style={{color:"#f6c453"}}>★</span></div>
+          <div className="text-[13px]" style={{color:"var(--a-text-dim)"}}>{subtitle}</div>
+        </div>
+        <button className="h-8 w-8 rounded-lg flex items-center justify-center" style={{background:"rgba(30,42,68,0.6)",border:"1px solid var(--a-border)"}}><TrendingUp size={12}/></button>
+      </div>
+      <div className="flex gap-2 mb-4">
+        <span className="a-chip" style={{color:chipTone,borderColor:chipTone,background:`${chipTone}20`}}>{chip}</span>
+        <span className="a-chip a-chip-active">Active</span>
+      </div>
+      <div className="rounded-xl p-3" style={{background:"rgba(10,15,26,0.5)",border:"1px solid var(--a-border)"}}>
+        <div className="text-[11px] mb-1" style={{color:"var(--a-text-mute)"}}>Levels Configuration</div>
+        <div className="text-white font-bold mb-2">{levels.length} Levels</div>
+        {levels.map(l=>(
+          <div key={l.n} className="flex justify-between text-[12px] py-0.5">
+            <span style={{color:"var(--a-text-dim)"}}>Level {l.n}:</span>
+            <span style={{color:chipTone,fontWeight:600}}>{l.p}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between text-[13px] mt-4">
+        <span style={{color:"var(--a-text-dim)"}}>{minLabel}:</span>
+        <span className="text-white font-semibold">{minValue}</span>
+      </div>
+    </div>
+  );
+}
+
+export function DepositPlansPage() {
+  return (
+    <div>
+      <PageHeader icon={<TrendingUp size={18}/>} title="Deposit Reward Plans" subtitle="Manage commission plans for deposit rewards" tone="green"/>
+      <div className="grid grid-cols-3 gap-4">
+        <PlanCard title="test" subtitle="test1" chip="Deposit Plan" chipTone="#33d69f" borderTone="rgba(51,214,159,0.4)"
+          levels={[{n:1,p:"3%"},{n:2,p:"5%"},{n:3,p:"2%"},{n:4,p:"0%"},{n:5,p:"0%"}]} minLabel="Min Deposit" minValue="₹100" />
+      </div>
+    </div>
+  );
+}
+
+export function BetPlansPage() {
+  return (
+    <div>
+      <PageHeader icon={<Activity size={18}/>} title="Bet Reward Plans" subtitle="Manage commission plans for bet rewards" tone="blue"/>
+      <div className="grid grid-cols-3 gap-4">
+        <PlanCard title="star" subtitle="test" chip="Bet Plan" chipTone="#4aa8ff" borderTone="rgba(74,168,255,0.4)"
+          levels={[{n:1,p:"10%"},{n:2,p:"5%"},{n:3,p:"2%"}]} minLabel="Min Bet" minValue="₹100" />
+      </div>
+    </div>
+  );
+}
+
+function TierRow({ p, r, i }: { p: string; r: string; i: string }) {
+  return (
+    <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3 items-end mb-3">
+      <div><div className="a-label">Active Players</div><input className="a-input" defaultValue={p}/></div>
+      <div><div className="a-label">Min Recharge (₹)</div><input className="a-input" defaultValue={r}/></div>
+      <div><div className="a-label">Income (₹)</div><input className="a-input" defaultValue={i}/></div>
+      <button className="a-btn" style={{background:"rgba(255,91,106,0.15)",color:"#ff5b6a",borderColor:"rgba(255,91,106,0.3)"}}>🗑</button>
+    </div>
+  );
+}
+
+export function SalaryIncomePage() {
+  return (
+    <div>
+      <PageHeader icon={<TrendingUp size={18}/>} title="Salary Income Plans" subtitle="Configure salary income tiers for daily, weekly, and monthly periods" tone="purple"
+        right={<button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save All Settings</button>} />
+      {[
+        { name: "Daily Salary Income", rows: [["2","2000","150"],["5","5000","350"],["10","10000","1000"]]},
+        { name: "Weekly Salary Income", rows: [["5","5000","1000"],["10","10000","2000"]]},
+        { name: "Monthly Salary Income", rows: [["5","5000","5000"],["10","10000","10000"]]},
+      ].map(g=>(
+        <div key={g.name} className="a-card mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-white font-bold text-[16px]">{g.name}</div>
+            <button className="a-btn a-btn-sm">+ Add Tier</button>
+          </div>
+          {g.rows.map((r,i)=>(<TierRow key={i} p={r[0]} r={r[1]} i={r[2]}/>))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function RankSystemPage() {
+  const ranks = [
+    ["Bronze","10000","5","3"],["Silver","100000","10","2"],["Gold","150000","15","1.5"],
+    ["Star","300000","20","1"],["Diamond","500000","25","1"],
+  ];
+  return (
+    <div>
+      <PageHeader icon={<TrendingUp size={18}/>} title="Rank System" subtitle="Configure rank definitions with turnover, referrals, and bonus percentages" tone="yellow"
+        right={<div className="flex gap-2"><button className="a-btn">+ Add Rank</button><button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save All Settings</button></div>} />
+      <div className="a-card">
+        {ranks.map((r,i)=>(
+          <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-3 mb-3">
+            <div><div className="a-label">Rank Name</div><input className="a-input" defaultValue={r[0]}/></div>
+            <div><div className="a-label">Turnover (₹)</div><input className="a-input" defaultValue={r[1]}/></div>
+            <div><div className="a-label">Direct Referrals</div><input className="a-input" defaultValue={r[2]}/></div>
+            <div><div className="a-label">Bonus %</div><input className="a-input" defaultValue={r[3]}/></div>
+            <div className="flex items-end"><button className="a-btn" style={{background:"rgba(255,91,106,0.15)",color:"#ff5b6a",borderColor:"rgba(255,91,106,0.3)"}}>🗑</button></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- System Controls ---------- */
+function ControlCard({ title, note, on = true, tone = "blue" }:
+  { title: string; note: string; on?: boolean; tone?: string }) {
+  const bg: Record<string,string> = { blue:"#4aa8ff", teal:"#4de3d3", purple:"#a06bff", orange:"#f6a24a", red:"#ff5b6a" };
+  return (
+    <div className="a-card">
+      <div className="flex items-start justify-between mb-3">
+        <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:bg[tone],color:"#fff"}}><Activity size={16}/></div>
+        <div className={`a-toggle ${on?"on":""}`}/>
+      </div>
+      <div className="text-white font-bold">{title}</div>
+      <div className="text-[12px] mt-1 mb-3" style={{color:"var(--a-text-dim)"}}>{note}</div>
+      <span className={`a-chip ${on?"a-chip-active":"a-chip-danger"}`}>● {on?"Enabled":"Disabled"}</span>
+    </div>
+  );
+}
+export function SystemControlsPage() {
+  return (
+    <div>
+      <PageHeader title="System Controls" subtitle="Manage platform features, access, and system settings" tone="teal"
+        right={<button className="a-btn" style={{background:"#3b82f6",color:"#fff"}}>💾 Save Changes</button>} />
+      <div className="grid grid-cols-3 gap-4">
+        <ControlCard title="User Registration" note="Allow new users to register" tone="teal" />
+        <ControlCard title="User Login" note="Allow users to login" tone="blue" />
+        <ControlCard title="Games" note="Enable all games" tone="purple" />
+        <ControlCard title="TRX Game" note="Enable or disable TRX Turbo Desk game" tone="orange" />
+        <ControlCard title="Deposits" note="Allow users to deposit" tone="red" />
+        <ControlCard title="Withdrawals" note="Allow users to withdraw" tone="teal" />
+        <ControlCard title="Maintenance Mode" note="Put platform in maintenance mode" on={false} tone="red" />
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Site & Logo ---------- */
+export function SiteLogoPage() {
+  return (
+    <div>
+      <PageHeader title="Site & Logo" subtitle="Upload a logo. It will be used in the admin panel and on the web app (login, header, home)." tone="blue"/>
+      <div className="a-card">
+        <div className="text-white font-semibold">Current logo</div>
+        <div className="text-[13px] mt-1 mb-4" style={{color:"var(--a-text-dim)"}}>No logo uploaded. Logo is shown only when uploaded to S3 (sidebar, login, web, favicon).</div>
+        <button className="a-btn" style={{background:"linear-gradient(135deg,#f6a24a,#ff6a4a)",color:"#fff",border:"none"}}>⬆ Upload new logo</button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Bonus Settings ---------- */
+export function BonusSettingsPage() {
+  return (
+    <div>
+      <PageHeader title="Bonus Settings" subtitle="Configure all bonus, reward, and commission settings"
+        right={<button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save All Settings</button>} />
+      <div className="flex gap-6 border-b mb-6" style={{borderColor:"var(--a-border)"}}>
+        <div className="pb-3 text-[13px] font-semibold" style={{color:"var(--a-teal)",borderBottom:"2px solid var(--a-teal)"}}>🎁 Signup Bonus</div>
+        <div className="pb-3 text-[13px]" style={{color:"var(--a-text-dim)"}}>↗ Welcome Deposit</div>
+        <div className="pb-3 text-[13px]" style={{color:"var(--a-text-dim)"}}>👥 Referral Bonus</div>
+      </div>
+      <div className="a-card">
+        <div className="text-white text-[16px] font-bold mb-4">Signup Bonus Configuration</div>
+        <label className="flex items-center gap-2 text-[13px] mb-4"><input type="checkbox" defaultChecked/> Enable Signup Bonus</label>
+        <div className="a-label">Bonus Amount (₹)</div>
+        <input className="a-input" defaultValue="30"/>
+        <div className="text-[12px] mt-2" style={{color:"var(--a-text-mute)"}}>Amount credited to Gaming Wallet on signup</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Aviator Bucket ---------- */
+export function AviatorBucketPage() {
+  return (
+    <div>
+      <PageHeader title="Aviator Bucket Settings" subtitle="Min/max bet, profit pool and game status for Aviator (crash) game"
+        right={<button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save Changes</button>} />
+      <div className="a-card">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:"linear-gradient(135deg,#33d69f,#4de3d3)"}}>✈</div>
+          <div>
+            <div className="text-white font-bold">Aviator Settings</div>
+            <div className="text-[12px]" style={{color:"var(--a-text-dim)"}}>These values control the crash game: min/max bet, profit pool (house edge bucket), and game status.</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><div className="a-label">Game Status (avi_status)</div><select className="a-select"><option>Enabled (Y)</option><option>Disabled (N)</option></select><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>Y = game available, N = game disabled</div></div>
+          <div><div className="a-label">Min Bet Amount</div><input className="a-input" defaultValue="10"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>Minimum bet per round (e.g. 10)</div></div>
+          <div><div className="a-label">Max Bet Amount</div><input className="a-input" defaultValue="8000"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>Maximum bet per round (e.g. 8000)</div></div>
+          <div><div className="a-label">Profit Pool (aviator_profit_pool)</div><input className="a-input" defaultValue="49.2"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>House profit pool / bucket (used for crash logic)</div></div>
+        </div>
+        <div className="mt-4 p-3 rounded-xl" style={{background:"rgba(74,168,255,0.06)",border:"1px solid rgba(74,168,255,0.25)"}}>
+          <div className="text-[13px] font-semibold" style={{color:"var(--a-blue)"}}>ⓘ Bucket settings</div>
+          <div className="text-[12px] mt-1" style={{color:"var(--a-text-dim)"}}>Changes apply immediately. Min/max bet are validated when users place bets. Profit pool affects house edge calculation for crash multiplier.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Cron Management ---------- */
+function CronCard({ title, when, note }: { title: string; when: string; note: string }) {
+  return (
+    <div className="a-card">
+      <div className="text-white font-bold text-[16px]">{title}</div>
+      <div className="text-[12px] mt-2 mb-3 flex items-start gap-1" style={{color:"var(--a-text-dim)"}}>📅 {when}</div>
+      <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>{note}</div>
+      <button className="a-btn w-full justify-center" style={{background:"linear-gradient(135deg,#4de3d3,#4aa8ff)",color:"#04070d",border:"none"}}>▶ Run Now</button>
+    </div>
+  );
+}
+export function CronManagementPage() {
+  return (
+    <div>
+      <PageHeader icon={<Activity size={18}/>} title="Cron Job Management" subtitle="Manage and trigger automated salary distribution jobs" tone="blue"/>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <CronCard title="Daily Salary Distribution" when="Once per IST calendar day (runs shortly after server start if missed at midnight)" note="Distributes daily salary to eligible users based on direct-downline activity and tiers (daily + weekly + monthly qualification required)."/>
+        <CronCard title="Weekly Salary Distribution" when="Once per IST Sunday (any time that Sunday)" note="Distributes weekly salary based on direct-downline performance over the past week (daily + weekly + monthly qualification required)."/>
+        <CronCard title="Monthly Salary Distribution" when="Once per IST calendar month (if the 1st is missed, runs when the server is up)" note="Distributes monthly salary based on direct-downline performance over the past calendar month (daily + weekly + monthly qualification required)."/>
+      </div>
+      <div className="a-card">
+        <div className="text-white font-bold mb-3">Salary Distribution Rules:</div>
+        <ul className="text-[13px] space-y-2" style={{color:"var(--a-text-dim)"}}>
+          <li><span className="text-white font-semibold">Direct team only:</span> Active players and deposits count only from level-1 referrals (direct downline), not deeper levels.</li>
+          <li><span className="text-white font-semibold">Triple qualification:</span> A payout runs only if the user qualifies for admin tiers on daily, weekly, and monthly salary for the IST windows aligned with that job.</li>
+          <li><span className="text-white font-semibold">Daily Salary:</span> Direct downlines must bet at least once on the counted day AND deposit rules meet the tier for that day.</li>
+          <li><span className="text-white font-semibold">Weekly Salary:</span> Direct downlines must bet at least once on EACH of the 7 days AND meet per-day deposit rules for the week.</li>
+          <li><span className="text-white font-semibold">Monthly Salary:</span> Direct downlines must bet at least once on EACH of the 30 days AND meet per-day deposit rules for the month.</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Gift Codes ---------- */
+export function GiftCodesPage() {
+  return (
+    <div>
+      <PageHeader icon={<Coins size={18}/>} title="Gift Code Management" subtitle="Create and manage gift codes for users" tone="teal"
+        right={<button className="a-btn" style={{background:"linear-gradient(135deg,#4de3d3,#4aa8ff)",color:"#04070d",border:"none"}}>+ Create Gift Code</button>} />
+      <div className="a-card">
+        <div className="text-white font-bold text-[16px] mb-4">All Gift Codes</div>
+        <table className="a-table">
+          <thead><tr><th>Code</th><th>Amount/User</th><th>Redemptions</th><th>Expires</th><th>Status</th><th>Notification</th></tr></thead>
+          <tbody>
+            <tr>
+              <td className="text-white font-semibold">NEWUSER</td>
+              <td>₹10</td>
+              <td>0 / 10</td>
+              <td>—</td>
+              <td><span className="a-chip a-chip-active">Active</span></td>
+              <td>🔕</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Settings (Security & Wallet) ---------- */
+export function SettingsPage() {
+  return (
+    <div>
+      <PageHeader title="Security & Wallet" subtitle="2FA (OTP) · Receiving address & gas private key" tone="teal"/>
+      <div className="text-white font-bold text-[18px] mb-2">Two-factor authentication</div>
+      <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>Authenticator app (TOTP). Required to set or change payment wallet credentials and for admin login when enabled.</div>
+      <div className="a-card mb-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:"rgba(51,214,159,0.15)",color:"#33d69f"}}>🛡</div>
+          <span className="a-chip a-chip-active">● Enabled</span>
+        </div>
+        <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>Two-factor authentication is enabled. OTP is always required for changing wallet credentials.</div>
+        <label className="flex items-center gap-2 text-[13px] mb-4"><input type="checkbox" defaultChecked/> Require OTP at login</label>
+        <div className="text-[12px] mb-2" style={{color:"var(--a-text-dim)"}}>Lost your authenticator? Regenerate recovery codes (verify with current OTP first):</div>
+        <div className="flex gap-2">
+          <input className="a-input" placeholder="6-digit code"/>
+          <button className="a-btn shrink-0" style={{background:"linear-gradient(135deg,#f6a24a,#ff6a4a)",color:"#fff",border:"none"}}>🔑 Regenerate recovery codes</button>
+        </div>
+      </div>
+      <div className="text-white font-bold text-[18px] mb-2">Payment Receiving Wallet</div>
+      <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>USDT receive address and gas wallet private key (BSC). Stored encrypted. Changes require authenticator app OTP.</div>
+      <div className="a-card mb-6">
+        <div className="a-label">Receiving address (0x…)</div>
+        <input className="a-input mb-4" placeholder="0x…"/>
+        <div className="a-label">Gas fee private key</div>
+        <input className="a-input mb-4" placeholder="Private key (stored encrypted)"/>
+        <div className="a-label">OTP (6 digits) – required to save</div>
+        <input className="a-input mb-4" placeholder="000000"/>
+        <button className="a-btn" style={{background:"linear-gradient(135deg,#f6a24a,#ff6a4a)",color:"#fff",border:"none"}}>💾 Save (encrypted)</button>
+      </div>
+      <div className="a-card">
+        <div className="a-eyebrow a-eyebrow-dim">USDT CONVERSION</div>
+        <div className="flex items-center justify-between mt-1 mb-4">
+          <div className="text-white text-[16px] font-bold">USDT to INR Rate</div>
+          <button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save rate</button>
+        </div>
+        <div className="text-[13px] mb-2" style={{color:"var(--a-text-dim)"}}>1 USDT = INR</div>
+        <div className="flex gap-2">
+          <div className="a-btn" style={{background:"rgba(30,42,68,0.6)"}}>INR</div>
+          <input className="a-input" defaultValue="94"/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Deposit Type ---------- */
+function DepositMethodCard({ title, desc, steps, tone, on = true }:
+  { title: string; desc: string; steps: string[]; tone: string; on?: boolean }) {
+  return (
+    <div className="a-card mb-4">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-start gap-3">
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:tone,color:"#fff"}}>💳</div>
+          <div>
+            <div className="text-white font-bold text-[16px]">{title}</div>
+            <div className="text-[13px] mt-1" style={{color:"var(--a-text-dim)"}}>{desc}</div>
+          </div>
+        </div>
+        <div className={`a-toggle ${on?"on":""}`}/>
+      </div>
+      <div className="rounded-xl p-3 mt-3" style={{background:"rgba(74,168,255,0.06)",border:"1px solid rgba(74,168,255,0.25)"}}>
+        <div className="text-[13px] font-semibold mb-2" style={{color:"var(--a-blue)"}}>ⓘ How it works:</div>
+        <ul className="text-[12px] space-y-1 pl-4 list-disc" style={{color:"var(--a-text-dim)"}}>
+          {steps.map((s,i)=><li key={i}>{s}</li>)}
+        </ul>
+      </div>
+      <div className="mt-3"><span className="a-chip a-chip-active">● Enabled</span></div>
+    </div>
+  );
+}
+export function DepositTypePage() {
+  return (
+    <div>
+      <PageHeader title="Deposit Type" subtitle="Configure available deposit payment methods for users"
+        right={<button className="a-btn" style={{background:"#3b82f6",color:"#fff"}}>💾 Save Changes</button>} />
+      <DepositMethodCard title="Manual Pay" tone="#4aa8ff"
+        desc="When enabled, users can deposit funds using manual UPI transfer. This is the primary payment method that must be enabled before other methods can be used."
+        steps={["User selects Manual Pay as payment method","User enters deposit amount","System provides UPI QR code or payment details","User completes payment via UPI transfer","Admin manually verifies and approves deposit"]}/>
+      <DepositMethodCard title="USDT BEP20" tone="#f6a24a"
+        desc="When enabled, users can deposit funds using USDT (BEP20) cryptocurrency. Users will send USDT to a provided wallet address and the deposit will be automatically verified."
+        steps={["User selects USDT BEP20 as payment method","User enters USDT amount (minimum $10)","System provides BEP20 wallet address","User sends USDT to the address","System automatically verifies and processes deposit"]}/>
+    </div>
+  );
+}
+
+/* Deposit minimum & Withdraw limit share visual style */
+export function WithdrawLimitPage() {
+  return (
+    <div>
+      <PageHeader icon={<TrendingDown size={18}/>} title="Withdraw Limit" subtitle="Set min/max and rules for user withdrawals. These apply to the user web panel (withdraw page) and are enforced by the server." tone="orange"
+        right={<button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save & Apply</button>} />
+      <div className="a-card">
+        <div className="text-white font-bold text-[16px] mb-4">Min, max & daily limit (applied on user panel)</div>
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div><div className="a-label">Minimum (₹)</div><input className="a-input" defaultValue="300"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>Users cannot withdraw below this.</div></div>
+          <div><div className="a-label">Maximum per withdrawal (₹)</div><input className="a-input" placeholder="0 = no limit"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>0 = no limit.</div></div>
+          <div><div className="a-label">Daily limit (₹)</div><input className="a-input" placeholder="0 = no limit"/><div className="text-[11px] mt-1" style={{color:"var(--a-text-mute)"}}>Max total per user per day. 0 = no cap.</div></div>
+        </div>
+        <div className="rounded-xl p-3" style={{background:"rgba(10,15,26,0.5)",border:"1px solid var(--a-border)"}}>
+          <div className="text-white font-semibold mb-2">Summary</div>
+          <ul className="text-[13px] space-y-1 pl-4 list-disc" style={{color:"var(--a-text-dim)"}}>
+            <li>Min: ₹300</li><li>Max per withdrawal: No limit</li><li>Daily limit: No limit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
