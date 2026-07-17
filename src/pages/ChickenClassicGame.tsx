@@ -547,15 +547,16 @@ const ChickenClassicGame = () => {
 
         {/* Quick select presets */}
         <div className="play-row-amounts">
-          {PRESETS_BY_CURRENCY[currency].map(val => (
+          {PRESETS_BY_MODE[currencyMode].map(val => (
             <button 
               key={val} 
               className="amount-btn" 
               onClick={() => handlePresetSelect(val)}
               disabled={phase !== "betting"}
             >
-              {currency === "dollar" ? `$${val}` : val}
+              {currencyMode === "STAR" ? `${val} ⭐` : `${currencySymbol(currencyMode)}${val}`}
             </button>
+
           ))}
         </div>
 
