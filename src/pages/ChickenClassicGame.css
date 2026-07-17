@@ -1,0 +1,595 @@
+.chicken-classic-body {
+  min-h-screen: 100vh;
+  background: #161824;
+  color: #fff;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .app-header {
+  height: 64px;
+  background: #3A3D51;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 0 16px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.chicken-classic-body .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chicken-classic-body .back-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.chicken-classic-body .back-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.chicken-classic-body .logo-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+.chicken-classic-body .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chicken-classic-body .balance-display {
+  background: #4E5163;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.2s;
+}
+
+.chicken-classic-body .balance-display:hover {
+  background: #5a5d72;
+}
+
+.chicken-classic-body .menu-btn {
+  background: #4e5163;
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chicken-classic-body .menu-btn:hover {
+  background: #5a5d72;
+}
+
+.chicken-classic-body .scroll-row {
+  width: 100vw;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0;
+  padding: 0;
+  background: none;
+  -webkit-overflow-scrolling: touch;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .scroll-row::-webkit-scrollbar {
+  height: 6px;
+}
+.chicken-classic-body .scroll-row::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+}
+.chicken-classic-body .scroll-row::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+.chicken-classic-body .scroll-inner {
+  display: flex;
+  flex-direction: row;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+}
+
+.chicken-classic-body .scroll-rect {
+  flex: 0 0 160px;
+  width: 160px;
+  height: 280px;
+  background: #4E5163;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  user-select: none;
+  position: relative;
+  border: none;
+  overflow: hidden;
+}
+
+.chicken-classic-body .rect-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.chicken-classic-body .center-img {
+  max-width: 80%;
+  max-height: 80%;
+  z-index: 2;
+  pointer-events: none;
+  position: relative;
+  margin: auto;
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transition: transform 0.3s ease;
+}
+
+.chicken-classic-body .chicken-game-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 25px;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 120px;
+  z-index: 11;
+  pointer-events: none;
+  animation: floatChickenClassic 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes floatChickenClassic {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(-6px); }
+}
+
+.chicken-classic-body .rect-text-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #707CBB;
+  pointer-events: none;
+  z-index: 10;
+  text-align: center;
+  width: 100%;
+}
+
+.chicken-classic-body .turn-effect {
+  animation: turn-green-spin 0.6s cubic-bezier(0.4,1.4,0.6,1) 1;
+}
+
+@keyframes turn-green-spin {
+  0% { transform: rotateY(0deg) scale(1); }
+  40% { transform: rotateY(-90deg) scale(1.15); }
+  60% { transform: rotateY(-90deg) scale(1.15); }
+  100% { transform: rotateY(-180deg) scale(1); }
+}
+
+.chicken-classic-body .play-card-standalone {
+  margin: 15px auto 30px auto;
+  width: 95%;
+  max-width: 360px;
+  background: #3A3D51;
+  border-radius: 10px;
+  border: 2px solid #404B4F;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 16px 0 14px 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .play-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.chicken-classic-body .play-row-top {
+  background: #4E5062;
+  border-radius: 4px;
+  height: 38px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .minmax-btn {
+  background: #686A79;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.chicken-classic-body .minmax-btn:hover {
+  background: #787a8c;
+}
+
+.chicken-classic-body .minmax-input {
+  background: transparent;
+  color: #fff;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+  min-width: 60px;
+  outline: none;
+}
+
+.chicken-classic-body .play-row-amounts {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chicken-classic-body .amount-btn {
+  flex: 1;
+  background: #4E5062;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  height: 38px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.chicken-classic-body .amount-btn:hover {
+  background: #5b5d72;
+}
+
+.chicken-classic-body .difficulty-select-wrapper {
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 5;
+}
+
+.chicken-classic-body .difficulty-select-display {
+  width: 100%;
+  height: 38px;
+  background: #4E5062;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .difficulty-popup {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 4px);
+  width: 100%;
+  background: #4E5062;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+  border: 1.5px solid #404B4F;
+  box-sizing: border-box;
+}
+
+.chicken-classic-body .difficulty-option {
+  padding: 10px 12px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  border-bottom: 1px solid #404B4F;
+  transition: background 0.2s;
+}
+
+.chicken-classic-body .difficulty-option:last-child {
+  border-bottom: none;
+}
+
+.chicken-classic-body .difficulty-option:hover,
+.chicken-classic-body .difficulty-option.selected {
+  background: #404B4F;
+}
+
+.chicken-classic-body .play-btn {
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  background: #3DC55B;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  height: 54px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(44,204,64,0.08);
+  margin-top: 8px;
+}
+
+.chicken-classic-body .play-btn:hover {
+  background: #43d463;
+}
+
+.chicken-classic-body .play-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chicken-classic-body .play-row-gocash {
+  display: flex;
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  gap: 4%;
+  justify-content: space-between;
+}
+
+.chicken-classic-body .go-btn,
+.chicken-classic-body .cashout-btn {
+  flex: 1;
+  border: none;
+  border-radius: 8px;
+  height: 54px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chicken-classic-body .go-btn {
+  background: #3DC55B;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(44,204,64,0.08);
+}
+
+.chicken-classic-body .go-btn:hover {
+  background: #43d463;
+}
+
+.chicken-classic-body .cashout-btn {
+  background: #F7B731;
+  color: #23263a;
+  box-shadow: 0 2px 8px rgba(247,183,49,0.08);
+}
+
+.chicken-classic-body .cashout-btn:hover {
+  background: #ffc445;
+}
+
+.chicken-classic-body .go-btn:disabled,
+.chicken-classic-body .cashout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Rules / How Modal overlay */
+.chicken-classic-body .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.chicken-classic-body .modal-box {
+  background: #3A3D51;
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  border: 2px solid #404B4F;
+  color: #fff;
+  position: relative;
+}
+
+.chicken-classic-body .modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chicken-classic-body .modal-close-btn:hover {
+  color: #fff;
+}
+
+.chicken-classic-body .modal-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.chicken-classic-body .modal-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #d1d5db;
+}
+
+.chicken-classic-body .modal-content ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.chicken-classic-body .modal-content li {
+  margin-bottom: 10px;
+}
+
+/* Cashout Modal Alert */
+.chicken-classic-body .cashout-modal-content {
+  text-align: center;
+  animation: scaleUpClassic 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes scaleUpClassic {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.chicken-classic-body .celebration-emoji {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  animation: bounceEmoji 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes bounceEmoji {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}
+
+.chicken-classic-body .cashout-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.chicken-classic-body .cashout-sub {
+  font-size: 0.9rem;
+  color: #a0aec0;
+  margin-bottom: 10px;
+}
+
+.chicken-classic-body .cashout-mult {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #10B981;
+  text-shadow: 0 0 10px rgba(16,185,129,0.2);
+  margin-bottom: 4px;
+}
+
+.chicken-classic-body .cashout-winnings {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #10B981;
+  margin-bottom: 16px;
+}
+
+.chicken-classic-body .cashout-ok-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 32px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(16,185,129,0.3);
+  transition: all 0.2s;
+}
+
+.chicken-classic-body .cashout-ok-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(16,185,129,0.4);
+}
+
+@media (max-width: 480px) {
+  .chicken-classic-body .scroll-row {
+    height: 420px;
+  }
+  .chicken-classic-body .scroll-rect {
+    width: 180px;
+    height: 420px;
+    flex: 0 0 180px;
+  }
+  .chicken-classic-body .play-card-standalone {
+    width: 90%;
+    padding: 10px 4px 10px 4px;
+  }
+  .chicken-classic-body .play-btn {
+    font-size: 1.1rem;
+    padding: 10px 0;
+  }
+  .chicken-classic-body .amount-btn {
+    font-size: 0.95rem;
+    padding: 7px 10px;
+  }
+  .chicken-classic-body .play-row-top {
+    font-size: 0.9rem;
+    padding: 5px 6px;
+  }
+  .chicken-classic-body .go-btn,
+  .chicken-classic-body .cashout-btn {
+    width: 48%;
+    margin-left: 1%;
+    margin-right: 1%;
+    height: 90px;
+    font-size: 1.15rem;
+  }
+  .chicken-classic-body .play-row-gocash {
+    width: 95%;
+    gap: 4%;
+  }
+}

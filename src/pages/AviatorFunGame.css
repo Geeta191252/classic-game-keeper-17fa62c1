@@ -1,0 +1,1592 @@
+/* ==========================================
+   Aviator Premium Design System & Stylesheet
+   ========================================== */
+
+.aviator-body {
+    --bg-main: #101011;
+    --bg-panel: #1b1b1c;
+    --bg-card: #141415;
+    --bg-input: #0c0d0d;
+    --border-color: #2b2b2c;
+    
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #9ca3af;
+    --color-text-muted: #6b7280;
+    
+    --primary-red: #eb1436;
+    --primary-red-hover: #c90e2b;
+    --balance-green: #2cba42;
+    --gold-cashout: #e28704;
+    --gold-cashout-hover: #c67402;
+    
+    --history-blue: #41a8ff;
+    --history-purple: #b05df9;
+    --history-pink: #c015b3;
+
+    --font-ui: 'Inter', sans-serif;
+    --font-display: 'Play', sans-serif;
+
+    background-color: #101011;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.aviator-body * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Scrollbar styling */
+.aviator-body .scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.aviator-body .scrollbar::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+.aviator-body .scrollbar::-webkit-scrollbar-thumb {
+    background: #3a3a3c;
+    border-radius: 3px;
+}
+.aviator-body .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4c;
+}
+
+/* App Container Layout */
+.aviator-body .app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+/* ==========================================
+   HEADER SECTION
+   ========================================== */
+.aviator-body .app-header {
+    height: 52px;
+    background-color: var(--bg-panel);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.aviator-body .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.aviator-body .logo-aviator {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--primary-red);
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+}
+
+.aviator-body .logo-text-bold {
+    font-weight: 800;
+}
+
+.aviator-body .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.aviator-body .balance-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+.aviator-body .balance-display:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.aviator-body .balance-amount {
+    color: var(--balance-green);
+}
+
+.aviator-body .balance-currency {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+.aviator-body .menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.aviator-body .menu-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-primary);
+}
+
+.aviator-body .menu-btn.active-sound {
+    color: var(--balance-green);
+}
+
+/* ==========================================
+   MAIN LAYOUT (SIDEBAR + GAME AREA)
+   ========================================== */
+.aviator-body .main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    width: 100%;
+}
+
+/* ==========================================
+   SIDEBAR (BETS FEED)
+   ========================================== */
+.aviator-body .sidebar-bets {
+    width: 320px;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+/* Tabs Header */
+.aviator-body .tabs-header {
+    display: flex;
+    background-color: var(--bg-panel);
+    padding: 8px;
+    gap: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.aviator-body .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    padding: 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.aviator-body .tab-btn.active {
+    background-color: #2c2d2e;
+    color: var(--color-text-primary);
+}
+
+/* Bets Stats Summary Header */
+.aviator-body .bets-stats-header {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-panel);
+}
+
+.aviator-body .bets-count {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.aviator-body .count-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.aviator-body .count-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+}
+
+.aviator-body .indicator-bar {
+    width: 80px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.aviator-body .indicator-fill {
+    height: 100%;
+    background-color: var(--balance-green);
+    border-radius: 2px;
+}
+
+.aviator-body .total-win {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.aviator-body .win-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+}
+
+.aviator-body .win-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    font-size: 14px;
+}
+
+/* Table Column Headers */
+.aviator-body .table-columns-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr;
+    padding: 8px 16px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--border-color);
+    text-transform: uppercase;
+}
+
+.aviator-body .text-center { text-align: center; }
+.aviator-body .text-right { text-align: right; }
+
+/* Table Body (Feed) */
+.aviator-body .bets-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Player Bet Item Style */
+.aviator-body .bet-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1.5fr;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+
+/* When player cashes out, row style is updated */
+.aviator-body .bet-row.cashed-out {
+    background-color: rgba(44, 186, 66, 0.08);
+    border-color: rgba(44, 186, 66, 0.2);
+}
+
+.aviator-body .player-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.aviator-body .player-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.aviator-body .player-name {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aviator-body .bet-val {
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+}
+
+.aviator-body .multiplier-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.aviator-body .multiplier-badge.low { background: rgba(65, 168, 255, 0.15); color: var(--history-blue); }
+.aviator-body .multiplier-badge.mid { background: rgba(176, 93, 249, 0.15); color: var(--history-purple); }
+.aviator-body .multiplier-badge.high { background: rgba(192, 21, 179, 0.15); color: var(--history-pink); }
+.aviator-body .multiplier-badge.won-badge { background: rgba(44, 186, 66, 0.2); color: var(--balance-green); }
+
+.aviator-body .win-val {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+.aviator-body .bet-row.cashed-out .win-val {
+    color: var(--balance-green);
+}
+
+/* Sidebar Footer */
+.aviator-body .sidebar-footer {
+    padding: 10px 16px;
+    background-color: var(--bg-panel);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.aviator-body .fair-game {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.aviator-body .powered-by span {
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+
+/* ==========================================
+   MAIN GAME AREA
+   ========================================== */
+.aviator-body .game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+/* ==========================================
+   MULTIPLIER HISTORY BAR
+   ========================================== */
+.aviator-body .history-row-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 20px;
+    padding: 3px 8px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    overflow: visible;
+}
+
+.aviator-body .history-scroll {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-right: 32px;
+}
+
+.aviator-body .history-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+/* Individual multiplier badges in row */
+.aviator-body .hist-item {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: background-color 0.2s;
+}
+
+.aviator-body .hist-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.aviator-body .hist-item.low { color: var(--history-blue); }
+.aviator-body .hist-item.mid { color: var(--history-purple); }
+.aviator-body .hist-item.high { color: var(--history-pink); }
+
+.aviator-body .history-dropdown-btn {
+    position: absolute;
+    right: 4px;
+    background: #1c1d1e;
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.aviator-body .history-dropdown-btn:hover {
+    background: #2d2e2f;
+    color: var(--color-text-primary);
+}
+
+/* Dropdown Panel */
+.aviator-body .history-dropdown-panel {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    left: 0;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    padding: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.aviator-body .history-dropdown-panel.show {
+    display: flex;
+}
+
+.aviator-body .history-dropdown-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 6px;
+}
+
+.aviator-body #history-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.aviator-body .history-dropdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+/* ==========================================
+   GAME SCREEN CONTAINER (CANVAS)
+   ========================================== */
+.aviator-body .graph-container {
+    position: relative;
+    flex: 1.8;
+    min-height: 260px;
+    background-color: #080808;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.aviator-body .fun-mode-banner {
+    background: linear-gradient(90deg, #d97706 0%, #eab308 100%);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 10px;
+    text-align: center;
+    padding: 3px 0;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+.aviator-body .canvas-wrapper {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 15px;
+}
+
+.aviator-body canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Main Display Multiplier Text */
+.aviator-body .multiplier-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 48px;
+    color: var(--color-text-primary);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Screen Overlays (Waiting, crashed) */
+.aviator-body .screen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    transition: opacity 0.3s;
+}
+
+/* WAITING STATE */
+.aviator-body .waiting-box {
+    text-align: center;
+    background: rgba(27, 27, 28, 0.85);
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    border-radius: 16px;
+    max-width: 280px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.aviator-body .waiting-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+.aviator-body .progress-ring-container {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.aviator-body .countdown-bar-fill {
+    height: 100%;
+    background-color: var(--primary-red);
+    width: 100%;
+    transition: width 0.1s linear;
+}
+
+.aviator-body .waiting-subtitle {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--color-text-primary);
+}
+
+/* CRASHED STATE */
+.aviator-body .crashed-overlay {
+    background: rgba(225, 29, 72, 0.04);
+}
+
+.aviator-body .flew-away-text {
+    position: absolute;
+    top: calc(50% - 36px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 24px;
+    color: var(--primary-red);
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(235, 20, 54, 0.4);
+}
+
+.aviator-body .flew-away-multiplier {
+    position: absolute;
+    top: calc(50% + 16px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 36px;
+    color: #a1a1aa;
+}
+
+/* Online Players count */
+.aviator-body .online-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 4;
+}
+
+.aviator-body .avatar-stack {
+    display: flex;
+    align-items: center;
+}
+
+.aviator-body .avatar-mini {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #000;
+    margin-right: -4px;
+    background-size: cover;
+    background-position: center;
+}
+
+.aviator-body .avatar-mini.a1 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2322c55e"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-11 4.9-11 11h22c0-6.1-4.9-11-11-11z"/></svg>'); }
+.aviator-body .avatar-mini.a2 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23eab308"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-11 4.9-11 11h22c0-6.1-4.9-11-11-11z"/></svg>'); }
+.aviator-body .avatar-mini.a3 { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233b82f6"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-11 4.9-11 11h22c0-6.1-4.9-11-11-11z"/></svg>'); }
+
+.aviator-body .online-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+}
+
+/* ==========================================
+   BET CONTROLS PANELS
+   ========================================== */
+.aviator-body .bet-panels-container {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.aviator-body .bet-panel {
+    flex: 1;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.aviator-body .panel-header-tabs {
+    display: flex;
+    background: var(--bg-input);
+    border-radius: 30px;
+    padding: 2px;
+    align-self: center;
+    width: fit-content;
+    position: relative;
+}
+
+.aviator-body .panel-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    padding: 4px 20px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 30px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.aviator-body .panel-tab-btn.active {
+    background-color: var(--bg-panel);
+    color: var(--color-text-primary);
+}
+
+.aviator-body .panel-collapse-btn {
+    position: absolute;
+    right: -36px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.aviator-body .panel-collapse-btn:hover {
+    color: var(--color-text-secondary);
+}
+
+/* Panel Body */
+.aviator-body .panel-body {
+    display: flex;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.aviator-body .control-left {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.aviator-body .control-right {
+    flex: 1;
+    display: flex;
+}
+
+/* Bet Input Box (- Value +) */
+.aviator-body .bet-input-box {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-input);
+    border-radius: 20px;
+    padding: 2px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.aviator-body .value-change-btn {
+    width: 32px;
+    height: 32px;
+    background: #1c1d1e;
+    border: none;
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+}
+
+.aviator-body .value-change-btn:hover {
+    background: #2a2b2c;
+    color: var(--color-text-primary);
+}
+
+.aviator-body .input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    position: relative;
+}
+
+.aviator-body .input-wrapper input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    outline: none;
+}
+
+/* Hide spin arrows in inputs */
+.aviator-body .input-wrapper input::-webkit-outer-spin-button,
+.aviator-body .input-wrapper input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.aviator-body .input-wrapper input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.aviator-body .input-currency {
+    position: absolute;
+    right: 8px;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+/* Quick Bet Presets Grid */
+.aviator-body .quick-bets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.aviator-body .quick-btn {
+    background: #1c1d1e;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--color-text-secondary);
+    border-radius: 12px;
+    height: 24px;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.aviator-body .quick-btn:hover {
+    background: #252627;
+    color: var(--color-text-primary);
+    border-color: rgba(255,255,255,0.08);
+}
+
+/* MAIN BETTING BUTTON */
+.aviator-body .main-bet-btn {
+    width: 100%;
+    border: none;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    font-family: var(--font-ui);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.aviator-body .main-bet-btn:active {
+    transform: scale(0.98);
+}
+
+.aviator-body .btn-action-label {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.aviator-body .btn-value-label {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+/* Main Button States styling */
+.aviator-body .btn-bet {
+    background: linear-gradient(180deg, #2ebf44 0%, #228b32 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #1a6d27;
+}
+.aviator-body .btn-bet:hover {
+    background: linear-gradient(180deg, #33cc4a 0%, #269937 100%);
+}
+
+.aviator-body .btn-cancel {
+    background: linear-gradient(180deg, #d93838 0%, #a61c1c 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #801212;
+}
+.aviator-body .btn-cancel:hover {
+    background: linear-gradient(180deg, #e04c4c 0%, #b82222 100%);
+}
+
+.aviator-body .btn-cashout {
+    background: linear-gradient(180deg, #f0951a 0%, #bf6c00 100%);
+    color: #ffffff;
+    border-bottom: 3px solid #995400;
+}
+.aviator-body .btn-cashout:hover {
+    background: linear-gradient(180deg, #ffa224 0%, #cc7300 100%);
+}
+
+.aviator-body .btn-disabled {
+    background: #2a2b2c !important;
+    color: var(--color-text-muted) !important;
+    border-bottom: none !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Auto Cashout Settings styling */
+.aviator-body .auto-settings-panel {
+    background: var(--bg-input);
+    border-radius: 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: max-height 0.3s ease;
+}
+
+.aviator-body .auto-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.aviator-body .auto-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+/* Switch Toggle Styling */
+.aviator-body .switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+}
+
+.aviator-body .switch-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.aviator-body .slider-round {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #3e3f40;
+    transition: .3s;
+    border-radius: 18px;
+}
+
+.aviator-body .slider-round:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+.aviator-body .switch-toggle input:checked + .slider-round {
+    background-color: var(--balance-green);
+}
+
+.aviator-body .switch-toggle input:checked + .slider-round:before {
+    transform: translateX(14px);
+}
+
+/* Auto Cashout Multiplier Value Input */
+.aviator-body .auto-input-box {
+    display: flex;
+    align-items: center;
+    background: #1c1d1e;
+    border-radius: 8px;
+    padding: 2px 6px;
+    width: 70px;
+    height: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.aviator-body .auto-input-box.disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.aviator-body .auto-input-box input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 11px;
+    text-align: center;
+    outline: none;
+}
+
+.aviator-body .x-suffix {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+/* Minimization style for panel 2 */
+.aviator-body .bet-panel.collapsed {
+    padding: 6px 12px;
+    gap: 0;
+}
+.aviator-body .bet-panel.collapsed .collapse-target {
+    display: none !important;
+}
+
+.aviator-body .bet-panel.collapsed .panel-collapse-btn svg {
+    transform: rotate(180deg);
+}
+
+/* Win visual animation overlay */
+.aviator-body .personal-win-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    background: rgba(44, 186, 66, 0.95);
+    border: 2px solid #55ea74;
+    padding: 16px 28px;
+    border-radius: 20px;
+    z-index: 10;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(44, 186, 66, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.aviator-body .personal-win-overlay.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.aviator-body .win-overlay-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+.aviator-body .win-overlay-mult {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 20px;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.aviator-body .win-overlay-amount {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    color: #ffffff;
+    background: rgba(0,0,0,0.2);
+    padding: 4px 12px;
+    border-radius: 30px;
+    display: inline-block;
+}
+
+/* ==========================================
+   RIGHT SLIDE-OUT MENU SIDEBAR & MODALS
+   ========================================== */
+.aviator-body .right-menu-sidebar {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--bg-panel);
+    border-left: 1px solid var(--border-color);
+    border-radius: 16px 0 0 16px;
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aviator-body .right-menu-sidebar.open {
+    right: 0;
+}
+
+.aviator-body .right-menu-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-card);
+    border-radius: 16px 0 0 0;
+}
+
+.aviator-body .right-menu-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aviator-body .right-menu-close {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.aviator-body .right-menu-close:hover {
+    color: var(--primary-red);
+}
+
+.aviator-body .right-menu-body {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+/* Balance Info Box inside menu */
+.aviator-body .menu-account-box {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.aviator-body .menu-account-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.aviator-body .menu-account-balance {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--balance-green);
+}
+
+/* Actions Menu List */
+.aviator-body .menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 4px;
+}
+
+.aviator-body .menu-action-item {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--color-text-primary);
+    padding: 14px 8px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: background 0.2s, padding-left 0.2s;
+    width: 100%;
+    text-align: left;
+    outline: none;
+}
+
+.aviator-body .menu-action-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    padding-left: 12px;
+}
+
+.aviator-body .menu-action-item svg {
+    flex-shrink: 0;
+    color: #ffffff;
+}
+
+/* Backdrop overlay */
+.aviator-body .menu-backdrop-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 950;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.aviator-body .menu-backdrop-overlay.open {
+    display: block;
+    opacity: 1;
+}
+
+/* MODALS */
+.aviator-body .menu-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    width: 320px;
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aviator-body .menu-modal.open {
+    display: flex;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.aviator-body .modal-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--bg-card);
+    border-radius: 16px 16px 0 0;
+}
+
+.aviator-body .modal-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--color-text-primary);
+    text-transform: uppercase;
+}
+
+.aviator-body .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.aviator-body .modal-close:hover {
+    color: var(--primary-red);
+}
+
+.aviator-body .modal-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.aviator-body .modal-desc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+}
+
+/* Amount Input Box */
+.aviator-body .modal-input-container {
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0 12px;
+    height: 42px;
+    position: relative;
+}
+
+.aviator-body .modal-input-container input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    outline: none;
+}
+
+.aviator-body .modal-currency {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--color-text-muted);
+}
+
+/* Presets grid */
+.aviator-body .modal-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.aviator-body .preset-btn {
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    border-radius: 8px;
+    height: 28px;
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.aviator-body .preset-btn:hover {
+    background: #151617;
+    color: var(--color-text-primary);
+}
+
+/* Submit buttons */
+.aviator-body .modal-submit-btn {
+    border: none;
+    border-radius: 12px;
+    height: 38px;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transition: opacity 0.2s;
+}
+
+.aviator-body .modal-submit-btn:hover {
+    opacity: 0.9;
+}
+
+.aviator-body .btn-deposit {
+    background: linear-gradient(180deg, #2ebf44 0%, #228b32 100%);
+    color: white;
+}
+
+.aviator-body .btn-withdraw {
+    background: linear-gradient(180deg, #f0951a 0%, #bf6c00 100%);
+    color: white;
+}
+
+/* Settings elements */
+.aviator-body .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.aviator-body .settings-row.flex-column {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    border-bottom: none;
+}
+
+.aviator-body .settings-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.aviator-body .settings-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.aviator-body .settings-desc {
+    font-size: 9px;
+    color: var(--color-text-muted);
+}
+
+/* Speed toggle buttons */
+.aviator-body .speed-presets {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+}
+
+.aviator-body .speed-btn {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    border-radius: 10px;
+    height: 32px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    outline: none;
+}
+
+.aviator-body .speed-btn.active {
+    background-color: var(--primary-red);
+    color: white;
+    border-color: var(--primary-red);
+}
+
+/* ==========================================
+   RESPONSIVENESS (MOBILE AND TABLET VIEW)
+   ========================================== */
+
+/* Tablet & Mobile Layout wrapper */
+@media (max-width: 950px) {
+    .aviator-body .main-layout {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    
+    .aviator-body .sidebar-bets {
+        width: 100%;
+        height: auto;
+        order: 3;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        max-height: 400px;
+    }
+    
+    .aviator-body .game-area {
+        flex: none;
+        order: 1;
+        width: 100%;
+        overflow-y: visible;
+    }
+    
+    .aviator-body .graph-container {
+        aspect-ratio: 16 / 9;
+        flex: none;
+    }
+    
+    .aviator-body .bet-panels-container {
+        order: 2;
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .aviator-body .multiplier-overlay {
+        font-size: 36px;
+    }
+
+    .aviator-body .flew-away-multiplier {
+        font-size: 48px;
+    }
+}
+
+@media (max-width: 480px) {
+    .aviator-body .app-header {
+        padding: 0 10px;
+    }
+    
+    .aviator-body .logo-aviator {
+        font-size: 20px;
+    }
+
+    .aviator-body .balance-display {
+        font-size: 14px;
+    }
+    
+    .aviator-body .game-area {
+        padding: 4px;
+        gap: 6px;
+    }
+    
+    .aviator-body .bet-panel {
+        padding: 8px;
+    }
+    
+    .aviator-body .bet-input-box {
+        height: 34px;
+    }
+
+    .aviator-body .value-change-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .aviator-body .main-bet-btn {
+        height: 70px;
+        border-radius: 12px;
+    }
+
+    .aviator-body .btn-action-label {
+        font-size: 14px;
+    }
+
+    .aviator-body .btn-value-label {
+        font-size: 10px;
+    }
+
+    .aviator-body .quick-btn {
+        font-size: 9px;
+        height: 22px;
+    }
+    
+    .aviator-body .sidebar-bets {
+        max-height: 300px;
+    }
+}

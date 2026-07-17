@@ -1,0 +1,830 @@
+/* Reset & Core Styling */
+.goblin-body * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.goblin-body {
+  font-family: 'Outfit', sans-serif;
+  background-color: #0d0b0a;
+  color: #f7ebdc;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Premium Desktop Web Wrapper */
+.goblin-body .web-wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, rgba(29,24,20,0.9) 0%, rgba(13,11,10,0.98) 100%),
+              url('/images/goblin/GoblinTowermobile.png') no-repeat center center;
+  background-size: cover;
+  backdrop-filter: blur(10px);
+}
+
+/* Mobile Viewport Container */
+.goblin-body .mobile-viewport {
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  max-height: 920px;
+  background: url('/images/goblin/GoblinTowermobile.png') no-repeat center center;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8),
+              0 0 0 8px rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustment for small desktop screens / mobile devices */
+@media (max-height: 920px) {
+  .goblin-body .mobile-viewport {
+    height: 100vh;
+    border-radius: 0;
+    max-height: none;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .goblin-body .mobile-viewport {
+    max-width: 100%;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+  .goblin-body .web-wrapper {
+    background: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Game Header styling */
+.goblin-body .game-header {
+  background-color: #241d1a;
+  height: 60px;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1a1513;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.goblin-body .logo {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goblin-body .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Balance Box */
+.goblin-body .balance-box {
+  background-color: #3b3027;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goblin-body .balance-box:hover {
+  background-color: #4a3c31;
+}
+
+.goblin-body .balance-box:active {
+  transform: scale(0.95);
+}
+
+.goblin-body .balance-value {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.goblin-body .currency-icon {
+  background-color: #ffffff;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.goblin-body .currency-symbol {
+  color: #3b3027;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+/* Hamburger Menu Button */
+.goblin-body .menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 22px;
+  height: 16px;
+  padding: 0;
+}
+
+.goblin-body .menu-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Main Game Area */
+.goblin-body .game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  justify-content: flex-end;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Multipliers Bar styling */
+.goblin-body .multipliers-bar {
+  position: absolute;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%) translateX(15px);
+  width: 62%;
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px;
+  background-color: rgba(29, 23, 20, 0.85);
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 10;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.goblin-body .multipliers-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.goblin-body .multiplier-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 52px;
+  text-align: center;
+  background-color: #3b2c23;
+  color: #ebd7c5;
+  padding: 6px 0;
+  border-radius: 4px;
+  border: 1px solid #574134;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.goblin-body .mult-val {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.goblin-body .multiplier-box.active-mult {
+  background-color: #9ccc3c;
+  color: #ffffff;
+  border: 1px solid #cce875;
+  transform: scale(1.08);
+  box-shadow: 0 0 10px rgba(156, 204, 60, 0.6);
+}
+
+/* Wooden Game Board Container */
+.goblin-body .board-container {
+  position: relative;
+  background: url('/images/goblin/boardmobile.png') no-repeat bottom center;
+  background-size: 100% 100%;
+  border-radius: 0;
+  padding: 40px 0 160px 0;
+  margin-bottom: -100px;
+  overflow: hidden;
+  width: 125%;
+  height: 110%;
+  margin-left: -16%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Grid of wooden crates */
+.goblin-body .grid-container {
+  position: absolute;
+  top: 142px;
+  left: 50%;
+  transform: translateX(-50%) translateX(15px);
+  width: 62%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  column-gap: 5px;
+  row-gap: 12px;
+  overflow-y: auto;
+  max-height: 52%;
+  padding-bottom: 20px;
+}
+
+.goblin-body .grid-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.goblin-body .grid-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.goblin-body .grid-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* Grid Row */
+.goblin-body .grid-row {
+  display: contents;
+}
+
+/* Crate */
+.goblin-body .crate {
+  aspect-ratio: 337 / 175;
+  background: url('/images/goblin/board.png') no-repeat center center;
+  background-size: 100% 100%;
+  cursor: not-allowed;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  perspective: 500px;
+  opacity: 0.75;
+}
+
+.goblin-body .crate-content {
+  position: absolute;
+  width: 70%;
+  height: 70%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.goblin-body .crate-content img, .goblin-body .crate-content svg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.4));
+}
+
+/* States */
+
+/* Current Active Row that the user must click */
+.goblin-body .grid-row.active-row .crate {
+  cursor: pointer;
+  opacity: 1;
+  filter: brightness(1.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.25);
+}
+
+.goblin-body .grid-row.active-row .crate:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.25);
+}
+
+.goblin-body .grid-row.active-row .crate:active {
+  transform: translateY(1px);
+}
+
+/* Completed Row styling */
+.goblin-body .grid-row.completed-row .crate {
+  opacity: 0.95;
+}
+
+/* Clicked Safe Crate */
+.goblin-body .crate.safe-crate {
+  opacity: 1 !important;
+  box-shadow: none;
+  background: none !important;
+}
+
+.goblin-body .crate.safe-crate .crate-content {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Clicked Goblin Crate (Losing action) */
+.goblin-body .crate.goblin-crate {
+  opacity: 1 !important;
+  box-shadow: none;
+  background: none !important;
+  animation: goblin-shake 0.5s ease-in-out;
+}
+
+.goblin-body .crate.goblin-crate .crate-content {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Unrevealed items shown at game end */
+.goblin-body .crate.unrevealed-safe {
+  opacity: 0.5;
+  box-shadow: none;
+  background: none !important;
+}
+
+.goblin-body .crate.unrevealed-safe .crate-content {
+  opacity: 0.6;
+  transform: scale(0.8);
+}
+
+.goblin-body .crate.unrevealed-goblin {
+  opacity: 0.5;
+  box-shadow: none;
+  background: none !important;
+}
+
+.goblin-body .crate.unrevealed-goblin .crate-content {
+  opacity: 0.6;
+  transform: scale(0.8);
+}
+
+/* Betting Controls Panel styling (Screenshot matched) */
+.goblin-body .controls-panel {
+  position: absolute;
+  bottom: 145px; /* Positioned slightly higher to stay fully visible above crop line */
+  left: 50%;
+  transform: translateX(-50%) translateX(15px); /* Perfectly aligned horizontally with grid and multipliers */
+  width: 62%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  z-index: 20;
+}
+
+/* Light parchment/cream bar */
+.goblin-body .bet-input-row-screenshot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #faf0da; /* Parchment cream background matching screenshot */
+  border-radius: 8px;
+  padding: 10px 8px; /* Increased vertical padding to raise height */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* Tan/beige adjust buttons */
+.goblin-body .bet-adjust-btn-screenshot {
+  background-color: #cfbdab; /* Tan/beige button background matching screenshot */
+  color: #533924; /* Dark brown text matching screenshot */
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.goblin-body .bet-adjust-btn-screenshot:hover {
+  filter: brightness(0.95);
+}
+
+.goblin-body .bet-adjust-btn-screenshot:active {
+  transform: scale(0.95);
+}
+
+.goblin-body .bet-value-display {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.goblin-body .bet-number-input-screenshot {
+  width: 70px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #432b17; /* Dark brown text matching screenshot */
+  font-weight: 800;
+  font-size: 18px;
+  text-align: center;
+}
+
+/* Premium Grass Green Action Button with 3D Bevel */
+.goblin-body .bet-action-btn-screenshot {
+  width: 100%;
+  background: linear-gradient(180deg, #95c832 0%, #7ca91f 100%); /* Screenshot grass green gradient */
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 0; /* Increased vertical padding to raise height */
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #5b7f11, 0 4px 6px rgba(0,0,0,0.35); /* 3D bevel matching screenshot */
+  transition: all 0.1s ease;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.goblin-body .bet-action-btn-screenshot:hover {
+  filter: brightness(1.06);
+}
+
+.goblin-body .bet-action-btn-screenshot:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #5b7f11, 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.goblin-body .bet-action-btn-screenshot.cashout-mode {
+  background: linear-gradient(180deg, #ffa726 0%, #f57c00 100%);
+  box-shadow: 0 4px 0 #b35900, 0 4px 6px rgba(0,0,0,0.35);
+}
+
+.goblin-body .bet-action-btn-screenshot.cashout-mode:active {
+  box-shadow: 0 2px 0 #b35900, 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Difficulty dropdown matching screenshot (Easy/Medium/Hard selector) */
+.goblin-body .dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.goblin-body .dropdown-trigger {
+  background-color: #3b2c23; /* Dark brown background matching multiplier box */
+  border: 1px solid #574134; /* Thin border matching multiplier border */
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.goblin-body .dropdown-trigger:hover {
+  background-color: #4a382e;
+}
+
+.goblin-body .chevron-icon {
+  font-size: 10px;
+  color: #ebd7c5;
+}
+
+.goblin-body .dropdown-options {
+  position: absolute;
+  bottom: calc(100% + 4px); /* Opens upwards to avoid vertical crop */
+  left: 0;
+  width: 100%;
+  background-color: #3b2c23;
+  border: 1px solid #574134;
+  border-radius: 8px;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 30;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+}
+
+.goblin-body .dropdown-container.open .dropdown-options {
+  display: flex;
+}
+
+.goblin-body .dropdown-option {
+  padding: 8px 12px;
+  color: #ebd7c5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.goblin-body .dropdown-option:hover {
+  background-color: #4a382e;
+  color: #ffffff;
+}
+
+/* Sidebar / Menu Modal styling */
+.goblin-body .menu-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(13, 11, 10, 0.85);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.goblin-body .menu-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.goblin-body .menu-content {
+  background-color: #241d1a;
+  width: 85%;
+  max-width: 340px;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  border: 1px solid #4a3c36;
+  transform: scale(0.85);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.goblin-body .menu-modal.open .menu-content {
+  transform: scale(1);
+}
+
+.goblin-body .close-menu {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #ebd7c5;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.goblin-body .menu-content h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #ffffff;
+  border-bottom: 2px solid #3b2f29;
+  padding-bottom: 8px;
+}
+
+.goblin-body .rules-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ebd7c5;
+  margin-bottom: 16px;
+}
+
+.goblin-body hr {
+  border: none;
+  border-top: 1px solid #3b2f29;
+  margin: 16px 0;
+}
+
+.goblin-body .stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.goblin-body .stat-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.goblin-body .stat-label {
+  color: #a89482;
+}
+
+.goblin-body .stat-value {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.goblin-body .reset-balance-btn {
+  width: 100%;
+  background-color: #5c4333;
+  color: #ebd7c5;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.goblin-body .reset-balance-btn:hover {
+  background-color: #70523e;
+  color: #ffffff;
+}
+
+/* Toast Alerts Overlay styling */
+.goblin-body .game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 90;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.goblin-body .game-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.goblin-body .overlay-card {
+  background-color: #241d1a;
+  border: 2px solid #4a3c36;
+  border-radius: 16px;
+  width: 80%;
+  max-width: 300px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  transform: translateY(30px);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.goblin-body .game-overlay.open .overlay-card {
+  transform: translateY(0);
+}
+
+.goblin-body #overlay-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #ffffff;
+  text-transform: none;
+}
+
+.goblin-body #overlay-text {
+  font-size: 16px;
+  color: #ebd7c5;
+  margin-bottom: 20px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.goblin-body .overlay-close-btn {
+  width: 100%;
+  background-color: #9ccc3c;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #547311;
+  transition: all 0.1s;
+}
+
+.goblin-body .overlay-close-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #547311;
+}
+
+/* Shake Animation for Goblin hits */
+@keyframes goblin-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* Responsive layout adjustments for short viewports (Telegram WebViews) */
+@media (max-height: 840px) {
+  .goblin-body .game-header {
+    height: 50px;
+  }
+  .goblin-body .multipliers-bar {
+    top: 72px;
+    padding: 4px;
+    gap: 6px;
+  }
+  .goblin-body .grid-container {
+    top: 122px;
+    max-height: 48%;
+    row-gap: 8px;
+  }
+  .goblin-body .controls-panel {
+    bottom: 125px;
+    gap: 5px;
+  }
+  .goblin-body .bet-input-row-screenshot {
+    padding: 6px 8px;
+  }
+  .goblin-body .bet-action-btn-screenshot {
+    padding: 10px 0;
+    font-size: 16px;
+  }
+}
+
+@media (max-height: 720px) {
+  .goblin-body .game-header {
+    height: 44px;
+  }
+  .goblin-body .multipliers-bar {
+    top: 64px;
+    padding: 3px;
+    gap: 4px;
+  }
+  .goblin-body .grid-container {
+    top: 110px;
+    max-height: 44%;
+    row-gap: 5px;
+  }
+  .goblin-body .controls-panel {
+    bottom: 112px;
+    gap: 4px;
+  }
+  .goblin-body .bet-input-row-screenshot {
+    padding: 4px 6px;
+  }
+  .goblin-body .bet-number-input-screenshot {
+    font-size: 15px;
+    width: 60px;
+  }
+  .goblin-body .bet-adjust-btn-screenshot {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .goblin-body .bet-action-btn-screenshot {
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .goblin-body .dropdown-trigger {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+@media (max-height: 620px) {
+  .goblin-body .grid-container {
+    top: 102px;
+    max-height: 40%;
+    row-gap: 3px;
+  }
+  .goblin-body .controls-panel {
+    bottom: 102px;
+    gap: 3px;
+  }
+}
