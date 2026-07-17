@@ -161,6 +161,12 @@ const GoblinTower = () => {
   const navigate = useNavigate();
   const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  useEffect(() => {
+    const newC = currencyMode === "STAR" ? "star" : "dollar";
+    setCurrency(newC);
+    setBet(newC === "star" ? 30 : 3);
+  }, [currencyMode]);
 
   // States
   const [bet, setBet] = useState(3);
