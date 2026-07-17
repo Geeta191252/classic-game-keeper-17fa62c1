@@ -518,6 +518,11 @@ const AviatorFunGame = () => {
         if (Array.isArray(s.history) && s.history.length) {
           setHistoryList(s.history.slice(0, 40));
         }
+        if (Array.isArray(s.bets)) {
+          setServerBets(s.bets as ServerBet[]);
+        } else {
+          setServerBets([]);
+        }
       } catch {
         // network hiccup — retry
       }
