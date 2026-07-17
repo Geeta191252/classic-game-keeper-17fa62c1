@@ -465,44 +465,7 @@ const MinesClassicGame = () => {
         </div>
 
         <div className="header-right flex items-center gap-1.5">
-          {/* Dollar (USD) Balance */}
-          <div 
-            className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-[#00a2e8] bg-[#00a2e8]/10" : "bg-slate-900 opacity-60"}`}
-            onClick={() => {
-              if (phase === "betting") {
-                setCurrency("dollar");
-              }
-            }}
-          >
-            <span className="text-[#00a2e8] font-bold">$</span>
-            <span>{totalDollar.toFixed(2)}</span>
-          </div>
-          
-          {/* INR Balance */}
-          <div 
-            className={`balance-display cursor-pointer transition-all ${currency === "dollar" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
-            onClick={() => {
-              if (phase === "betting") {
-                setCurrency("dollar");
-              }
-            }}
-          >
-            <span className="text-emerald-400 font-bold">₹</span>
-            <span>{(totalDollar * 85).toFixed(2)}</span>
-          </div>
-
-          {/* Star Balance */}
-          <div 
-            className={`balance-display cursor-pointer transition-all ${currency === "star" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
-            onClick={() => {
-              if (phase === "betting") {
-                setCurrency("star");
-              }
-            }}
-          >
-            <span className="text-amber-400 font-bold">★</span>
-            <span>{Math.floor(totalStar).toLocaleString()}</span>
-          </div>
+          <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting"} />
 
           <button className="menu-btn" onClick={() => setShowHowModal(true)} title="Rules / Guide">
             <BookOpen size={16} />
