@@ -329,11 +329,12 @@ const AviatorFunGame = () => {
     bgImgRef.current = bgImg;
   }, []);
 
-  // Format Helper
+  // Format Helper — val is in the display unit (INR/USD/STAR)
   const formatMoney = useCallback((val: number) => {
-    if (currency === "star") return `★${Math.floor(val).toLocaleString()}`;
+    if (displayMode === "STAR") return `★${Math.floor(val).toLocaleString()}`;
+    if (displayMode === "INR") return `₹${val.toFixed(2)}`;
     return `$${val.toFixed(2)}`;
-  }, [currency]);
+  }, [displayMode]);
 
   // Balance Auto Refill (Disabled for real money mode)
   useEffect(() => {
