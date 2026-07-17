@@ -6,7 +6,7 @@ import { playBetSound, playSpinSound, playWinSound, playLoseSound, playResultRev
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount , currencySymbol} , currencySymbol removed
 
 const SEGMENTS = [
   { label: "2X", multiplier: 2, color: "hsl(0, 70%, 55%)" },

@@ -6,7 +6,7 @@ import { playBetSound, playWinSound, playLoseSound, playResultReveal, startBgMus
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount , currencySymbol} , currencySymbol removed
 
 const GRID_SIZE = 5;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;

@@ -6,7 +6,7 @@ import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdown
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult, type CurrencyType } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount , currencySymbol} , currencySymbol removed
 
 const DICE_FACES = [
   { value: 1, dots: "⚀", multiplier: 0 },

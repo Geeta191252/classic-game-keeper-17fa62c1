@@ -13,7 +13,7 @@ import {
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount , currencySymbol} , currencySymbol removed
 import plinkoHeader from "@/assets/plinko-header.png";
 import plinkoPillar from "@/assets/plinko-pillar.png";
 
