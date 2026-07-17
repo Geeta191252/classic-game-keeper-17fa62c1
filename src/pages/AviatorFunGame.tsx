@@ -244,14 +244,18 @@ const INITIAL_HISTORY = [
   20.67, 5.90, 66.12, 5.13, 1.25, 2.80, 1.10, 8.44, 1.95, 12.30
 ];
 
+const INR_RATE = 85; // 1 USD = 85 INR
+
 const AviatorFunGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
+  const [displayMode, setDisplayMode] = useState<"USD" | "INR" | "STAR">("USD");
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalStar = starBalance + starWinning;
-  const balance = currency === "dollar" ? totalDollar : totalStar;
+  // Balance in the DISPLAY unit (INR = dollars * 85, USD = dollars, STAR = stars)
+  const balance = displayMode === "STAR" ? totalStar : displayMode === "INR" ? totalDollar * INR_RATE : totalDollar;
 
   // Settings
   const [roundSpeedMultiplier, setRoundSpeedMultiplier] = useState(1.0);
