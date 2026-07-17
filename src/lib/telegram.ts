@@ -54,6 +54,15 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.ori
 export type CurrencyType = "dollar" | "rupee" | "star";
 export type ActionType = "deposit" | "withdraw";
 
+export interface BalancePayload {
+  dollarBalance: number;
+  rupeeBalance: number;
+  starBalance: number;
+  dollarWinning: number;
+  rupeeWinning: number;
+  starWinning: number;
+}
+
 interface InvoiceResponse {
   invoiceUrl: string;
 }
@@ -127,7 +136,7 @@ export const initiatePayment = async (
 /**
  * Fetch user balance from backend
  */
-export const fetchBalance = async (): Promise<{ dollarBalance: number; rupeeBalance: number; starBalance: number; dollarWinning: number; rupeeWinning: number; starWinning: number; referralCount: number }> => {
+export const fetchBalance = async (): Promise<BalancePayload & { referralCount: number }> => {
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id;
 
@@ -200,7 +209,7 @@ export const reportGameResult = async (data: {
   winAmount: number;
   currency: CurrencyType;
   game: string;
-}): Promise<{ dollarBalance: number; rupeeBalance: number; starBalance: number; dollarWinning: number; rupeeWinning: number; starWinning: number }> => {
+}): Promise<BalancePayload> => {
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id;
 
@@ -258,7 +267,7 @@ export const placeGreedyKingBet = async (data: {
   amount: number;
   currency: CurrencyType;
   firstName?: string;
-}): Promise<{ success: boolean }> => {
+}): Promise<{ success: boolean } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/greedy-king/bet`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -302,7 +311,7 @@ export const placeJetXBet = async (data: {
   amount: number;
   currency: CurrencyType;
   firstName?: string;
-}): Promise<{ success: boolean; roundNumber: number }> => {
+}): Promise<{ success: boolean; roundNumber: number } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/jetx/bet`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -313,7 +322,7 @@ export const placeJetXBet = async (data: {
   return json;
 };
 
-export const cashOutJetX = async (userId: number | string, currency: CurrencyType): Promise<{ success: boolean; multiplier: number; winAmount: number }> => {
+export const cashOutJetX = async (userId: number | string, currency: CurrencyType): Promise<{ success: boolean; multiplier: number; winAmount: number } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/jetx/cashout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -350,7 +359,7 @@ export const placeAviatorBet = async (data: {
   currency: CurrencyType;
   firstName?: string;
   slot?: 1 | 2;
-}): Promise<{ success: boolean; roundNumber: number; slot: number }> => {
+}): Promise<{ success: boolean; roundNumber: number; slot: number } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/aviator/bet`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -361,7 +370,7 @@ export const placeAviatorBet = async (data: {
   return json;
 };
 
-export const cashOutAviator = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; multiplier: number; winAmount: number }> => {
+export const cashOutAviator = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; multiplier: number; winAmount: number } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/aviator/cashout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -372,7 +381,7 @@ export const cashOutAviator = async (userId: number | string, currency: Currency
   return json;
 };
 
-export const cancelAviatorBet = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; refunded: number }> => {
+export const cancelAviatorBet = async (userId: number | string, currency: CurrencyType, slot: 1 | 2 = 1): Promise<{ success: boolean; refunded: number } & Partial<BalancePayload>> => {
   const res = await fetch(`${API_BASE_URL}/aviator/cancel`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
