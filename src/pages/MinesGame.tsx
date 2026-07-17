@@ -390,7 +390,7 @@ const MinesGame = () => {
                 className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>−</button>
               <div className="flex-1 text-center">
                 <span className="text-xl font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
-                  {activeWallet === "dollar" ? `$${selectedBet.toFixed(2)}` : `${selectedBet.toFixed(2)} ⭐`}
+                  {currencyMode === "STAR" ? `${selectedBet.toFixed(2)} ⭐` : `${currencySymbol(currencyMode)}${selectedBet.toFixed(2)}`}
                 </span>
               </div>
               <button onClick={() => setSelectedBet(prev => prev + 1)}
@@ -405,8 +405,9 @@ const MinesGame = () => {
                     color: "hsl(0, 0%, 80%)",
                     border: "1px solid hsla(0, 0%, 40%, 0.5)",
                   }}>
-                  {activeWallet === "dollar" ? `$${bet}` : `${bet} ⭐`}
+                  {currencyMode === "STAR" ? `${bet} ⭐` : `${currencySymbol(currencyMode)}${bet}`}
                 </button>
+
               ))}
             </div>
           </div>
