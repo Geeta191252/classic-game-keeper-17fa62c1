@@ -408,7 +408,8 @@ const BetPanel = ({
   multiplier,
   roundNumber,
   currency,
-  setCurrency,
+  currencyMode,
+  setCurrencyMode,
   tgUserId,
   userName,
   balance,
@@ -424,7 +425,8 @@ const BetPanel = ({
   multiplier: number;
   roundNumber: number;
   currency: CurrencyType;
-  setCurrency: (c: CurrencyType) => void;
+  currencyMode: GameCurrencyMode;
+  setCurrencyMode: (m: GameCurrencyMode) => void;
   tgUserId: number | undefined;
   userName: string;
   balance: number;
