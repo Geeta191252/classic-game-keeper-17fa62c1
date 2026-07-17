@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine, ArrowUpFromLine, Users as UsersIcon,
-  Search, TrendingUp, TrendingDown, Activity, Wallet, Gamepad2,
-  ShieldAlert, Crown, RefreshCw, Loader2, CheckCircle2, XCircle,
-  DollarSign, Coins, Sparkles, Database, AlertCircle, Info,
+  Search, TrendingUp, TrendingDown, Activity,
+  RefreshCw, Loader2, CheckCircle2, XCircle,
+  Coins, Database, AlertCircle, Info,
 } from "lucide-react";
 import {
   getSummary, listUsers, listTransactions, walletAdjust,
