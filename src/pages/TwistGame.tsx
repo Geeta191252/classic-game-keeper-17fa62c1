@@ -244,10 +244,12 @@ const MULTIPLIERS = [
   [0, 3.90, 12.5, 28.0, 52.0, 85.0, 133.0, 200.0, 1000.0]  // Fire (Outer)
 ];
 
-const PRESETS_BY_CURRENCY = {
-  dollar: [1, 3, 5, 10, 20, 50, 100],
-  star: [10, 25, 50, 100, 250, 500, 1000]
+const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
+  USD: [1, 3, 5, 10, 20, 50, 100],
+  INR: [100, 300, 500, 1000, 2000, 5000, 10000],
+  STAR: [10, 25, 50, 100, 250, 500, 1000],
 };
+
 
 const stepAngles = MULTIPLIERS.map(arr => {
   const len = arr.length;
@@ -1180,8 +1182,9 @@ const TwistGame = () => {
                 <div className="bet-input-section">
                   <div className="bet-input-label">BET</div>
                   <div className="bet-value-display">
-                    <div className="currency-icon">{currency === "dollar" ? "$" : "★"}</div>
+                    <div className="currency-icon">{currencyMode === "STAR" ? "★" : currencySymbol(currencyMode)}</div>
                     <span>{bet}</span>
+
                   </div>
                 </div>
                 <div className="bet-spinners">
@@ -1197,7 +1200,7 @@ const TwistGame = () => {
 
             {/* Presets */}
             <div className="flex gap-1 justify-between w-full mb-1">
-              {PRESETS_BY_CURRENCY[currency].map((preset) => (
+              {PRESETS_BY_MODE[currencyMode].map((preset) => (
                 <button
                   key={preset}
                   disabled={isRoundActive}
@@ -1228,7 +1231,7 @@ const TwistGame = () => {
                   PART CASHOUT 
                   {hasPartProgress && (
                     <span className="cashout-amount blue-glow">
-                      {currency === "dollar" ? `$${partPayoutVal.toFixed(2)}` : `★${partPayoutVal}`}
+                      {currencyMode === "STAR" ? `★${partPayoutVal}` : `${currencySymbol(currencyMode)}${partPayoutVal.toFixed(2)}`}
                     </span>
                   )}
                 </button>
@@ -1241,7 +1244,7 @@ const TwistGame = () => {
                   CASHOUT 
                   {currentPayoutMult > 0 && (
                     <span className="cashout-amount">
-                      {currency === "dollar" ? `$${currentPayoutVal.toFixed(2)}` : `★${currentPayoutVal}`}
+                      {currencyMode === "STAR" ? `★${currentPayoutVal}` : `${currencySymbol(currencyMode)}${currentPayoutVal.toFixed(2)}`}
                     </span>
                   )}
                 </button>
@@ -1282,7 +1285,7 @@ const TwistGame = () => {
 
       {/* Footer Info */}
       <div className="footer-bar">
-        Last Win: <span id="lastWinDisplay">{lastWin ? (currency === "dollar" ? `$${lastWin.toFixed(2)}` : `★${lastWin}`) : "-"}</span>
+        Last Win: <span id="lastWinDisplay">{lastWin ? (currencyMode === "STAR" ? `★${lastWin}` : `${currencySymbol(currencyMode)}${lastWin.toFixed(2)}`) : "-"}</span>
       </div>
 
       {/* Settings Drawer */}
