@@ -251,7 +251,6 @@ const AviatorFunGame = () => {
   const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [displayMode, setDisplayMode] = useState<"USD" | "INR" | "STAR">("USD");
-  const autoPickedRef = useRef(false);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalStar = starBalance + starWinning;
