@@ -153,6 +153,8 @@ const MinesClassicGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  useEffect(() => { setCurrency(currencyMode === "STAR" ? "star" : "dollar"); }, [currencyMode]);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalStar = starBalance + starWinning;
