@@ -1200,7 +1200,7 @@ const TwistGame = () => {
 
             {/* Presets */}
             <div className="flex gap-1 justify-between w-full mb-1">
-              {PRESETS_BY_CURRENCY[currency].map((preset) => (
+              {PRESETS_BY_MODE[currencyMode].map((preset) => (
                 <button
                   key={preset}
                   disabled={isRoundActive}
