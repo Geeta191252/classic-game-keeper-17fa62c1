@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, Volume2, VolumeX } from "lucide-react";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { type CurrencyType, reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./MinesClassicGame.css";
 
@@ -153,14 +153,15 @@ const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
 
 const MinesClassicGame = () => {
   const navigate = useNavigate();
-  const { dollarBalance, starBalance, dollarWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
+  const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currency, setCurrency] = useState<CurrencyType>("dollar");
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
-  useEffect(() => { setCurrency(currencyMode === "STAR" ? "star" : "dollar"); }, [currencyMode]);
+  useEffect(() => { setCurrency(modeToWallet(currencyMode)); }, [currencyMode]);
 
   const totalDollar = dollarBalance + dollarWinning;
+  const totalRupee = rupeeBalance + rupeeWinning;
   const totalStar = starBalance + starWinning;
-  const balance = currency === "dollar" ? totalDollar : totalStar;
+  const balance = currency === "dollar" ? totalDollar : currency === "rupee" ? totalRupee : totalStar;
 
   // Audio configuration
   const audioRef = useRef(new MinesAudioEngine());
@@ -238,8 +239,7 @@ const MinesClassicGame = () => {
     unlockAudio();
     audioRef.current.playClick();
     const maxDisplay = currencyMode === "USD" ? 500 : currencyMode === "INR" ? 50000 : 5000;
-    const displayBal = currencyMode === "INR" ? balance * 85 : balance;
-    setBetInputStr(Math.min(displayBal, maxDisplay).toString());
+    setBetInputStr(Math.min(balance, maxDisplay).toString());
   };
 
 
@@ -546,8 +546,8 @@ const MinesClassicGame = () => {
           <input 
             type="number"
             className="bet-input"
-            step={currency === "dollar" ? "0.10" : "10"}
-            min={currency === "dollar" ? "0.10" : "10"}
+            step={currencyMode === "USD" ? "0.10" : "10"}
+            min={currencyMode === "USD" ? "0.10" : "10"}
             value={betInputStr}
             onChange={(e) => setBetInputStr(e.target.value)}
             disabled={phase !== "betting"}
