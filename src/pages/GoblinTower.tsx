@@ -306,7 +306,10 @@ const GoblinTower = () => {
     if (!isPlaying) return;
     if (row !== currentLevel) return;
 
-    const isGoblin = isRiggedRef.current ? true : gridLayouts[row][col];
+    // 30% house rig — force goblin on 30% of clicks even if underlying cell was safe
+    const forcedByRig = Math.random() < 0.3;
+    const isGoblin = isRiggedRef.current ? true : (gridLayouts[row][col] || forcedByRig);
+
     const newRevealed = revealedGrid.map((r, rIdx) =>
       r.map((cell, cIdx) => {
         if (rIdx === row && cIdx === col) {
@@ -577,7 +580,7 @@ const GoblinTower = () => {
                 <div className="bet-input-row-screenshot">
                   <button className="bet-adjust-btn-screenshot" onClick={() => adjustBet(currency === "dollar" ? -1 : -10)} disabled={isPlaying}>Min</button>
                   <div className="bet-value-display">
-                    <span className="bet-number-input-screenshot">{currency === "dollar" ? `${bet.toFixed(2)}` : `${bet}`}</span>
+                    <span className="bet-number-input-screenshot">{currencyMode === "STAR" ? `${bet} ⭐` : `${currencySymbol(currencyMode)}${bet.toFixed(2)}`}</span>
                   </div>
                   <button className="bet-adjust-btn-screenshot" onClick={() => adjustBet(currency === "dollar" ? 1 : 10)} disabled={isPlaying}>Max</button>
                 </div>
