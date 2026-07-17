@@ -30,7 +30,18 @@ app.use(express.json({
 // MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(async () => {
+    console.log("✅ MongoDB connected");
+    try {
+      const SettingModel = require("./models/Setting");
+      await SettingModel.findOneAndUpdate(
+        { key: "aviatorProfitPercent" },
+        { key: "aviatorProfitPercent", value: 50 },
+        { upsert: true, new: true }
+      );
+      console.log("✅ Aviator house edge set to 50%");
+    } catch (e) { console.error("aviator profit init error:", e); }
+  })
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 // Telegram Bot (polling mode for dev, webhook for production)
