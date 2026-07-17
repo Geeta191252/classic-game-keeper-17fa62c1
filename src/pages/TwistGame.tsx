@@ -1141,6 +1141,8 @@ const TwistGame = () => {
           </div>
         </div>
 
+        <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={isRoundActive} />
+
         <div className="flex items-center gap-3">
           <button 
             onClick={() => {
