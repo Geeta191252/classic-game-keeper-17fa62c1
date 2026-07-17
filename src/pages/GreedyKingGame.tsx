@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdownBeep, playResultReveal, startBgMusic, stopBgMusic } from "@/hooks/useGameSounds";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { getTelegram, fetchGreedyKingState, placeGreedyKingBet, fetchMyGreedyKingBets, type CurrencyType, type GreedyKingState } from "@/lib/telegram";
+import GameCurrencyChips from "@/components/GameCurrencyChips";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
 
 const FOOD_ITEMS = [
   { emoji: "🌭", name: "Hot Dog", multiplier: 10 },
@@ -59,7 +61,9 @@ const GreedyKingGame = () => {
   const gameDollarBalance = dollarBalance + dollarWinning;
   const gameStarBalance = starBalance + starWinning;
   const [todayProfits, setTodayProfits] = useState(0);
-  const [activeWallet, setActiveWallet] = useState<"dollar" | "star">("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const activeWallet = modeToWallet(currencyMode);
+  const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<"dollar" | "star">("dollar");
   const [selectedBet, setSelectedBet] = useState(10);
@@ -247,8 +251,9 @@ const GreedyKingGame = () => {
           <div className="rounded-lg px-3 py-1.5 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
             <p className="text-[10px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
             <p className="font-bold text-sm leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>{todayRound}</p>
-          </div>
+          <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting"} />
         </div>
+      </div>
       </div>
 
       {/* Wheel */}
@@ -475,7 +480,7 @@ const GreedyKingGame = () => {
             onClick={() => {
               const hasBet = myBets.some(b => b > 0);
               if (phase !== "betting" || hasBet) return;
-              setActiveWallet(prev => prev === "dollar" ? "star" : "dollar");
+              setActiveWallet(activeWallet === "dollar" ? "star" : "dollar");
             }}
             className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all active:scale-90"
             style={{

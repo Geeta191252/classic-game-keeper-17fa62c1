@@ -12,6 +12,8 @@ import {
 } from "@/hooks/useGameSounds";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
+import GameCurrencyChips from "@/components/GameCurrencyChips";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
 import plinkoHeader from "@/assets/plinko-header.png";
 import plinkoPillar from "@/assets/plinko-pillar.png";
 
@@ -155,7 +157,9 @@ const PlinkoGame = () => {
   const gameDollarBalance = dollarBalance + dollarWinning + localDollarAdj;
   const gameStarBalance = starBalance + starWinning + localStarAdj;
 
-  const [activeWallet, setActiveWallet] = useState<"dollar" | "star">("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const activeWallet = modeToWallet(currencyMode);
+  const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
   const [bet, setBet] = useState(1);
   const [lines, setLines] = useState(8);
   const [risk, setRisk] = useState<Risk>("medium");
@@ -168,7 +172,8 @@ const PlinkoGame = () => {
   const betCounterRef = useRef(0);
 
   const multipliers = useMemo(() => MULTIPLIER_TABLE[risk][lines], [risk, lines]);
-  const currentBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const nativeBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const currentBalance = currencyMode === "INR" ? nativeBalance * INR_RATE : nativeBalance;
 
   // Geometry
   const PEG_TOP = 3;
@@ -200,8 +205,9 @@ const PlinkoGame = () => {
     if (dropping) return;
     if (currentBalance < bet) return;
 
-    if (activeWallet === "dollar") setLocalDollarAdj((p) => p - bet);
-    else setLocalStarAdj((p) => p - bet);
+    const nBet = toNativeAmount(bet, currencyMode);
+    if (activeWallet === "dollar") setLocalDollarAdj((p) => p - nBet);
+    else setLocalStarAdj((p) => p - nBet);
     if (soundRef.current) playBetSound();
 
     // Rigging: 9 losses (~0.4x–0.7x) then every 10th bet a ~2x win
@@ -242,8 +248,8 @@ const PlinkoGame = () => {
 
     try {
       await reportGameResult({
-        betAmount: bet,
-        winAmount: win,
+        betAmount: toNativeAmount(bet, currencyMode),
+        winAmount: toNativeAmount(win, currencyMode),
         currency: activeWallet,
         game: "plinko",
       });
@@ -316,32 +322,7 @@ const PlinkoGame = () => {
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </button>
         <div className="flex gap-1.5">
-          <button
-            onClick={() => setActiveWallet("dollar")}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-            style={{
-              background:
-                activeWallet === "dollar"
-                  ? "linear-gradient(135deg, hsl(140 65% 42%), hsl(160 55% 38%))"
-                  : "hsla(0,0%,100%,0.08)",
-              color: activeWallet === "dollar" ? "hsl(0 0% 100%)" : "hsl(260 30% 70%)",
-            }}
-          >
-            💲 {gameDollarBalance.toFixed(2)}
-          </button>
-          <button
-            onClick={() => setActiveWallet("star")}
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold"
-            style={{
-              background:
-                activeWallet === "star"
-                  ? "linear-gradient(135deg, hsl(40 90% 50%), hsl(25 85% 45%))"
-                  : "hsla(0,0%,100%,0.08)",
-              color: activeWallet === "star" ? "hsl(0 0% 10%)" : "hsl(260 30% 70%)",
-            }}
-          >
-            ⭐ {gameStarBalance.toLocaleString()}
-          </button>
+        <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={dropping} />
         </div>
       </div>
 

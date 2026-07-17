@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdownBeep, playResultReveal, startBgMusic, stopBgMusic } from "@/hooks/useGameSounds";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult, type CurrencyType } from "@/lib/telegram";
+import GameCurrencyChips from "@/components/GameCurrencyChips";
+import { GameCurrencyMode, INR_RATE, modeToWallet, toNativeAmount } from "@/lib/gameCurrency";
 
 const DICE_FACES = [
   { value: 1, dots: "⚀", multiplier: 0 },
@@ -29,7 +31,9 @@ const DiceMasterGame = () => {
   const [localStarAdj, setLocalStarAdj] = useState(0);
   const gameDollarBalance = dollarBalance + dollarWinning + localDollarAdj;
   const gameStarBalance = starBalance + starWinning + localStarAdj;
-  const [activeWallet, setActiveWallet] = useState<"dollar" | "star">("dollar");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const activeWallet = modeToWallet(currencyMode);
+  const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
   const [selectedBet, setSelectedBet] = useState(1);
   
   const [phase, setPhase] = useState<GamePhase>("betting");
@@ -56,14 +60,18 @@ const DiceMasterGame = () => {
     };
   }, []);
 
-  const currentBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  // INR is a display layer over the dollar wallet, so balance/bet compare
+  // in display units (INR shows $ balance × 85).
+  const nativeBalance = activeWallet === "dollar" ? gameDollarBalance : gameStarBalance;
+  const currentBalance = currencyMode === "INR" ? nativeBalance * INR_RATE : nativeBalance;
 
   const rollDice = () => {
     if (phase !== "betting" || currentBalance < selectedBet) return;
 
-    // Deduct bet
-    if (activeWallet === "dollar") setLocalDollarAdj(p => p - selectedBet);
-    else setLocalStarAdj(p => p - selectedBet);
+    // Bet in native wallet units (INR display → $ backend)
+    const nativeBet = toNativeAmount(selectedBet, currencyMode);
+    if (activeWallet === "dollar") setLocalDollarAdj(p => p - nativeBet);
+    else setLocalStarAdj(p => p - nativeBet);
 
     if (soundRef.current) playBetSound();
     setPhase("rolling");
@@ -115,8 +123,8 @@ const DiceMasterGame = () => {
         setTotalLost(selectedBet);
         if (soundRef.current) playLoseSound();
       }
-      // Report result to backend
-      reportGameResult({ betAmount: selectedBet, winAmount: prize, currency: activeWallet, game: "dice-master" })
+      // Report result to backend in NATIVE wallet units
+      reportGameResult({ betAmount: toNativeAmount(selectedBet, currencyMode), winAmount: toNativeAmount(prize, currencyMode), currency: activeWallet, game: "dice-master" })
         .then(() => { setLocalDollarAdj(0); setLocalStarAdj(0); refreshBalance(); }).catch(console.error);
 
       setPhase("result");
@@ -190,6 +198,7 @@ const DiceMasterGame = () => {
             </button>
           ))}
         </div>
+        <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting"} />
         <div className="rounded-lg px-3 py-1.5 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
           <p className="text-[10px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
           <p className="font-bold text-sm leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
@@ -335,7 +344,7 @@ const DiceMasterGame = () => {
         <button
           onClick={() => {
             if (phase !== "betting") return;
-            setActiveWallet(prev => prev === "dollar" ? "star" : "dollar");
+            setActiveWallet(activeWallet === "dollar" ? "star" : "dollar");
           }}
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all active:scale-90"
           style={{
