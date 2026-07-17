@@ -351,18 +351,20 @@ const AviatorFunGame = () => {
     setActiveModal(null);
   };
 
-  // Generate simulated players
+  // Generate simulated players — seeded by roundNumber so every user sees the same list
+  const roundSeedRef = useRef(1);
   const generateSimulatedPlayers = () => {
+    const rand = mulberry32(roundSeedRef.current * 9301 + (currency === "star" ? 1 : 2));
     const list: SimulatedPlayer[] = [];
-    const numPlayers = Math.floor(Math.random() * 40) + 90;
+    const numPlayers = Math.floor(rand() * 40) + 90;
     for (let i = 0; i < numPlayers; i++) {
-      const name = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)] + Math.floor(Math.random() * 900 + 100);
-      const betAmt = Math.floor(Math.random() * (currency === "dollar" ? 10 : 100)) + (currency === "dollar" ? 1 : 10);
-      
-      const r = Math.random();
-      let target = 1.05 + Math.random() * 0.2;
-      if (r > 0.3) target = 1.25 + Math.pow(Math.random(), 2) * 4.0;
-      if (r > 0.8) target = 5.0 + Math.pow(Math.random(), 3) * 35.0;
+      const name = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)] + Math.floor(rand() * 900 + 100);
+      const betAmt = Math.floor(rand() * (currency === "dollar" ? 10 : 100)) + (currency === "dollar" ? 1 : 10);
+
+      const r = rand();
+      let target = 1.05 + rand() * 0.2;
+      if (r > 0.3) target = 1.25 + Math.pow(rand(), 2) * 4.0;
+      if (r > 0.8) target = 5.0 + Math.pow(rand(), 3) * 35.0;
 
       list.push({
         name,
@@ -370,22 +372,12 @@ const AviatorFunGame = () => {
         targetMultiplier: Math.round(target * 100) / 100,
         cashedOut: false,
         winAmount: 0,
-        avatarIdx: Math.floor(Math.random() * AVATAR_GRADIENTS.length)
+        avatarIdx: Math.floor(rand() * AVATAR_GRADIENTS.length)
       });
     }
     return list;
   };
 
-  // Generate random crash multipliers
-  const generateCrashMultiplier = () => {
-    const r = Math.random();
-    if (r < 0.05) return 1.00; // instant crash
-    
-    // Spribe distribution
-    const raw = 0.98 / (1.0 - Math.random() * 0.96);
-    const finalMult = Math.floor(Math.max(1.01, raw) * 100) / 100;
-    return Math.min(1000.00, finalMult);
-  };
 
   // Game Round Control
   const startWaitingRound = useCallback(() => {
