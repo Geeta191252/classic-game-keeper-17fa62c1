@@ -867,8 +867,8 @@ const AviatorFunGame = () => {
     const updater = panelId === "panel-1" ? setPanel1 : setPanel2;
     updater(prev => {
       if (prev.status !== "NONE") return prev;
-      const minVal = currency === "dollar" ? 1 : 10;
-      const maxVal = currency === "dollar" ? 1000 : 10000;
+      const minVal = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
+      const maxVal = displayMode === "USD" ? 1000 : displayMode === "INR" ? 100000 : 10000;
       const next = Math.max(minVal, Math.min(maxVal, prev.amount + amountChange));
       return { ...prev, amount: next };
     });
