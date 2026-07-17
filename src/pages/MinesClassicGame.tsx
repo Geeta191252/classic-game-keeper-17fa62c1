@@ -619,7 +619,7 @@ const MinesClassicGame = () => {
             onClick={triggerCashout}
             disabled={safeOpens === 0 || phase !== "playing"}
           >
-            Cashout {safeOpens > 0 && `(${(parseFloat(betInputStr) * currentMultiplier).toFixed(2)})`}
+            Cashout {safeOpens > 0 && `(${currencyMode === "STAR" ? "★" : currencySymbol(currencyMode)}${(parseFloat(betInputStr) * currentMultiplier).toFixed(2)})`}
           </button>
         )}
 
