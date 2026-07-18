@@ -186,9 +186,8 @@ const WalletScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (walletTab === "deposit") {
-      setDepositStep("menu");
-    }
+    if (walletTab === "deposit") setDepositStep("menu");
+    else setWithdrawStep("menu");
   }, [walletTab]);
 
   const handleUpiDepositSubmit = async () => {
