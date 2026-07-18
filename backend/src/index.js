@@ -3862,6 +3862,68 @@ app.post("/api/admin/upi/config", requireAdmin, async (req, res) => {
   }
 });
 
+// ============================================
+// Deposit/Withdraw Limits Config
+// ============================================
+const DEFAULT_LIMITS = {
+  inr: { depositMin: 300, withdrawMin: 300 },
+  star: { depositMin: 100, withdrawMin: 100 },
+  crypto: {
+    depositMin: { btc: 20, ltc: 5, ton: 3, sol: 5, trx: 2, doge: 8 },
+    withdrawMin: 10,
+  },
+};
+
+function mergeLimits(v) {
+  const s = v && typeof v === "object" ? v : {};
+  return {
+    inr: {
+      depositMin: Number(s?.inr?.depositMin) || DEFAULT_LIMITS.inr.depositMin,
+      withdrawMin: Number(s?.inr?.withdrawMin) || DEFAULT_LIMITS.inr.withdrawMin,
+    },
+    star: {
+      depositMin: Number(s?.star?.depositMin) || DEFAULT_LIMITS.star.depositMin,
+      withdrawMin: Number(s?.star?.withdrawMin) || DEFAULT_LIMITS.star.withdrawMin,
+    },
+    crypto: {
+      depositMin: { ...DEFAULT_LIMITS.crypto.depositMin, ...(s?.crypto?.depositMin || {}) },
+      withdrawMin: Number(s?.crypto?.withdrawMin) || DEFAULT_LIMITS.crypto.withdrawMin,
+    },
+  };
+}
+
+app.get("/api/limits-config", async (req, res) => {
+  try {
+    const doc = await SettingModel.findOne({ key: "limitsConfig" });
+    res.json(mergeLimits(doc?.value));
+  } catch (e) {
+    res.json(DEFAULT_LIMITS);
+  }
+});
+
+app.get("/api/admin/limits-config", requireAdmin, async (req, res) => {
+  try {
+    const doc = await SettingModel.findOne({ key: "limitsConfig" });
+    res.json(mergeLimits(doc?.value));
+  } catch (e) {
+    res.status(500).json({ error: "Failed to load limits" });
+  }
+});
+
+app.post("/api/admin/limits-config", requireAdmin, async (req, res) => {
+  try {
+    const value = mergeLimits(req.body || {});
+    const doc = await SettingModel.findOneAndUpdate(
+      { key: "limitsConfig" },
+      { key: "limitsConfig", value },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, config: doc.value });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to save limits" });
+  }
+});
+
 
 // ============================================
 // Aviator Fun — independent game with its own admin controls
