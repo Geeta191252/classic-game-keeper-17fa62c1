@@ -75,6 +75,8 @@ const WalletScreen = () => {
   const [loading, setLoading] = useState(false);
   const [walletTab, setWalletTab] = useState<"deposit" | "withdraw">("deposit");
   const [depositStep, setDepositStep] = useState<"menu" | "crypto" | "inr" | "star">("menu");
+  const [withdrawStep, setWithdrawStep] = useState<"menu" | "crypto" | "inr" | "star">("menu");
+  const [upiWithdrawAddress, setUpiWithdrawAddress] = useState("");
   const [amountDialog, setAmountDialog] = useState<{
     open: boolean;
     action: ActionType;
@@ -184,9 +186,8 @@ const WalletScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (walletTab === "deposit") {
-      setDepositStep("menu");
-    }
+    if (walletTab === "deposit") setDepositStep("menu");
+    else setWithdrawStep("menu");
   }, [walletTab]);
 
   const handleUpiDepositSubmit = async () => {
@@ -689,9 +690,9 @@ const WalletScreen = () => {
                   Choose Deposit Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", icon: DollarSign, color: "#00a2e8" },
-                  { id: "inr", label: "INR", desc: "UPI / QR Code", icon: IndianRupee, color: "#10b981" },
-                  { id: "star", label: "Star", desc: "Telegram Stars ⭐", icon: Star, color: "#f59e0b" },
+                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: "Min $4+", icon: DollarSign, color: "#00a2e8" },
+                  { id: "inr", label: "INR", desc: "UPI / QR Code", min: "Min ₹100", icon: IndianRupee, color: "#10b981" },
+                  { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${STAR_TO_DOLLAR_RATE} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
                   const Icon = m.icon;
                   return (
@@ -709,6 +710,7 @@ const WalletScreen = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-black text-sm text-white">{m.label}</p>
                         <p className="text-[10px] text-[#8e97a4] truncate">{m.desc}</p>
+                        <p className="text-[9px] font-black text-amber-400 mt-0.5">{m.min}</p>
                       </div>
                       <ArrowRightLeft className="h-4 w-4 text-[#8e97a4] rotate-[-90deg]" />
                     </button>
@@ -1008,134 +1010,327 @@ const WalletScreen = () => {
              WITHDRAW TAB
              ============================================ */
           <>
-            {/* Winnings Manual Withdrawal Form (Embedded directly in page!) */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-4 shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <ArrowUpRight className="h-4 w-4 text-[#00a2e8]" />
-                  <h3 className="font-black text-xs text-white uppercase tracking-wider">Withdraw Winnings</h3>
-                </div>
-                <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                  Available: ${dollarWinnings.toFixed(2)}
-                </span>
-              </div>
-
-              <p className="text-[10px] text-[#8e97a4]">
-                Withdraw from your winnings wallet. Minimum withdrawal is <span className="text-white font-bold">$10</span>.
-              </p>
-
-              {/* Crypto selector */}
-              <div className="grid grid-cols-3 gap-1.5">
-                {withdrawCryptoOptions.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => {
-                      setWithdrawCrypto(c.id);
-                      setWithdrawNetwork(c.network);
-                    }}
-                    className={`py-2 rounded-xl text-[10px] font-black border transition-colors ${
-                      withdrawCrypto === c.id
-                        ? "border-[#00a2e8] bg-[#00a2e8]/10 text-white"
-                        : "border-white/[0.02] bg-[#0d121f] text-slate-400"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Withdraw Address</label>
-                <Input
-                  type="text"
-                  placeholder={`Your ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''} address`}
-                  value={withdrawAddress}
-                  onChange={e => setWithdrawAddress(e.target.value)}
-                  className="rounded-xl bg-[#0d121f] border-white/[0.02] font-mono text-[9px] text-white h-9"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD)</label>
-                <Input
-                  type="number"
-                  placeholder="Amount to withdraw (min $10)"
-                  value={withdrawAmount}
-                  onChange={e => setWithdrawAmount(e.target.value)}
-                  className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
-                  min="10"
-                />
-              </div>
-
-              <Button
-                onClick={handleWithdrawSubmit}
-                disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < 10}
-                className="w-full rounded-xl h-10 font-black text-xs uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+            {/* Withdraw Method MENU Page */}
+            {withdrawStep === "menu" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-3"
               >
-                {withdrawing ? "Submitting..." : `Withdraw via ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''}`}
-              </Button>
+                <p className="text-[10px] font-extrabold text-[#8e97a4] uppercase tracking-wider text-center">
+                  Choose Withdraw Method
+                </p>
+                {([
+                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: "Min $10", icon: DollarSign, color: "#00a2e8" },
+                  { id: "inr", label: "INR", desc: "UPI / Bank UPI ID", min: "Min ₹500", icon: IndianRupee, color: "#10b981" },
+                  { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${STAR_TO_DOLLAR_RATE} ⭐`, icon: Star, color: "#f59e0b" },
+                ] as const).map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setWithdrawStep(m.id)}
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-[#141b2b] border border-white/[0.02] hover:border-white/10 hover:bg-[#1a2235] transition-all text-left shadow-md"
+                    >
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${m.color}15`, color: m.color }}
+                      >
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-black text-sm text-white">{m.label}</p>
+                        <p className="text-[10px] text-[#8e97a4] truncate">{m.desc}</p>
+                        <p className="text-[9px] font-black text-amber-400 mt-0.5">{m.min}</p>
+                      </div>
+                      <ArrowRightLeft className="h-4 w-4 text-[#8e97a4] rotate-[-90deg]" />
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
 
-              <p className="text-[8px] text-slate-500 text-center leading-relaxed">
-                ⏳ Winnings requests go to admin for approval. You will receive a Telegram message once processed.
-              </p>
-            </motion.div>
-
-            {/* TON Wallet Connect & Withdraw only */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Wallet className="h-4 w-4 text-[#00a2e8]" />
-                  <h3 className="font-black text-xs text-white uppercase tracking-wider">TON Withdraw</h3>
+            {/* CRYPTO WITHDRAW PAGE */}
+            {withdrawStep === "crypto" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setWithdrawStep("menu")}
+                    className="flex items-center gap-1 text-[10px] font-black text-[#8e97a4] hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">Crypto Withdraw</span>
                 </div>
-                {tonPrice && (
-                  <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                    1 TON = ${tonPrice.toFixed(2)}
-                  </span>
-                )}
-              </div>
 
-              <div className="flex justify-center py-1">
-                <div className="ton-connect-button-container" style={{ transform: "scale(0.9)" }} />
-              </div>
+                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-4 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ArrowUpRight className="h-4 w-4 text-[#00a2e8]" />
+                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Withdraw Winnings</h3>
+                    </div>
+                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
+                      Available: ${dollarWinnings.toFixed(2)}
+                    </span>
+                  </div>
 
-              {tonAddress ? (
-                <div className="space-y-1.5">
-                  <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet</p>
+                  <p className="text-[10px] text-[#8e97a4]">
+                    Minimum withdrawal: <span className="text-amber-400 font-black">$10</span>
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {withdrawCryptoOptions.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setWithdrawCrypto(c.id);
+                          setWithdrawNetwork(c.network);
+                        }}
+                        className={`py-2 rounded-xl text-[10px] font-black border transition-colors ${
+                          withdrawCrypto === c.id
+                            ? "border-[#00a2e8] bg-[#00a2e8]/10 text-white"
+                            : "border-white/[0.02] bg-[#0d121f] text-slate-400"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Withdraw Address</label>
+                    <Input
+                      type="text"
+                      placeholder={`Your ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''} address`}
+                      value={withdrawAddress}
+                      onChange={e => setWithdrawAddress(e.target.value)}
+                      className="rounded-xl bg-[#0d121f] border-white/[0.02] font-mono text-[9px] text-white h-9"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD) — Min $10</label>
+                    <Input
+                      type="number"
+                      placeholder="Amount to withdraw (min $10)"
+                      value={withdrawAmount}
+                      onChange={e => { setWithdrawAmount(e.target.value); setWithdrawCurrency("dollar"); }}
+                      className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
+                      min="10"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={() => { setWithdrawCurrency("dollar"); handleWithdrawSubmit(); }}
+                    disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < 10}
+                    className="w-full rounded-xl h-10 font-black text-xs uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                  >
+                    {withdrawing ? "Submitting..." : `Withdraw via ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''}`}
+                  </Button>
+
+                  <p className="text-[8px] text-slate-500 text-center leading-relaxed">
+                    ⏳ Requests go to admin for approval. You'll get a Telegram message once processed.
+                  </p>
+                </div>
+
+                {/* TON Instant Withdraw */}
+                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Wallet className="h-4 w-4 text-[#00a2e8]" />
+                      <h3 className="font-black text-xs text-white uppercase tracking-wider">TON Withdraw</h3>
+                    </div>
+                    {tonPrice && (
+                      <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
+                        1 TON = ${tonPrice.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex justify-center py-1">
+                    <div className="ton-connect-button-container" style={{ transform: "scale(0.9)" }} />
+                  </div>
+
+                  {tonAddress ? (
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet (Min $10)</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <Input
+                            type="number"
+                            placeholder="Amount to withdraw (min $10)"
+                            value={tonWithdrawAmount}
+                            onChange={(e) => setTonWithdrawAmount(e.target.value)}
+                            className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
+                            min="10"
+                          />
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">$</span>
+                        </div>
+                        <button
+                          onClick={handleTonWithdraw}
+                          disabled={tonProcessing || !tonWithdrawAmount}
+                          className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                        >
+                          {tonProcessing ? "..." : "Withdraw"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[9px] text-[#8e97a4] text-center py-2">
+                      ⚠️ Connect your TON wallet to perform TON withdrawals.
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* INR / UPI WITHDRAW PAGE */}
+            {withdrawStep === "inr" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setWithdrawStep("menu")}
+                    className="flex items-center gap-1 text-[10px] font-black text-[#8e97a4] hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">INR Withdraw</span>
+                </div>
+
+                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-4 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Smartphone className="h-4 w-4 text-emerald-400" />
+                      <h3 className="font-black text-xs text-white uppercase tracking-wider">UPI Withdraw</h3>
+                    </div>
+                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
+                      Available: ₹{rupeeWinnings.toFixed(2)}
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-[#8e97a4]">
+                    Minimum withdrawal: <span className="text-amber-400 font-black">₹500</span>. Payout to your UPI ID after admin approval.
+                  </p>
+
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Your UPI ID</label>
+                    <Input
+                      type="text"
+                      placeholder="e.g. yourname@upi"
+                      value={upiWithdrawAddress}
+                      onChange={e => setUpiWithdrawAddress(e.target.value)}
+                      className="rounded-xl bg-[#0d121f] border-white/[0.02] font-mono text-[10px] text-white h-9"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (INR) — Min ₹500</label>
+                    <Input
+                      type="number"
+                      placeholder="Amount in ₹ (min 500)"
+                      value={withdrawAmount}
+                      onChange={e => setWithdrawAmount(e.target.value)}
+                      className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
+                      min="500"
+                    />
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      const amt = parseFloat(withdrawAmount);
+                      if (!amt || amt < 500) {
+                        toast({ title: "Minimum ₹500", description: "Minimum INR withdrawal is ₹500.", variant: "destructive" });
+                        return;
+                      }
+                      if (!upiWithdrawAddress.trim()) {
+                        toast({ title: "UPI ID required", description: "Enter your UPI ID.", variant: "destructive" });
+                        return;
+                      }
+                      setWithdrawCurrency("rupee");
+                      setWithdrawAddress(upiWithdrawAddress.trim());
+                      setWithdrawNetwork("UPI");
+                      setTimeout(handleWithdrawSubmit, 0);
+                    }}
+                    disabled={withdrawing || !withdrawAmount || !upiWithdrawAddress.trim() || parseFloat(withdrawAmount) < 500}
+                    className="w-full rounded-xl h-10 font-black text-xs uppercase bg-emerald-500 hover:bg-emerald-600 text-white tracking-wider shadow-md transition-all disabled:opacity-50"
+                  >
+                    {withdrawing ? "Submitting..." : "Withdraw to UPI"}
+                  </Button>
+
+                  <p className="text-[8px] text-slate-500 text-center leading-relaxed">
+                    ⏳ Admin will verify and send INR to your UPI ID.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STAR WITHDRAW PAGE */}
+            {withdrawStep === "star" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setWithdrawStep("menu")}
+                    className="flex items-center gap-1 text-[10px] font-black text-[#8e97a4] hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">Star Withdraw</span>
+                </div>
+
+                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ArrowRightLeft className="h-4 w-4 text-amber-400" />
+                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Star to Cash</h3>
+                    </div>
+                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
+                      Available: {starBalance.toLocaleString()} ⭐
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-[#8e97a4]">
+                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from Crypto tab.
+                  </p>
+
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <Input
                         type="number"
-                        placeholder="Amount to withdraw (min $10)"
-                        value={tonWithdrawAmount}
-                        onChange={(e) => setTonWithdrawAmount(e.target.value)}
+                        placeholder={`Min ${STAR_TO_DOLLAR_RATE} ⭐`}
+                        value={convertStars}
+                        onChange={(e) => setConvertStars(e.target.value)}
                         className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min="10"
+                        min={STAR_TO_DOLLAR_RATE}
                       />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">$</span>
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">⭐</span>
                     </div>
                     <button
-                      onClick={handleTonWithdraw}
-                      disabled={tonProcessing || !tonWithdrawAmount}
-                      className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                      onClick={handleConvert}
+                      disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
+                      className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-amber-500 hover:bg-amber-600 text-black tracking-wider shadow-md transition-all disabled:opacity-50"
                     >
-                      {tonProcessing ? "..." : "Withdraw"}
+                      {converting ? "..." : `Convert to $${dollarOutput}`}
                     </button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-[9px] text-[#8e97a4] text-center py-2">
-                  ⚠️ Connect your TON wallet to perform TON withdrawals.
-                </p>
-              )}
-            </motion.div>
+              </motion.div>
+            )}
           </>
         )}
       </div>
