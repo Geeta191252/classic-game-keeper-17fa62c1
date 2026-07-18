@@ -1196,20 +1196,21 @@ const WalletScreen = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD) — Min $10</label>
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD) — Min ${cryptoWithdrawMin}</label>
                     <Input
                       type="number"
-                      placeholder="Amount to withdraw (min $10)"
+                      placeholder={`Amount to withdraw (min $${cryptoWithdrawMin})`}
                       value={withdrawAmount}
                       onChange={e => { setWithdrawAmount(e.target.value); setWithdrawCurrency("dollar"); }}
                       className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
-                      min="10"
+                      min={cryptoWithdrawMin}
                     />
                   </div>
 
                   <Button
                     onClick={() => { setWithdrawCurrency("dollar"); handleWithdrawSubmit(); }}
-                    disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < 10}
+                    disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < cryptoWithdrawMin}
+
                     className="w-full rounded-xl h-10 font-black text-xs uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                   >
                     {withdrawing ? "Submitting..." : `Withdraw via ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''}`}
