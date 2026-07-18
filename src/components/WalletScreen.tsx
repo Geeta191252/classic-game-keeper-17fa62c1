@@ -1321,7 +1321,7 @@ const WalletScreen = () => {
                   </div>
 
                   <p className="text-[10px] text-[#8e97a4]">
-                    Minimum withdrawal: <span className="text-amber-400 font-black">₹500</span>. Payout to your UPI ID after admin approval.
+                    Minimum withdrawal: <span className="text-amber-400 font-black">₹{inrWithdrawMin}</span>. Payout to your UPI ID after admin approval.
                   </p>
 
                   <div className="space-y-1">
@@ -1336,22 +1336,22 @@ const WalletScreen = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (INR) — Min ₹500</label>
+                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (INR) — Min ₹{inrWithdrawMin}</label>
                     <Input
                       type="number"
-                      placeholder="Amount in ₹ (min 500)"
+                      placeholder={`Amount in ₹ (min ${inrWithdrawMin})`}
                       value={withdrawAmount}
                       onChange={e => setWithdrawAmount(e.target.value)}
                       className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
-                      min="500"
+                      min={inrWithdrawMin}
                     />
                   </div>
 
                   <Button
                     onClick={() => {
                       const amt = parseFloat(withdrawAmount);
-                      if (!amt || amt < 500) {
-                        toast({ title: "Minimum ₹500", description: "Minimum INR withdrawal is ₹500.", variant: "destructive" });
+                      if (!amt || amt < inrWithdrawMin) {
+                        toast({ title: `Minimum ₹${inrWithdrawMin}`, description: `Minimum INR withdrawal is ₹${inrWithdrawMin}.`, variant: "destructive" });
                         return;
                       }
                       if (!upiWithdrawAddress.trim()) {
@@ -1363,9 +1363,10 @@ const WalletScreen = () => {
                       setWithdrawNetwork("UPI");
                       setTimeout(handleWithdrawSubmit, 0);
                     }}
-                    disabled={withdrawing || !withdrawAmount || !upiWithdrawAddress.trim() || parseFloat(withdrawAmount) < 500}
+                    disabled={withdrawing || !withdrawAmount || !upiWithdrawAddress.trim() || parseFloat(withdrawAmount) < inrWithdrawMin}
                     className="w-full rounded-xl h-10 font-black text-xs uppercase bg-emerald-500 hover:bg-emerald-600 text-white tracking-wider shadow-md transition-all disabled:opacity-50"
                   >
+
                     {withdrawing ? "Submitting..." : "Withdraw to UPI"}
                   </Button>
 
