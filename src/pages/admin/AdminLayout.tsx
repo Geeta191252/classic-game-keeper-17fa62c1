@@ -1,11 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  Activity, Users, Gamepad2, Image as ImageIcon, ShieldCheck, MessageSquare,
-  Megaphone, KeyRound, Wallet, ArrowDownToLine, ArrowUpFromLine, Coins,
-  BarChart3, PiggyBank, LineChart, Network, DollarSign, Palette, TrendingUp,
-  Target, CalendarClock, Crown, ShieldAlert, Type, Gift, Plane, Clock, Ticket,
-  Settings, Layers, MinusCircle, UserCircle2, ChevronLeft, ChevronRight,
+  Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
+  BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight,
   Bell, Search, Sparkles, LogOut, type LucideIcon,
 } from "lucide-react";
 import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
@@ -21,11 +18,6 @@ const GROUPS: Group[] = [
       { to: "/admin/dashboard", label: "Dashboard", icon: Activity },
       { to: "/admin/users", label: "Users", icon: Users },
       { to: "/admin/games", label: "Games", icon: Gamepad2 },
-      { to: "/admin/banners", label: "Banners", icon: ImageIcon },
-      { to: "/admin/moderators", label: "Moderators", icon: ShieldCheck },
-      { to: "/admin/support", label: "Support", icon: MessageSquare },
-      { to: "/admin/announcements", label: "Announcements", icon: Megaphone },
-      { to: "/admin/forgotten-passwords", label: "Forgotten Passwords", icon: KeyRound },
     ],
   },
   {
@@ -40,34 +32,12 @@ const GROUPS: Group[] = [
     label: "Insights",
     items: [
       { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-      { to: "/admin/spare-wallet", label: "Spare Wallet (Wingo, K3, …)", icon: PiggyBank },
-      { to: "/admin/daily-analytics", label: "Daily Analytics (Wingo, K…)", icon: LineChart },
-      { to: "/admin/bonus-income-report", label: "Bonus & Income Report", icon: Network },
-      { to: "/admin/financials-report", label: "Financials Report", icon: DollarSign },
-      { to: "/admin/user-theme", label: "User Theme", icon: Palette },
-    ],
-  },
-  {
-    label: "MLM Plans",
-    items: [
-      { to: "/admin/plans/deposit", label: "Deposit Plans", icon: TrendingUp },
-      { to: "/admin/plans/bet", label: "Bet Plans", icon: Target },
-      { to: "/admin/plans/salary", label: "Salary Income", icon: CalendarClock },
-      { to: "/admin/plans/rank", label: "Rank System", icon: Crown },
     ],
   },
   {
     label: "Configuration",
     items: [
-      { to: "/admin/system-controls", label: "System Controls", icon: ShieldAlert },
-      { to: "/admin/site-logo", label: "Site & Logo", icon: Type },
-      { to: "/admin/bonus-settings", label: "Bonus Settings", icon: Gift },
-      { to: "/admin/aviator-bucket", label: "Aviator Bucket", icon: Plane },
-      { to: "/admin/cron", label: "Cron Management", icon: Clock },
-      { to: "/admin/gift-codes", label: "Gift Codes", icon: Ticket },
       { to: "/admin/settings", label: "Settings", icon: Settings },
-      { to: "/admin/deposit-type", label: "Deposit Type/Min", icon: Layers },
-      { to: "/admin/withdraw-limit", label: "Withdraw Limit", icon: MinusCircle },
       { to: "/admin/profile", label: "Profile", icon: UserCircle2 },
     ],
   },

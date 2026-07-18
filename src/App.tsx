@@ -37,33 +37,11 @@ const AdminPages = {
   Dashboard: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.Dashboard }))),
   Users: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.UsersPage }))),
   Games: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.GamesPage }))),
-  Banners: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.BannersPage }))),
-  Moderators: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ModeratorsPage }))),
-  Support: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SupportPage }))),
-  Announcements: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnnouncementsPage }))),
-  ForgottenPasswords: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ForgottenPasswordsPage }))),
   Deposits: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.DepositsPage }))),
   Withdrawals: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WithdrawalsPage }))),
   WalletAdjust: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WalletAdjustPage }))),
   Analytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnalyticsPage }))),
-  SpareWallet: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SpareWalletPage }))),
-  DailyAnalytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.DailyAnalyticsPage }))),
-  BonusIncomeReport: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.BonusIncomeReportPage }))),
-  FinancialsReport: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.FinancialsReportPage }))),
-  UserTheme: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.UserThemePage }))),
-  DepositPlans: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.DepositPlansPage }))),
-  BetPlans: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.BetPlansPage }))),
-  SalaryIncome: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SalaryIncomePage }))),
-  RankSystem: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.RankSystemPage }))),
-  SystemControls: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SystemControlsPage }))),
-  SiteLogo: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SiteLogoPage }))),
-  BonusSettings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.BonusSettingsPage }))),
-  AviatorBucket: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AviatorBucketPage }))),
-  Cron: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.CronManagementPage }))),
-  GiftCodes: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.GiftCodesPage }))),
   Settings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SettingsPage }))),
-  DepositType: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.DepositTypePage }))),
-  WithdrawLimit: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WithdrawLimitPage }))),
   Profile: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ProfilePage }))),
 };
 
@@ -177,33 +155,11 @@ const App = () => {
                     <Route path="dashboard" element={<AdminPages.Dashboard />} />
                     <Route path="users" element={<AdminPages.Users />} />
                     <Route path="games" element={<AdminPages.Games />} />
-                    <Route path="banners" element={<AdminPages.Banners />} />
-                    <Route path="moderators" element={<AdminPages.Moderators />} />
-                    <Route path="support" element={<AdminPages.Support />} />
-                    <Route path="announcements" element={<AdminPages.Announcements />} />
-                    <Route path="forgotten-passwords" element={<AdminPages.ForgottenPasswords />} />
                     <Route path="deposits" element={<AdminPages.Deposits />} />
                     <Route path="withdrawals" element={<AdminPages.Withdrawals />} />
                     <Route path="wallet-adjust" element={<AdminPages.WalletAdjust />} />
                     <Route path="analytics" element={<AdminPages.Analytics />} />
-                    <Route path="spare-wallet" element={<AdminPages.SpareWallet />} />
-                    <Route path="daily-analytics" element={<AdminPages.DailyAnalytics />} />
-                    <Route path="bonus-income-report" element={<AdminPages.BonusIncomeReport />} />
-                    <Route path="financials-report" element={<AdminPages.FinancialsReport />} />
-                    <Route path="user-theme" element={<AdminPages.UserTheme />} />
-                    <Route path="plans/deposit" element={<AdminPages.DepositPlans />} />
-                    <Route path="plans/bet" element={<AdminPages.BetPlans />} />
-                    <Route path="plans/salary" element={<AdminPages.SalaryIncome />} />
-                    <Route path="plans/rank" element={<AdminPages.RankSystem />} />
-                    <Route path="system-controls" element={<AdminPages.SystemControls />} />
-                    <Route path="site-logo" element={<AdminPages.SiteLogo />} />
-                    <Route path="bonus-settings" element={<AdminPages.BonusSettings />} />
-                    <Route path="aviator-bucket" element={<AdminPages.AviatorBucket />} />
-                    <Route path="cron" element={<AdminPages.Cron />} />
-                    <Route path="gift-codes" element={<AdminPages.GiftCodes />} />
                     <Route path="settings" element={<AdminPages.Settings />} />
-                    <Route path="deposit-type" element={<AdminPages.DepositType />} />
-                    <Route path="withdraw-limit" element={<AdminPages.WithdrawLimit />} />
                     <Route path="profile" element={<AdminPages.Profile />} />
                   </Route>
                   <Route path="*" element={<NotFound />} />
