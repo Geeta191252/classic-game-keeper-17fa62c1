@@ -3579,7 +3579,14 @@ app.get("/api/admin/transactions-list", requireAdmin, async (req, res) => {
       Transaction.find(q).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Transaction.countDocuments(q),
     ]);
-    res.json({ items, total, limit, skip });
+    // Enrich with user info (username, firstName, lastName, current balances)
+    const ids = [...new Set(items.map((i) => i.telegramId))];
+    const users = await User.find({ telegramId: { $in: ids } })
+      .select("telegramId username firstName lastName dollarBalance rupeeBalance starBalance")
+      .lean();
+    const map = new Map(users.map((u) => [u.telegramId, u]));
+    const enriched = items.map((t) => ({ ...t, user: map.get(t.telegramId) || null }));
+    res.json({ items: enriched, total, limit, skip });
   } catch (e) {
     console.error("admin/transactions-list error:", e);
     res.status(500).json({ error: "Failed to list transactions" });
