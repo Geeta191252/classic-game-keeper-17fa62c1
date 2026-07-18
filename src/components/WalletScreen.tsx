@@ -17,8 +17,8 @@ const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
 };
 
-// Per-coin minimum deposit in USD (based on network fees / provider limits)
-const cryptoMins: Record<string, number> = {
+// Per-coin minimum deposit in USD (defaults, overridable via admin limits config)
+const defaultCryptoMins: Record<string, number> = {
   btc: 20,
   ltc: 5,
   ton: 3,
@@ -26,6 +26,13 @@ const cryptoMins: Record<string, number> = {
   trx: 2,
   doge: 8,
 };
+
+const defaultLimits = {
+  inr: { depositMin: 300, withdrawMin: 300 },
+  star: { depositMin: 100, withdrawMin: 100 },
+  crypto: { depositMin: defaultCryptoMins, withdrawMin: 10 },
+};
+
 
 type CryptoOption = { id: string; label: string; name: string; color: string; symbol: string };
 const cryptoOptions: CryptoOption[] = [
