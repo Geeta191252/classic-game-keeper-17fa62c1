@@ -15,11 +15,29 @@ const STAR_TO_DOLLAR_RATE = 100; // 100 ⭐ = $1
 
 const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
+  usdc: "usdcerc20",
 };
 
 const cryptoMins: Record<string, number> = {
-  btc: 18, ltc: 4, ton: 4, sol: 4, trx: 4, doge: 6,
+  btc: 18, eth: 15, ltc: 4, usdt: 5, sol: 4, trx: 4,
+  usdc: 5, xrp: 4, bnb: 5, ada: 4, bch: 4, ton: 4, doge: 6,
 };
+
+type CryptoOption = { id: string; label: string; name: string; color: string; symbol: string };
+const cryptoOptions: CryptoOption[] = [
+  { id: "btc", label: "BTC", name: "Bitcoin", color: "#f7931a", symbol: "₿" },
+  { id: "eth", label: "ETH", name: "Ethereum", color: "#627eea", symbol: "Ξ" },
+  { id: "ltc", label: "LTC", name: "Litecoin", color: "#345d9d", symbol: "Ł" },
+  { id: "usdt", label: "USDT", name: "Tether", color: "#26a17b", symbol: "₮" },
+  { id: "sol", label: "SOL", name: "Solana", color: "#9945ff", symbol: "◎" },
+  { id: "trx", label: "TRX", name: "Tron", color: "#eb0029", symbol: "T" },
+  { id: "usdc", label: "USDC", name: "USD Coin", color: "#2775ca", symbol: "$" },
+  { id: "xrp", label: "XRP", name: "Ripple", color: "#25292e", symbol: "X" },
+  { id: "bnb", label: "BNB", name: "Binance Coin", color: "#f3ba2f", symbol: "◆" },
+  { id: "ada", label: "ADA", name: "Cardano", color: "#0033ad", symbol: "₳" },
+  { id: "bch", label: "BCH", name: "Bitcoin Cash", color: "#0ac18e", symbol: "₿" },
+];
+
 
 type WalletTransaction = {
   type?: string | null;
