@@ -83,9 +83,10 @@ const HomeScreen = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { dollarBalance, starBalance, dollarWinning, starWinning } = useBalanceContext();
+  const { dollarBalance, starBalance, rupeeBalance, dollarWinning, starWinning, rupeeWinning } = useBalanceContext();
   const totalDollar = dollarBalance + dollarWinning;
   const totalStar = starBalance + starWinning;
+  const totalRupee = rupeeBalance + rupeeWinning;
   const [filter, setFilter] = useState<FilterTab>("all");
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [openTournament, setOpenTournament] = useState<Tournament | null>(null);
