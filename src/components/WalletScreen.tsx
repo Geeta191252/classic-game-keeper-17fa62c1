@@ -568,6 +568,49 @@ const WalletScreen = () => {
     }
   };
 
+  const handleStarWithdraw = async () => {
+    const amt = Number(starWithdrawAmount);
+    const uname = starWithdrawUsername.trim().replace(/^@/, "");
+    if (!amt || amt < STAR_TO_DOLLAR_RATE) {
+      toast({ title: "Minimum required", description: `Minimum ${STAR_TO_DOLLAR_RATE} ⭐ to withdraw.`, variant: "destructive" });
+      return;
+    }
+    if (amt > starBalance) {
+      toast({ title: "Insufficient Stars", description: "You don't have enough Stars.", variant: "destructive" });
+      return;
+    }
+    if (!uname) {
+      toast({ title: "Username required", description: "Enter your Telegram @username.", variant: "destructive" });
+      return;
+    }
+    setStarWithdrawing(true);
+    try {
+      const tg = getTelegram();
+      const userId = tg?.initDataUnsafe?.user?.id || "demo";
+      const res = await fetch(`${apiBase}/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          amount: amt,
+          currency: "star",
+          network: "TELEGRAM_STARS",
+          cryptoAddress: `@${uname}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Withdrawal failed");
+      toast({ title: "Request submitted ✅", description: `${amt} ⭐ withdrawal to @${uname} sent for admin approval.` });
+      setStarWithdrawAmount("");
+      setStarWithdrawUsername("");
+      refreshBalance();
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Withdrawal failed.", variant: "destructive" });
+    } finally {
+      setStarWithdrawing(false);
+    }
+  };
+
   return (
     <div className="px-4 pt-4 pb-24 space-y-4 bg-[#0e131f] text-[#8e97a4] min-h-screen">
       
