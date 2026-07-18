@@ -769,6 +769,7 @@ const WalletScreen = () => {
                             <span className="text-[13px] font-black text-white tracking-tight">{coin.label}</span>
                           </div>
                           <span className="text-[10px] text-[#8e97a4] font-medium leading-none">{coin.name}</span>
+                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min ${cryptoMins[coin.id]}</span>
                         </button>
                       );
                     })}
