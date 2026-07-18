@@ -108,6 +108,11 @@ const WalletScreen = () => {
   const [convertStars, setConvertStars] = useState("");
   const [converting, setConverting] = useState(false);
 
+  // Telegram Star withdrawal
+  const [starWithdrawAmount, setStarWithdrawAmount] = useState("");
+  const [starWithdrawUsername, setStarWithdrawUsername] = useState("");
+  const [starWithdrawing, setStarWithdrawing] = useState(false);
+
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const tonAddress = useTonAddress(false);
