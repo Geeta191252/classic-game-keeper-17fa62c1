@@ -450,27 +450,62 @@ export function WithdrawalsPage() { return <TxFilterPage type="withdraw" title="
 /* ============= Wallet Adjust ============= */
 
 export function WalletAdjustPage() {
-  const [targetUserId, setTargetUserId] = useState("");
+  const [search, setSearch] = useState("");
+  const [q, setQ] = useState("");
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [selected, setSelected] = useState<AdminUser | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchErr, setSearchErr] = useState<string | null>(null);
+
   const [currency, setCurrency] = useState<"dollar" | "rupee" | "star">("dollar");
   const [balanceType, setBalanceType] = useState<"deposit" | "winning">("deposit");
+  const [mode, setMode] = useState<"add" | "deduct" | "set">("add");
   const [amount, setAmount] = useState("0");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!q) { setUsers([]); return; }
+    setSearching(true); setSearchErr(null);
+    listUsers({ search: q, limit: 25 })
+      .then((d) => setUsers(d.users))
+      .catch((e) => setSearchErr(e.message))
+      .finally(() => setSearching(false));
+  }, [q]);
+
+  const currentBalance = (u: AdminUser | null) => {
+    if (!u) return 0;
+    const field = balanceType === "winning"
+      ? (currency === "dollar" ? "dollarWinning" : currency === "rupee" ? "rupeeWinning" : "starWinning")
+      : (currency === "dollar" ? "dollarBalance" : currency === "rupee" ? "rupeeBalance" : "starBalance");
+    return Number((u as any)[field] || 0);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null); setMsg(null);
+    if (!selected) { setErr("Select a user first"); return; }
     const amt = Number(amount);
-    if (!targetUserId.trim() || !Number.isFinite(amt) || amt === 0) {
-      setErr("Enter a valid Telegram ID and non-zero amount");
-      return;
-    }
+    if (!Number.isFinite(amt) || amt < 0) { setErr("Enter a non-negative amount"); return; }
+    let delta = amt;
+    if (mode === "deduct") delta = -amt;
+    if (mode === "set") delta = amt - currentBalance(selected);
+    if (delta === 0) { setErr("No change to apply"); return; }
     setBusy(true);
     try {
-      const r = await walletAdjust({ targetUserId: targetUserId.trim(), currency, amount: amt, balanceType, note });
-      setMsg(`✅ Adjusted. New balances: $${r.balance.dollarBalance} · ₹${r.balance.rupeeBalance} · ★${r.balance.starBalance}`);
+      const r = await walletAdjust({
+        targetUserId: selected.telegramId, currency, amount: delta, balanceType, note,
+      });
+      setMsg(`Saved. New balances: $${r.balance.dollarBalance} · ₹${r.balance.rupeeBalance} · ★${r.balance.starBalance}`);
+      // update selected user snapshot
+      setSelected({ ...selected,
+        dollarBalance: r.balance.dollarBalance, rupeeBalance: r.balance.rupeeBalance, starBalance: r.balance.starBalance,
+        dollarWinning: r.balance.dollarWinning ?? selected.dollarWinning,
+        rupeeWinning: r.balance.rupeeWinning ?? selected.rupeeWinning,
+        starWinning: r.balance.starWinning ?? selected.starWinning,
+      });
       setAmount("0"); setNote("");
     } catch (e) { setErr(e instanceof Error ? e.message : "Failed"); }
     finally { setBusy(false); }
@@ -478,54 +513,202 @@ export function WalletAdjustPage() {
 
   return (
     <Section eyebrow="TREASURY" title="Adjust user wallet">
-      <form onSubmit={submit} className="a-card max-w-2xl">
-        <div className="grid md:grid-cols-2 gap-3">
-          <div>
-            <label className="a-label">Target Telegram ID</label>
-            <input className="a-input" value={targetUserId} onChange={(e) => setTargetUserId(e.target.value)} placeholder="e.g. 6965488457" />
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="a-card">
+          <div className="text-white font-bold text-[15px] mb-3">1. Find user</div>
+          <div className="flex gap-2 mb-3">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl"
+                 style={{ background: "rgba(10,15,26,0.7)", border: "1px solid var(--a-border)" }}>
+              <Search size={14} style={{ color: "var(--a-text-mute)" }} />
+              <input
+                className="bg-transparent outline-none text-[13px] w-full placeholder:text-[var(--a-text-mute)]"
+                placeholder="Name, username, or Telegram ID"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && setQ(search.trim())}
+              />
+            </div>
+            <button className="a-btn" onClick={() => setQ(search.trim())}>Search</button>
           </div>
-          <div>
-            <label className="a-label">Currency</label>
-            <select className="a-select" value={currency} onChange={(e) => setCurrency(e.target.value as any)}>
-              <option value="dollar">Dollar ($)</option>
-              <option value="rupee">Rupee (₹)</option>
-              <option value="star">Star (★)</option>
-            </select>
-          </div>
-          <div>
-            <label className="a-label">Bucket</label>
-            <select className="a-select" value={balanceType} onChange={(e) => setBalanceType(e.target.value as any)}>
-              <option value="deposit">Deposit balance</option>
-              <option value="winning">Winning balance</option>
-            </select>
-          </div>
-          <div>
-            <label className="a-label">Amount (use negative to deduct)</label>
-            <input className="a-input" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          </div>
-          <div className="md:col-span-2">
-            <label className="a-label">Note (optional)</label>
-            <input className="a-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason / reference" />
-          </div>
+          {searching ? <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>Searching…</div>
+            : searchErr ? <div className="text-[12px]" style={{ color: "#ff9b9b" }}>{searchErr}</div>
+            : (
+              <div className="max-h-64 overflow-y-auto">
+                {users.map((u) => (
+                  <button key={u._id} type="button"
+                    onClick={() => setSelected(u)}
+                    className="w-full text-left px-3 py-2 rounded-lg mb-1 flex items-center justify-between"
+                    style={{
+                      background: selected?._id === u._id ? "rgba(74,168,255,0.15)" : "rgba(255,255,255,0.02)",
+                      border: `1px solid ${selected?._id === u._id ? "var(--a-blue)" : "var(--a-border)"}`,
+                    }}>
+                    <div>
+                      <div className="text-white text-[13px] font-medium">{userName(u)}</div>
+                      <div className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>
+                        {u.username ? `@${u.username} · ` : ""}#{u.telegramId}
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-right" style={{ color: "var(--a-text-dim)" }}>
+                      ${Number(u.dollarBalance||0).toFixed(2)}<br/>
+                      ₹{Number(u.rupeeBalance||0).toFixed(2)} · ★{Number(u.starBalance||0).toFixed(0)}
+                    </div>
+                  </button>
+                ))}
+                {q && !users.length && <div className="text-[12px] text-center py-4" style={{ color: "var(--a-text-mute)" }}>No users found.</div>}
+                {!q && <div className="text-[12px] text-center py-4" style={{ color: "var(--a-text-mute)" }}>Search to load users.</div>}
+              </div>
+            )}
         </div>
-        {err && <div className="mt-3 text-[13px]" style={{ color: "#ff9b9b" }}>{err}</div>}
-        {msg && <div className="mt-3 text-[13px]" style={{ color: "var(--a-green)" }}>{msg}</div>}
-        <div className="flex justify-end mt-4">
-          <button disabled={busy} className="a-btn a-btn-primary">
-            {busy ? <Loader2 size={12} className="animate-spin" /> : <Coins size={12} />} Apply adjustment
-          </button>
-        </div>
-      </form>
+
+        <form onSubmit={submit} className="a-card">
+          <div className="text-white font-bold text-[15px] mb-3">2. Edit balance</div>
+          {selected ? (
+            <div className="mb-3 p-3 rounded-lg" style={{ background: "rgba(74,168,255,0.08)", border: "1px solid var(--a-border)" }}>
+              <div className="text-white font-semibold text-[14px]">{userName(selected)}</div>
+              <div className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>
+                {selected.username ? `@${selected.username} · ` : ""}#{selected.telegramId}
+              </div>
+              <div className="text-[12px] mt-2 grid grid-cols-3 gap-2">
+                <div>Dep $ <b className="text-white">{Number(selected.dollarBalance||0).toFixed(2)}</b></div>
+                <div>Dep ₹ <b className="text-white">{Number(selected.rupeeBalance||0).toFixed(2)}</b></div>
+                <div>Dep ★ <b className="text-white">{Number(selected.starBalance||0).toFixed(0)}</b></div>
+                <div>Win $ <b className="text-white">{Number(selected.dollarWinning||0).toFixed(2)}</b></div>
+                <div>Win ₹ <b className="text-white">{Number(selected.rupeeWinning||0).toFixed(2)}</b></div>
+                <div>Win ★ <b className="text-white">{Number(selected.starWinning||0).toFixed(0)}</b></div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-[12px] mb-3" style={{ color: "var(--a-text-mute)" }}>Select a user from the search results on the left.</div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="a-label">Currency</label>
+              <select className="a-select" value={currency} onChange={(e) => setCurrency(e.target.value as any)}>
+                <option value="dollar">Dollar ($)</option>
+                <option value="rupee">Rupee (₹)</option>
+                <option value="star">Star (★)</option>
+              </select>
+            </div>
+            <div>
+              <label className="a-label">Bucket</label>
+              <select className="a-select" value={balanceType} onChange={(e) => setBalanceType(e.target.value as any)}>
+                <option value="deposit">Deposit balance</option>
+                <option value="winning">Winning balance</option>
+              </select>
+            </div>
+            <div>
+              <label className="a-label">Action</label>
+              <select className="a-select" value={mode} onChange={(e) => setMode(e.target.value as any)}>
+                <option value="add">Add (+)</option>
+                <option value="deduct">Deduct (−)</option>
+                <option value="set">Set exact value</option>
+              </select>
+            </div>
+            <div>
+              <label className="a-label">Amount</label>
+              <input className="a-input" type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
+            <div className="col-span-2">
+              <label className="a-label">Note (optional)</label>
+              <input className="a-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Reason / reference" />
+            </div>
+          </div>
+          {selected && (
+            <div className="mt-3 text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Current: <b className="text-white">{symFor(currency)}{currentBalance(selected).toFixed(2)}</b>
+            </div>
+          )}
+          {err && <div className="mt-3 text-[13px]" style={{ color: "#ff9b9b" }}>{err}</div>}
+          {msg && <div className="mt-3 text-[13px]" style={{ color: "var(--a-green)" }}>{msg}</div>}
+          <div className="flex justify-end mt-4">
+            <button disabled={busy || !selected} className="a-btn a-btn-primary">
+              {busy ? <Loader2 size={12} className="animate-spin" /> : <Coins size={12} />} Apply
+            </button>
+          </div>
+        </form>
+      </div>
     </Section>
   );
 }
 
-/* ============= Games ============= */
+/* ============= Games (with per-game analytics drill-down) ============= */
+
+function GameAnalyticsPanel({ game, onClose }: { game: string; onClose: () => void }) {
+  const [days, setDays] = useState(7);
+  const [data, setData] = useState<GameAnalytics | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true); setErr(null);
+    getGameAnalytics(game, days).then(setData).catch((e) => setErr(e.message)).finally(() => setLoading(false));
+  };
+  useEffect(load, [days]);
+
+  return (
+    <div className="a-card mt-3" style={{ border: "1px solid var(--a-blue)" }}>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="a-eyebrow a-eyebrow-dim">GAME ANALYTICS</div>
+          <div className="text-white text-[16px] font-bold capitalize">{game}</div>
+        </div>
+        <div className="flex gap-1">
+          {[7, 14, 30, 90].map((n) => (
+            <button key={n} className={`a-btn a-btn-sm ${days === n ? "a-btn-primary" : ""}`} onClick={() => setDays(n)}>{n}d</button>
+          ))}
+          <button className="a-btn a-btn-sm" onClick={load}><RefreshCw size={12} /></button>
+          <button className="a-btn a-btn-sm" onClick={onClose}>Close</button>
+        </div>
+      </div>
+      {loading ? <LoadingBlock /> : err ? <ErrorBlock message={err} onRetry={load} /> : data && (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <StatCard label="Total bets" value={String(data.totals.betCount)} icon={<TrendingDown size={16} />} tone="yellow" />
+            <StatCard label="Total wins" value={String(data.totals.winCount)} icon={<TrendingUp size={16} />} tone="teal" />
+            <StatCard label="Bet volume"
+              value={`$${data.totals.bet.dollar.toFixed(2)} · ₹${data.totals.bet.rupee.toFixed(2)} · ★${data.totals.bet.star.toFixed(0)}`}
+              icon={<Coins size={16} />} tone="blue" />
+            <StatCard label="Win payout"
+              value={`$${data.totals.win.dollar.toFixed(2)} · ₹${data.totals.win.rupee.toFixed(2)} · ★${data.totals.win.star.toFixed(0)}`}
+              icon={<Coins size={16} />} tone="green" />
+          </div>
+          <div className="overflow-x-auto">
+            <table className="a-table w-full">
+              <thead>
+                <tr><th>Day</th><th>Bets ($)</th><th>Wins ($)</th><th>Bets (₹)</th><th>Wins (₹)</th><th>Bets (★)</th><th>Wins (★)</th><th># Bets</th><th># Wins</th></tr>
+              </thead>
+              <tbody>
+                {data.series.map((d) => (
+                  <tr key={d.day}>
+                    <td>{d.day}</td>
+                    <td>${d.bet.dollar.toFixed(2)}</td>
+                    <td>${d.win.dollar.toFixed(2)}</td>
+                    <td>₹{d.bet.rupee.toFixed(2)}</td>
+                    <td>₹{d.win.rupee.toFixed(2)}</td>
+                    <td>★{d.bet.star.toFixed(0)}</td>
+                    <td>★{d.win.star.toFixed(0)}</td>
+                    <td>{d.betCount}</td>
+                    <td>{d.winCount}</td>
+                  </tr>
+                ))}
+                {!data.series.length && (
+                  <tr><td colSpan={9} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No activity in this window.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export function GamesPage() {
   const [data, setData] = useState<GameStatRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [openGame, setOpenGame] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true); setErr(null);
@@ -544,13 +727,13 @@ export function GamesPage() {
           <thead>
             <tr>
               <th>Game</th><th>Bets ($)</th><th>Wins ($)</th><th>Bets (₹)</th><th>Wins (₹)</th>
-              <th>Bets (★)</th><th>Wins (★)</th><th>Total bets</th><th>Total wins</th>
+              <th>Bets (★)</th><th>Wins (★)</th><th>Total bets</th><th>Total wins</th><th></th>
             </tr>
           </thead>
           <tbody>
             {(data || []).map((g) => (
               <tr key={g.game}>
-                <td className="text-white font-semibold">{g.game}</td>
+                <td className="text-white font-semibold capitalize">{g.game}</td>
                 <td>${g.bets.dollar.toFixed(2)}</td>
                 <td>${g.wins.dollar.toFixed(2)}</td>
                 <td>₹{g.bets.rupee.toFixed(2)}</td>
@@ -559,14 +742,21 @@ export function GamesPage() {
                 <td>★{g.wins.star.toFixed(0)}</td>
                 <td>{g.betCount}</td>
                 <td>{g.winCount}</td>
+                <td>
+                  <button className="a-btn a-btn-sm"
+                    onClick={() => setOpenGame(openGame === g.game ? null : g.game)}>
+                    <Activity size={12} /> {openGame === g.game ? "Hide" : "Analytics"}
+                  </button>
+                </td>
               </tr>
             ))}
             {(!data || data.length === 0) && (
-              <tr><td colSpan={9} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No game bets recorded yet.</td></tr>
+              <tr><td colSpan={10} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No game bets recorded yet.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+      {openGame && <GameAnalyticsPanel game={openGame} onClose={() => setOpenGame(null)} />}
     </Section>
   );
 }
