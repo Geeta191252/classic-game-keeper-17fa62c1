@@ -660,7 +660,31 @@ const WalletScreen = () => {
              DEPOSIT TAB
              ============================================ */
           <>
-            {/* UPI Deposit */}
+            {/* Deposit Method Sub-Tabs: Crypto ($) / INR / Star */}
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#0d121f] border border-white/[0.02] rounded-2xl">
+              {([
+                { id: "crypto", label: "Crypto $", icon: "💲" },
+                { id: "inr", label: "INR", icon: "₹" },
+                { id: "star", label: "Star", icon: "⭐" },
+              ] as const).map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setDepositMethod(m.id)}
+                  className={`py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1 ${
+                    depositMethod === m.id
+                      ? "bg-[#00a2e8] text-white shadow-md shadow-[#00a2e8]/20"
+                      : "text-[#8e97a4] hover:text-white"
+                  }`}
+                >
+                  <span>{m.icon}</span>
+                  <span>{m.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* INR / UPI Deposit */}
+            {depositMethod === "inr" && (
+
             {upiConfig && upiConfig.upiId && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
