@@ -183,6 +183,12 @@ const WalletScreen = () => {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (walletTab === "deposit") {
+      setDepositStep("menu");
+    }
+  }, [walletTab]);
+
   const handleUpiDepositSubmit = async () => {
     const rupeeAmount = Number(upiAmount);
     if (!rupeeAmount || rupeeAmount <= 0) {
