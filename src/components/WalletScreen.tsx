@@ -592,10 +592,11 @@ const WalletScreen = () => {
   const handleStarWithdraw = async () => {
     const amt = Number(starWithdrawAmount);
     const uname = starWithdrawUsername.trim().replace(/^@/, "");
-    if (!amt || amt < STAR_TO_DOLLAR_RATE) {
-      toast({ title: "Minimum required", description: `Minimum ${STAR_TO_DOLLAR_RATE} ⭐ to withdraw.`, variant: "destructive" });
+    if (!amt || amt < starWithdrawMin) {
+      toast({ title: "Minimum required", description: `Minimum ${starWithdrawMin} ⭐ to withdraw.`, variant: "destructive" });
       return;
     }
+
     if (amt > starBalance) {
       toast({ title: "Insufficient Stars", description: "You don't have enough Stars.", variant: "destructive" });
       return;
