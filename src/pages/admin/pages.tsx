@@ -9,8 +9,9 @@ import {
   getSummary, listUsers, listTransactions, walletAdjust,
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
+  getUpiConfig, saveUpiConfig,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
-  type GameStatRow, type GameAnalytics,
+  type GameStatRow, type GameAnalytics, type UpiConfig,
 } from "@/lib/adminApi";
 
 /* ============= Shared primitives ============= */
