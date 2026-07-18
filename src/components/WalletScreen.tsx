@@ -639,7 +639,7 @@ const WalletScreen = () => {
              ============================================ */
           <>
             {/* UPI Deposit */}
-            {upiConfig?.isEnabled && (
+            {upiConfig && upiConfig.upiId && upiConfig.isEnabled !== false && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
