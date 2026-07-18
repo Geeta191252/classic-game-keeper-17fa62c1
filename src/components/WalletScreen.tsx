@@ -848,7 +848,27 @@ const WalletScreen = () => {
                     )}
                   </div>
                   <div className="flex justify-center py-1">
-                    <div className="ton-connect-button-container" style={{ transform: "scale(0.9)" }} />
+                    {tonAddress ? (
+                      <div className="flex items-center gap-2 w-full">
+                        <div className="flex-1 bg-[#0d121f] border border-white/[0.04] rounded-xl px-3 py-2">
+                          <p className="text-[8px] font-extrabold text-emerald-400 uppercase tracking-wider">Connected</p>
+                          <p className="text-[10px] font-mono text-white truncate">{tonAddress}</p>
+                        </div>
+                        <button
+                          onClick={() => tonConnectUI.disconnect()}
+                          className="rounded-xl h-10 px-3 text-[10px] font-black uppercase bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 tracking-wider transition-all"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => tonConnectUI.openModal()}
+                        className="w-full rounded-xl h-10 text-[11px] font-black uppercase bg-[#0098ea] hover:bg-[#0086cf] text-white tracking-wider shadow-md shadow-[#0098ea]/20 transition-all"
+                      >
+                        Connect TON Wallet
+                      </button>
+                    )}
                   </div>
                   {tonAddress ? (
                     <div className="space-y-1.5">
@@ -875,7 +895,7 @@ const WalletScreen = () => {
                     </div>
                   ) : (
                     <p className="text-[9px] text-[#8e97a4] text-center py-2">
-                      ⚠️ Connect your TON wallet to perform instant TON deposits.
+                      ⚠️ Connect your TON wallet above to perform instant TON deposits.
                     </p>
                   )}
                 </div>
@@ -1144,7 +1164,27 @@ const WalletScreen = () => {
                   </div>
 
                   <div className="flex justify-center py-1">
-                    <div className="ton-connect-button-container" style={{ transform: "scale(0.9)" }} />
+                    {tonAddress ? (
+                      <div className="flex items-center gap-2 w-full">
+                        <div className="flex-1 bg-[#0d121f] border border-white/[0.04] rounded-xl px-3 py-2">
+                          <p className="text-[8px] font-extrabold text-emerald-400 uppercase tracking-wider">Connected</p>
+                          <p className="text-[10px] font-mono text-white truncate">{tonAddress}</p>
+                        </div>
+                        <button
+                          onClick={() => tonConnectUI.disconnect()}
+                          className="rounded-xl h-10 px-3 text-[10px] font-black uppercase bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 tracking-wider transition-all"
+                        >
+                          Disconnect
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => tonConnectUI.openModal()}
+                        className="w-full rounded-xl h-10 text-[11px] font-black uppercase bg-[#0098ea] hover:bg-[#0086cf] text-white tracking-wider shadow-md shadow-[#0098ea]/20 transition-all"
+                      >
+                        Connect TON Wallet
+                      </button>
+                    )}
                   </div>
 
                   {tonAddress ? (
