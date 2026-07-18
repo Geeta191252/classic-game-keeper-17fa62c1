@@ -710,6 +710,7 @@ const WalletScreen = () => {
                       <div className="flex-1 min-w-0">
                         <p className="font-black text-sm text-white">{m.label}</p>
                         <p className="text-[10px] text-[#8e97a4] truncate">{m.desc}</p>
+                        <p className="text-[9px] font-black text-amber-400 mt-0.5">{m.min}</p>
                       </div>
                       <ArrowRightLeft className="h-4 w-4 text-[#8e97a4] rotate-[-90deg]" />
                     </button>
