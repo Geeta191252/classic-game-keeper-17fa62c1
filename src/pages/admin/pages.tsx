@@ -9,8 +9,9 @@ import {
   getSummary, listUsers, listTransactions, walletAdjust,
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
+  getUpiConfig, saveUpiConfig,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
-  type GameStatRow, type GameAnalytics,
+  type GameStatRow, type GameAnalytics, type UpiConfig,
 } from "@/lib/adminApi";
 
 /* ============= Shared primitives ============= */
@@ -1512,50 +1513,110 @@ export function GiftCodesPage() {
 
 /* ---------- Settings (Security & Wallet) ---------- */
 export function SettingsPage() {
+  const [cfg, setCfg] = useState<UpiConfig>({
+    upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85,
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getUpiConfig()
+      .then((c) => { if (alive) setCfg({
+        upiId: c.upiId || "", payeeName: c.payeeName || "", qrImageUrl: c.qrImageUrl || "",
+        isEnabled: !!c.isEnabled, exchangeRate: Number(c.exchangeRate) || 85,
+      }); })
+      .catch((e) => setMsg({ tone: "err", text: e.message || "Failed to load" }))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, []);
+
+  const save = async () => {
+    setMsg(null);
+    if (!cfg.upiId.trim()) { setMsg({ tone: "err", text: "UPI ID is required" }); return; }
+    setSaving(true);
+    try {
+      const r = await saveUpiConfig(cfg);
+      setCfg(r.config);
+      setMsg({ tone: "ok", text: "UPI settings saved." });
+    } catch (e: any) {
+      setMsg({ tone: "err", text: e.message || "Save failed" });
+    } finally { setSaving(false); }
+  };
+
   return (
     <div>
-      <PageHeader title="Security & Wallet" subtitle="2FA (OTP) · Receiving address & gas private key" tone="teal"/>
-      <div className="text-white font-bold text-[18px] mb-2">Two-factor authentication</div>
-      <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>Authenticator app (TOTP). Required to set or change payment wallet credentials and for admin login when enabled.</div>
-      <div className="a-card mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-10 w-10 rounded-xl flex items-center justify-center" style={{background:"rgba(51,214,159,0.15)",color:"#33d69f"}}>🛡</div>
-          <span className="a-chip a-chip-active">● Enabled</span>
+      <PageHeader title="UPI Payment Settings" subtitle="Manual UPI deposits — users pay to your UPI ID, admin approves in Deposits" tone="teal"/>
+
+      {loading ? (
+        <div className="a-card flex items-center gap-2 text-white/70 text-[13px]">
+          <Loader2 className="h-4 w-4 animate-spin"/> Loading…
         </div>
-        <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>Two-factor authentication is enabled. OTP is always required for changing wallet credentials.</div>
-        <label className="flex items-center gap-2 text-[13px] mb-4"><input type="checkbox" defaultChecked/> Require OTP at login</label>
-        <div className="text-[12px] mb-2" style={{color:"var(--a-text-dim)"}}>Lost your authenticator? Regenerate recovery codes (verify with current OTP first):</div>
-        <div className="flex gap-2">
-          <input className="a-input" placeholder="6-digit code"/>
-          <button className="a-btn shrink-0" style={{background:"linear-gradient(135deg,#f6a24a,#ff6a4a)",color:"#fff",border:"none"}}>🔑 Regenerate recovery codes</button>
+      ) : (
+        <div className="a-card mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-white font-bold text-[16px]">Manual UPI Deposit</div>
+              <div className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+                Toggle to show / hide UPI deposit option in user wallet
+              </div>
+            </div>
+            <label className="inline-flex items-center gap-2 cursor-pointer text-[13px] text-white">
+              <input type="checkbox" checked={cfg.isEnabled}
+                onChange={(e) => setCfg({ ...cfg, isEnabled: e.target.checked })}/>
+              {cfg.isEnabled ? "Enabled" : "Disabled"}
+            </label>
+          </div>
+
+          <div className="a-label">UPI ID (VPA)</div>
+          <input className="a-input mb-3" placeholder="yourname@okhdfcbank"
+            value={cfg.upiId}
+            onChange={(e) => setCfg({ ...cfg, upiId: e.target.value })}/>
+
+          <div className="a-label">Payee Name (shown in UPI app)</div>
+          <input className="a-input mb-3" placeholder="Royal King Games"
+            value={cfg.payeeName}
+            onChange={(e) => setCfg({ ...cfg, payeeName: e.target.value })}/>
+
+          <div className="a-label">QR Image URL (optional — leave blank to auto-generate)</div>
+          <input className="a-input mb-3" placeholder="https://…/qr.png"
+            value={cfg.qrImageUrl}
+            onChange={(e) => setCfg({ ...cfg, qrImageUrl: e.target.value })}/>
+
+          <div className="a-label">1 USDT = ? INR (exchange rate)</div>
+          <input className="a-input mb-4" type="number" min={1} step={0.01}
+            value={cfg.exchangeRate}
+            onChange={(e) => setCfg({ ...cfg, exchangeRate: Number(e.target.value) || 0 })}/>
+
+          <div className="flex items-center gap-3">
+            <button className="a-btn" disabled={saving}
+              onClick={save}
+              style={{ background: "linear-gradient(135deg,#33d69f,#0ea5e9)", color: "#04070d", border: "none", opacity: saving ? 0.6 : 1 }}>
+              {saving ? "Saving…" : "💾 Save UPI Settings"}
+            </button>
+            {msg && (
+              <span className="text-[12px]" style={{ color: msg.tone === "ok" ? "#33d69f" : "#ef4444" }}>
+                {msg.text}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="text-white font-bold text-[18px] mb-2">Payment Receiving Wallet</div>
-      <div className="text-[13px] mb-4" style={{color:"var(--a-text-dim)"}}>USDT receive address and gas wallet private key (BSC). Stored encrypted. Changes require authenticator app OTP.</div>
-      <div className="a-card mb-6">
-        <div className="a-label">Receiving address (0x…)</div>
-        <input className="a-input mb-4" placeholder="0x…"/>
-        <div className="a-label">Gas fee private key</div>
-        <input className="a-input mb-4" placeholder="Private key (stored encrypted)"/>
-        <div className="a-label">OTP (6 digits) – required to save</div>
-        <input className="a-input mb-4" placeholder="000000"/>
-        <button className="a-btn" style={{background:"linear-gradient(135deg,#f6a24a,#ff6a4a)",color:"#fff",border:"none"}}>💾 Save (encrypted)</button>
-      </div>
+      )}
+
       <div className="a-card">
-        <div className="a-eyebrow a-eyebrow-dim">USDT CONVERSION</div>
-        <div className="flex items-center justify-between mt-1 mb-4">
-          <div className="text-white text-[16px] font-bold">USDT to INR Rate</div>
-          <button className="a-btn" style={{background:"#33d69f",color:"#04070d"}}>💾 Save rate</button>
-        </div>
-        <div className="text-[13px] mb-2" style={{color:"var(--a-text-dim)"}}>1 USDT = INR</div>
-        <div className="flex gap-2">
-          <div className="a-btn" style={{background:"rgba(30,42,68,0.6)"}}>INR</div>
-          <input className="a-input" defaultValue="94"/>
-        </div>
+        <div className="a-eyebrow a-eyebrow-dim">HOW IT WORKS</div>
+        <ol className="text-[12px] mt-2 space-y-1 pl-4 list-decimal" style={{ color: "var(--a-text-dim)" }}>
+          <li>User opens Wallet → taps <b>Pay with UPI / QR Code</b>.</li>
+          <li>User pays to your UPI ID above and enters the 12-digit UTR / Transaction ID.</li>
+          <li>Request appears in <b>Deposits</b> page as pending.</li>
+          <li>You verify the UTR in your bank/UPI app and click <b>Approve</b> — balance is instantly credited to the user's ₹ wallet.</li>
+        </ol>
       </div>
     </div>
   );
 }
+
 
 /* ---------- Deposit Type ---------- */
 function DepositMethodCard({ title, desc, steps, tone, on = true }:

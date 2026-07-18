@@ -184,3 +184,19 @@ export interface GameStatRow {
   winCount: number;
 }
 export const getGameStats = () => adminFetch<{ games: GameStatRow[] }>("/admin/game-stats");
+
+// ---------- UPI config ----------
+export interface UpiConfig {
+  upiId: string;
+  payeeName: string;
+  qrImageUrl: string;
+  isEnabled: boolean;
+  exchangeRate: number;
+}
+export const getUpiConfig = () => adminFetch<UpiConfig>("/admin/upi/config");
+export const saveUpiConfig = (cfg: UpiConfig) =>
+  adminFetch<{ success: true; config: UpiConfig }>("/admin/upi/config", {
+    method: "POST",
+    body: JSON.stringify(cfg),
+  });
+

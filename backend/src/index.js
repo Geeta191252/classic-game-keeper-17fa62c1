@@ -3819,6 +3819,51 @@ app.get("*", (req, res) => {
 });
 
 // ============================================
+// Admin UPI config (token-authenticated)
+// ============================================
+const SettingModel = require("./models/Setting");
+
+app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
+  try {
+    let doc = await SettingModel.findOne({ key: "upiConfig" });
+    if (!doc) {
+      doc = await SettingModel.create({
+        key: "upiConfig",
+        value: { upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85 },
+      });
+    }
+    res.json(doc.value || {});
+  } catch (e) {
+    console.error("admin upi get error:", e);
+    res.status(500).json({ error: "Failed to load UPI config" });
+  }
+});
+
+app.post("/api/admin/upi/config", requireAdmin, async (req, res) => {
+  try {
+    const { upiId, payeeName, qrImageUrl, isEnabled, exchangeRate } = req.body || {};
+    const value = {
+      upiId: String(upiId || "").trim(),
+      payeeName: String(payeeName || "").trim(),
+      qrImageUrl: String(qrImageUrl || "").trim(),
+      isEnabled: isEnabled === true || isEnabled === "true",
+      exchangeRate: Number(exchangeRate) > 0 ? Number(exchangeRate) : 85,
+    };
+    if (!value.upiId) return res.status(400).json({ error: "UPI ID is required" });
+    const doc = await SettingModel.findOneAndUpdate(
+      { key: "upiConfig" },
+      { key: "upiConfig", value },
+      { new: true, upsert: true }
+    );
+    res.json({ success: true, config: doc.value });
+  } catch (e) {
+    console.error("admin upi save error:", e);
+    res.status(500).json({ error: "Failed to save UPI config" });
+  }
+});
+
+
+// ============================================
 // Start server
 // ============================================
 app.listen(PORT, () => {
