@@ -136,6 +136,34 @@ export const approveWithdrawal = (transactionId: string) =>
 export const rejectWithdrawal = (transactionId: string, reason?: string) =>
   adminFetch("/admin/withdrawals/reject", { method: "POST", body: JSON.stringify({ transactionId, reason }) });
 
+// ---------- Deposits ----------
+export const approveDeposit = (transactionId: string) =>
+  adminFetch("/admin/deposits/approve", { method: "POST", body: JSON.stringify({ transactionId }) });
+
+export const rejectDeposit = (transactionId: string, reason?: string) =>
+  adminFetch("/admin/deposits/reject", { method: "POST", body: JSON.stringify({ transactionId, reason }) });
+
+// ---------- Per-game analytics ----------
+export interface GameAnalytics {
+  game: string;
+  days: number;
+  totals: {
+    bet: { dollar: number; rupee: number; star: number };
+    win: { dollar: number; rupee: number; star: number };
+    betCount: number;
+    winCount: number;
+  };
+  series: Array<{
+    day: string;
+    bet: { dollar: number; rupee: number; star: number };
+    win: { dollar: number; rupee: number; star: number };
+    betCount: number;
+    winCount: number;
+  }>;
+}
+export const getGameAnalytics = (game: string, days = 7) =>
+  adminFetch<GameAnalytics>(`/admin/game-analytics?game=${encodeURIComponent(game)}&days=${days}`);
+
 // ---------- Analytics ----------
 export interface AnalyticsDay {
   day: string;
