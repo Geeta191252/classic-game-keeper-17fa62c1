@@ -1835,36 +1835,49 @@ function AviatorFunPoolCard({
 
 export function AviatorFunControlPage() {
   const [overview, setOverview] = useState<AviatorFunOverview["overview"] | null>(null);
-  const [profit, setProfit] = useState<number>(50);
-  const [profitInput, setProfitInput] = useState<string>("50");
+  const [profit, setProfit] = useState<number | null>(null);
+  const [profitInput, setProfitInput] = useState<string>("");
+  const [profitDirty, setProfitDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const load = async () => {
-    try {
-      const [ov, pf] = await Promise.all([getAviatorFunOverview(), getAviatorFunProfit()]);
-      setOverview(ov.overview);
-      setProfit(pf.percent);
-      setProfitInput(String(pf.percent));
-      setError(null);
-    } catch (e: any) {
-      setError(e?.message || "Failed to load");
+    const results = await Promise.allSettled([getAviatorFunOverview(), getAviatorFunProfit()]);
+    const ov = results[0];
+    const pf = results[1];
+    if (ov.status === "fulfilled" && ov.value?.overview) {
+      setOverview(ov.value.overview);
     }
+    if (pf.status === "fulfilled" && typeof pf.value?.percent === "number") {
+      setProfit(pf.value.percent);
+      if (!profitDirty) setProfitInput(String(pf.value.percent));
+    }
+    const firstErr = results.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined;
+    if (firstErr && ov.status === "rejected" && pf.status === "rejected") {
+      setError((firstErr.reason as Error)?.message || "Failed to load Aviator Fun data");
+    } else {
+      setError(null);
+    }
+    setLoaded(true);
   };
 
   useEffect(() => {
     load();
     const t = setInterval(load, 1500);
     return () => clearInterval(t);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profitDirty]);
 
   const saveProfit = async () => {
     const n = Number(profitInput);
-    if (isNaN(n) || n < 0 || n > 95) { setError("Profit must be 0-95"); return; }
+    if (isNaN(n) || n < 0 || n > 95) { setError("Profit must be a number between 0 and 95"); return; }
     setSaving(true);
     try {
-      await setAviatorFunProfit(n);
-      setProfit(n);
+      const res = await setAviatorFunProfit(n);
+      setProfit(res.percent ?? n);
+      setProfitInput(String(res.percent ?? n));
+      setProfitDirty(false);
       setError(null);
     } catch (e: any) {
       setError(e?.message || "Failed to save");
@@ -1872,6 +1885,8 @@ export function AviatorFunControlPage() {
       setSaving(false);
     }
   };
+
+  const profitDisplay = profit === null ? "—" : `${profit}%`;
 
   return (
     <div>
@@ -1882,7 +1897,10 @@ export function AviatorFunControlPage() {
 
       {error && (
         <div className="a-card mb-4" style={{ borderColor: "#ff6b6b" }}>
-          <div className="text-[13px]" style={{ color: "#ff6b6b" }}>{error}</div>
+          <div className="text-[13px]" style={{ color: "#ff6b6b" }}>⚠ {error}</div>
+          <div className="text-[11px] mt-1" style={{ color: "var(--a-text-mute)" }}>
+            Backend endpoint <code>/api/admin/aviator-fun/*</code> unreachable. Ensure the Node backend is deployed and reachable at <code>VITE_API_BASE_URL</code>.
+          </div>
         </div>
       )}
 
@@ -1891,38 +1909,70 @@ export function AviatorFunControlPage() {
           <div>
             <div className="text-white font-bold text-[16px]">House profit target</div>
             <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>
-              Currently <span className="text-white font-semibold">{profit}%</span>. Applies to all new rounds across every currency pool.
+              Currently <span className="text-white font-semibold">{profitDisplay}</span>. Applies to all new rounds across every currency pool.
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <input className="a-input w-24 text-center" value={profitInput}
-                   onChange={(e) => setProfitInput(e.target.value)} />
+            <input
+              className="a-input w-24 text-center"
+              type="number" min={0} max={95}
+              placeholder="50"
+              value={profitInput}
+              onChange={(e) => { setProfitInput(e.target.value); setProfitDirty(true); }}
+            />
             <span className="text-white">%</span>
             <button className="a-btn" style={{ background: "#33d69f", color: "#04070d" }}
-                    onClick={saveProfit} disabled={saving}>
+                    onClick={saveProfit} disabled={saving || !profitInput}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save
             </button>
           </div>
         </div>
       </div>
 
-      {!overview ? (
-        <div className="a-card"><Loader2 className="animate-spin" size={16} /></div>
+      {!overview && !loaded ? (
+        <div className="a-card flex items-center gap-2 text-[13px]" style={{ color: "var(--a-text-mute)" }}>
+          <Loader2 className="animate-spin" size={16} /> Loading pools…
+        </div>
+      ) : !overview ? (
+        <div className="a-card text-[13px]" style={{ color: "var(--a-text-mute)" }}>
+          No pool data available yet. Waiting for backend…
+        </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          {CURRENCIES.map((c) => (
-            <AviatorFunPoolCard
-              key={c.key} currencyKey={c.key} symbol={c.symbol} label={c.label}
-              pool={overview[c.key]}
-              onAdd={async (v) => { await addAviatorFunManual(c.key, v); load(); }}
-              onRemove={async (i) => { await removeAviatorFunManual(c.key, i); load(); }}
-              onClear={async () => { await clearAviatorFunManual(c.key); load(); }}
-              onForce={async () => { await forceCrashAviatorFun(c.key); load(); }}
-              onReset={async () => { if (confirm("Reset cumulative ledger for " + c.label + " pool?")) { await resetAviatorFunLedger(c.key); load(); } }}
-            />
-          ))}
+          {CURRENCIES.map((c) => {
+            const raw = overview[c.key];
+            const pool: AviatorFunPoolOverview = {
+              roundNumber: raw?.roundNumber ?? 0,
+              phase: raw?.phase ?? "betting",
+              multiplier: Number(raw?.multiplier ?? 1),
+              timeLeft: raw?.timeLeft ?? 0,
+              totalPool: Number(raw?.totalPool ?? 0),
+              totalPaidOut: Number(raw?.totalPaidOut ?? 0),
+              cumPool: Number(raw?.cumPool ?? 0),
+              cumPaid: Number(raw?.cumPaid ?? 0),
+              houseNet: Number(raw?.houseNet ?? 0),
+              totalPlayers: raw?.totalPlayers ?? 0,
+              manualQueue: Array.isArray(raw?.manualQueue) ? raw!.manualQueue : [],
+              manualOverride: !!raw?.manualOverride,
+              crashAt: raw?.crashAt ?? null,
+              history: Array.isArray(raw?.history) ? raw!.history : [],
+              bets: Array.isArray(raw?.bets) ? raw!.bets : [],
+            };
+            return (
+              <AviatorFunPoolCard
+                key={c.key} currencyKey={c.key} symbol={c.symbol} label={c.label}
+                pool={pool}
+                onAdd={async (v) => { await addAviatorFunManual(c.key, v); load(); }}
+                onRemove={async (i) => { await removeAviatorFunManual(c.key, i); load(); }}
+                onClear={async () => { await clearAviatorFunManual(c.key); load(); }}
+                onForce={async () => { await forceCrashAviatorFun(c.key); load(); }}
+                onReset={async () => { if (confirm("Reset cumulative ledger for " + c.label + " pool?")) { await resetAviatorFunLedger(c.key); load(); } }}
+              />
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+
