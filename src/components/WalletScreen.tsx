@@ -683,9 +683,7 @@ const WalletScreen = () => {
             </div>
 
             {/* INR / UPI Deposit */}
-            {depositMethod === "inr" && (
-
-            {upiConfig && upiConfig.upiId && (
+            {depositMethod === "inr" && upiConfig && upiConfig.upiId && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -701,7 +699,6 @@ const WalletScreen = () => {
                   </span>
                 </div>
                 <p className="text-[10px] text-[#8e97a4]">Pay using any Indian UPI App (PhonePe, GPay, Paytm) and get ₹ balance</p>
-                
                 <button
                   onClick={() => setUpiDepositDialog(true)}
                   className="w-full rounded-xl h-10 text-xs font-black uppercase tracking-wider bg-[#00a2e8] hover:bg-[#0091d0] text-white shadow-md shadow-[#00a2e8]/20 transition-all flex items-center justify-center gap-1.5"
@@ -710,11 +707,11 @@ const WalletScreen = () => {
                 </button>
               </motion.div>
             )}
-            )}
 
             {/* Crypto Deposit (NOWPayments) */}
             {depositMethod === "crypto" && (
             <motion.div
+
 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
