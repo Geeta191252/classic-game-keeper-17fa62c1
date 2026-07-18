@@ -17,8 +17,14 @@ const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
 };
 
+// Per-coin minimum deposit in USD (based on network fees / provider limits)
 const cryptoMins: Record<string, number> = {
-  btc: 18, ltc: 4, ton: 4, sol: 4, trx: 4, doge: 6,
+  btc: 20,
+  ltc: 5,
+  ton: 3,
+  sol: 5,
+  trx: 2,
+  doge: 8,
 };
 
 type CryptoOption = { id: string; label: string; name: string; color: string; symbol: string };
