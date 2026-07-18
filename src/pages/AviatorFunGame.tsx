@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useBalanceContext } from "@/contexts/BalanceContext";
-import { type CurrencyType, reportGameResult, fetchAviatorState, getTelegramUser } from "@/lib/telegram";
+import { type CurrencyType, reportGameResult, fetchAviatorFunState, getTelegramUser } from "@/lib/telegram";
 import { GameCurrencyMode, currencySymbol, modeToWallet } from "@/lib/gameCurrency";
 
 type ServerBet = { user: string; amount: number; multiplier: number | null; cashout: number | null };
