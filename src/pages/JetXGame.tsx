@@ -135,9 +135,9 @@ const JetXGame = () => {
   const modeSymbol = currencySymbol(currencyMode);
   const fmt = (v: number) => `${modeSymbol}${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-  // ── Smoothed multiplier for buttery number animation
+  // ── Smoothed multiplier for snappy number animation (matches faster flight)
   const multMv = useMotionValue(1);
-  const multSpring = useSpring(multMv, { stiffness: 90, damping: 20, mass: 0.7 });
+  const multSpring = useSpring(multMv, { stiffness: 140, damping: 18, mass: 0.55 });
   const multText = useTransform(multSpring, (v) => `${v.toFixed(2)}x`);
   useEffect(() => { multMv.set(multiplier); }, [multiplier, multMv]);
 
