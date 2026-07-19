@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, HelpCircle, Volume2, Users, Minus, Plus, ChevronDown, Wallet, Info } from "lucide-react";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { ArrowLeft, HelpCircle, Volume2, Users, Minus, Plus, Wallet, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useBalanceContext } from "@/contexts/BalanceContext";
@@ -14,8 +14,6 @@ import {
 } from "@/lib/telegram";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket.png";
-import spaceBg from "@/assets/jetx-space-bg.jpg";
-import stageBg from "@/assets/jetx-stage-bg.png.asset.json";
 
 type Phase = "betting" | "flying" | "crashed";
 
@@ -27,15 +25,14 @@ const PRESETS: Record<CurrencyType, number[]> = {
 
 const CASHOUT_PRESETS = [1.5, 2, 2.45, 5];
 
-// History chip colors (cycled) — matches reference multi-color pills
 const CHIP_COLORS = [
-  { bg: "linear-gradient(180deg,#1e90ff,#0b5bbf)", ring: "#3aa4ff" }, // blue
-  { bg: "linear-gradient(180deg,#22c55e,#166534)", ring: "#4ade80" }, // green
-  { bg: "linear-gradient(180deg,#14b8a6,#0f766e)", ring: "#2dd4bf" }, // teal
-  { bg: "linear-gradient(180deg,#a855f7,#6b21a8)", ring: "#c084fc" }, // purple
-  { bg: "linear-gradient(180deg,#eab308,#a16207)", ring: "#facc15" }, // yellow
-  { bg: "linear-gradient(180deg,#f97316,#9a3412)", ring: "#fb923c" }, // orange
-  { bg: "linear-gradient(180deg,#ec4899,#9d174d)", ring: "#f472b6" }, // pink
+  { bg: "linear-gradient(180deg,#1e90ff,#0b5bbf)", ring: "#3aa4ff" },
+  { bg: "linear-gradient(180deg,#22c55e,#166534)", ring: "#4ade80" },
+  { bg: "linear-gradient(180deg,#14b8a6,#0f766e)", ring: "#2dd4bf" },
+  { bg: "linear-gradient(180deg,#a855f7,#6b21a8)", ring: "#c084fc" },
+  { bg: "linear-gradient(180deg,#eab308,#a16207)", ring: "#facc15" },
+  { bg: "linear-gradient(180deg,#f97316,#9a3412)", ring: "#fb923c" },
+  { bg: "linear-gradient(180deg,#ec4899,#9d174d)", ring: "#f472b6" },
 ];
 
 const JetXGame = () => {
@@ -63,10 +60,8 @@ const JetXGame = () => {
 
   const lastPhaseRef = useRef<Phase>("betting");
   const lastRoundRef = useRef(0);
-  const autoBetRef = useRef(autoBet);
-  autoBetRef.current = autoBet;
-  const autoCashRef = useRef(autoCashout);
-  autoCashRef.current = autoCashout;
+  const autoBetRef = useRef(autoBet); autoBetRef.current = autoBet;
+  const autoCashRef = useRef(autoCashout); autoCashRef.current = autoCashout;
 
   useEffect(() => {
     setBetAmount(currencyMode === "INR" ? 500 : currencyMode === "STAR" ? 50 : 5);
@@ -79,6 +74,12 @@ const JetXGame = () => {
   const displayBalance = toDisplayAmount(totalBal, currencyMode);
   const modeSymbol = currencySymbol(currencyMode);
   const fmt = (v: number) => `${modeSymbol}${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+
+  // ── Smoothed multiplier for buttery number animation
+  const multMv = useMotionValue(1);
+  const multSpring = useSpring(multMv, { stiffness: 120, damping: 22, mass: 0.6 });
+  const multText = useTransform(multSpring, (v) => `${v.toFixed(2)}x`);
+  useEffect(() => { multMv.set(multiplier); }, [multiplier, multMv]);
 
   // Poll server state
   useEffect(() => {
@@ -94,19 +95,16 @@ const JetXGame = () => {
         setHistory(s.history);
         setRoundNumber(s.roundNumber);
         setTotalPlayers(s.totalPlayers);
-
         if (s.roundNumber !== lastRoundRef.current) {
           lastRoundRef.current = s.roundNumber;
           setMyBet(null);
         }
-        if (lastPhaseRef.current !== s.phase && s.phase === "crashed") {
-          refreshBalance();
-        }
+        if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
       } catch { /* silent */ }
     };
     tick();
-    const id = setInterval(tick, 300);
+    const id = setInterval(tick, 250);
     return () => { cancel = true; clearInterval(id); };
   }, [currency, refreshBalance]);
 
@@ -120,12 +118,7 @@ const JetXGame = () => {
     if (nativeBet > totalBal) return toast.error(`Insufficient ${modeSymbol} balance`);
     setPlacing(true);
     try {
-      await placeJetXBet({
-        userId: tgUser?.id || "demo",
-        amount: nativeBet,
-        currency,
-        firstName: tgUser?.first_name,
-      });
+      await placeJetXBet({ userId: tgUser?.id || "demo", amount: nativeBet, currency, firstName: tgUser?.first_name });
       setMyBet({ amount: betAmount, cashedOutAt: null, winAmount: 0 });
       refreshBalance();
       toast.success(`Bet ${fmt(betAmount)} placed`);
@@ -151,14 +144,13 @@ const JetXGame = () => {
     }
   }, [canCashout, tgUser, currency, currencyMode]);
 
-  // Auto-cashout
   useEffect(() => {
     if (phase === "flying" && myBet && !myBet.cashedOutAt && autoBetRef.current && multiplier >= autoCashRef.current) {
       handleCashout();
     }
   }, [multiplier, phase, myBet, handleCashout]);
 
-  const potentialWin = useMemo(() => myBet ? myBet.amount * 0.98 * multiplier : betAmount * 0.98 * multiplier, [myBet, betAmount, multiplier]);
+  const potentialWin = useMemo(() => (myBet ? myBet.amount : betAmount) * 0.98 * multiplier, [myBet, betAmount, multiplier]);
 
   const currencyOptions: { mode: GameCurrencyMode; label: string }[] = [
     { mode: "INR", label: "₹" },
@@ -166,346 +158,341 @@ const JetXGame = () => {
     { mode: "STAR", label: "★" },
   ];
 
+  // Rocket flight math
+  const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(15)) : 0;
+  const rocketBottomPct = phase === "crashed" ? 130 : 6 + progress * 55;
+  const flameHvh = phase === "flying" ? 20 + progress * 14 : phase === "betting" ? 14 : 12;
+
   return (
-    <div className="min-h-screen w-full text-white select-none" style={{ background: "#000" }}>
-      {/* ── HEADER ─────────────────────────── */}
-      <div className="relative px-3 pt-3 pb-2">
-        <div className="flex items-start justify-between">
-          {/* Back */}
+    <div
+      className="min-h-screen w-full text-white select-none relative overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(ellipse at 20% 10%, #1a2a5a 0%, #0a0f24 40%, #04060f 100%)",
+      }}
+    >
+      {/* ── Animated deep-space background (edge-to-edge) ── */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        {/* Nebula wash */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(60% 45% at 75% 25%, rgba(120,80,220,0.35), transparent 60%), radial-gradient(50% 40% at 15% 75%, rgba(30,120,220,0.35), transparent 65%), radial-gradient(35% 30% at 60% 85%, rgba(236,72,153,0.22), transparent 70%)",
+            animation: "jetx-nebula-drift 14s ease-in-out infinite",
+          }}
+        />
+        {/* Star layers */}
+        <div
+          className="absolute inset-0 jetx-stars opacity-90"
+          style={{ animation: `jetx-stars-move ${phase === "flying" ? 12 : 40}s linear infinite` }}
+        />
+        <div
+          className="absolute inset-0 jetx-stars opacity-50"
+          style={{
+            animation: `jetx-stars-move ${phase === "flying" ? 22 : 70}s linear infinite`,
+            filter: "blur(0.5px)",
+            transform: "scale(1.4)",
+          }}
+        />
+        {/* Vignette */}
+        <div
+          className="absolute inset-0"
+          style={{ background: "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.65) 100%)" }}
+        />
+      </div>
+
+      {/* ── HEADER ── */}
+      <div className="relative z-10 px-4 pt-3 pb-2">
+        <div className="flex items-center justify-between gap-3">
           <button
             onClick={() => navigate("/")}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center active:scale-90 transition"
-            style={{
-              background: "linear-gradient(180deg,#1f2937,#0b1220)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 4px 0 #000, inset 0 1px 0 rgba(255,255,255,0.1)",
-            }}
+            className="w-11 h-11 rounded-2xl flex items-center justify-center active:scale-90 transition jetx-glass"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
 
-          {/* 3D JetX Logo */}
-          <div className="flex-1 flex justify-center -mt-1">
-            <div className="relative">
-              <h1
-                className="text-[42px] font-black italic tracking-tight leading-none"
-                style={{
-                  fontFamily: "'Arial Black', system-ui, sans-serif",
-                  background: "linear-gradient(180deg,#ffffff 0%,#e5e7eb 55%,#9ca3af 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  textShadow: "0 4px 0 #4b5563, 0 6px 12px rgba(0,0,0,0.6)",
-                  filter: "drop-shadow(0 3px 0 #374151)",
-                }}
-              >
-                Jet<span style={{
-                  background: "linear-gradient(180deg,#fde047 0%,#eab308 55%,#a16207 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  filter: "drop-shadow(0 0 12px rgba(250,204,21,0.7))",
-                }}>X</span>
-              </h1>
-            </div>
+          <div className="flex-1 flex justify-center">
+            <h1
+              className="text-[40px] font-black italic tracking-tight leading-none"
+              style={{
+                fontFamily: "'Arial Black', system-ui, sans-serif",
+                background: "linear-gradient(180deg,#ffffff 0%,#dbeafe 55%,#93a4c9 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 3px 10px rgba(120,150,255,0.35))",
+              }}
+            >
+              Jet<span style={{
+                background: "linear-gradient(180deg,#fde047 0%,#eab308 55%,#a16207 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                filter: "drop-shadow(0 0 14px rgba(250,204,21,0.75))",
+              }}>X</span>
+            </h1>
           </div>
 
-          {/* Right buttons */}
-          <div className="flex flex-col gap-1.5">
-            <button className="px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-[11px] font-bold"
-              style={{
-                background: "linear-gradient(180deg,#1e3a8a,#0c1d4a)",
-                border: "1px solid #3b5fbf",
-                boxShadow: "0 3px 0 #030712, inset 0 1px 0 rgba(255,255,255,0.15)",
-              }}>
-              <HelpCircle className="h-3.5 w-3.5 text-sky-300" />
-              <span>How to play?</span>
-            </button>
-          </div>
+          <button className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass">
+            <HelpCircle className="h-5 w-5 text-sky-300" />
+          </button>
         </div>
 
-        {/* Wallet chip + volume */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-2 px-2 py-1.5 rounded-2xl"
-            style={{
-              background: "linear-gradient(180deg,#0b1220,#000)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              boxShadow: "0 3px 0 #000",
-            }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+        {/* Wallet + currency + volume */}
+        <div className="flex items-center justify-between gap-2 mt-3">
+          <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl jetx-glass">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
               style={{
                 background: "linear-gradient(180deg,#22c55e,#166534)",
-                boxShadow: "0 3px 0 #052e16, inset 0 1px 0 rgba(255,255,255,0.3)",
-              }}>
+                boxShadow: "0 4px 10px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+              }}
+            >
               <Wallet className="h-4 w-4 text-white" />
             </div>
-            <div className="pr-2">
+            <div>
               <div className="text-[13px] font-black leading-tight">{fmt(displayBalance)}</div>
-              <div className="text-[9px] text-white/50 uppercase tracking-wider leading-tight">Main Balance</div>
+              <div className="text-[9px] text-white/50 uppercase tracking-wider leading-tight">Balance</div>
             </div>
           </div>
 
-          {/* Currency switch */}
-          <div className="flex items-center gap-1 p-1 rounded-2xl"
-            style={{
-              background: "linear-gradient(180deg,#0b1220,#000)",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}>
-            {currencyOptions.map(o => (
-              <button
-                key={o.mode}
-                onClick={() => setCurrencyMode(o.mode)}
-                disabled={phase !== "betting"}
-                className="w-8 h-8 rounded-xl font-black text-sm disabled:opacity-50"
-                style={{
-                  background: currencyMode === o.mode
-                    ? "linear-gradient(180deg,#eab308,#a16207)"
-                    : "linear-gradient(180deg,#1f2937,#0b1220)",
-                  color: currencyMode === o.mode ? "#111" : "#fff",
-                  boxShadow: currencyMode === o.mode
-                    ? "0 2px 0 #713f12, inset 0 1px 0 rgba(255,255,255,0.4)"
-                    : "0 2px 0 #000",
-                }}
-              >
-                {o.label}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 p-1 rounded-2xl jetx-glass">
+            {currencyOptions.map((o) => {
+              const active = currencyMode === o.mode;
+              return (
+                <button
+                  key={o.mode}
+                  onClick={() => setCurrencyMode(o.mode)}
+                  disabled={phase !== "betting"}
+                  className="w-8 h-8 rounded-xl font-black text-sm disabled:opacity-50 transition"
+                  style={{
+                    background: active
+                      ? "linear-gradient(180deg,#fde047,#a16207)"
+                      : "transparent",
+                    color: active ? "#111" : "#fff",
+                    boxShadow: active
+                      ? "0 4px 12px rgba(234,179,8,0.5), inset 0 1px 0 rgba(255,255,255,0.5)"
+                      : "none",
+                  }}
+                >
+                  {o.label}
+                </button>
+              );
+            })}
           </div>
 
-          <button className="w-11 h-11 rounded-2xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(180deg,#1e3a8a,#0c1d4a)",
-              border: "1px solid #3b5fbf",
-              boxShadow: "0 3px 0 #030712",
-            }}>
+          <button className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass">
             <Volume2 className="h-4 w-4 text-sky-300" />
           </button>
         </div>
       </div>
 
-      {/* ── STAGE ────────────────────────── */}
-      <div className="px-3">
-        <div className="relative rounded-[28px] overflow-hidden"
-          style={{
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 8px 0 #000, inset 0 1px 0 rgba(255,255,255,0.08)",
-            aspectRatio: "973 / 630",
-          }}>
-          {/* Scrolling space + clouds background (two stacked tiles → seamless loop) */}
-          <div className="absolute inset-0 overflow-hidden">
-            <motion.div
-              className="absolute left-0 w-full"
-              style={{ top: 0, height: "200%" }}
-              animate={{ y: phase === "flying" ? ["0%", "-50%"] : ["0%", "-50%"] }}
-              transition={{
-                duration: phase === "flying" ? 6 : 18,
-                ease: "linear",
-                repeat: Infinity,
-              }}
-            >
-              <img src={stageBg.url} alt="" className="absolute top-0 left-0 w-full h-1/2 object-cover" />
-              <img src={stageBg.url} alt="" className="absolute top-1/2 left-0 w-full h-1/2 object-cover" />
-            </motion.div>
-          </div>
-
-          {/* Animated Rocket + massive vertical Flame plume — matches reference */}
-          {(() => {
-            const progress = phase === "flying"
-              ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(15))
-              : 0;
-            // Rocket rises from lower area up
-            const bottomPct = phase === "crashed" ? 120 : 8 + progress * 18;
-            const flameH = phase === "flying" ? 22 + progress * 10 : phase === "betting" ? 16 : 14;
-            return (
-              <motion.div
-                className="absolute pointer-events-none"
-                style={{ right: "8%", width: "28%" }}
-                animate={{
-                  bottom: `${bottomPct}%`,
-                  x: phase === "flying" ? [0, -3, 3, -2, 0] : 0,
-                  y: phase !== "crashed" ? [0, -6, 0, 4, 0] : 0,
-                }}
-                transition={{
-                  bottom: { duration: 0.4, ease: "linear" },
-                  x: { duration: 0.6, repeat: Infinity, ease: "easeInOut" },
-                  y: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
-                }}
-              >
-                {/* Rocket — upright, nozzle points straight down */}
-                <img
-                  src={rocketImg}
-                  alt="rocket"
-                  className="relative w-full block"
-                  style={{
-                    filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.75)) drop-shadow(0 0 25px rgba(249,115,22,0.4))",
-                  }}
-                />
-
-                {/* Massive vertical flame column shooting DOWN from rocket's nozzle */}
-                <div
-                  className="absolute left-1/2 -translate-x-1/2"
-                  style={{ top: "96%", width: "55%", height: `${flameH}vh`, maxHeight: "70vh" }}
-                >
-                  {/* outer smoke glow */}
-                  <motion.div
-                    style={{
-                      position: "absolute", inset: "0 -60% 0 -60%",
-                      background: "radial-gradient(ellipse at top, rgba(251,146,60,0.55) 0%, rgba(234,88,12,0.25) 40%, transparent 75%)",
-                      filter: "blur(14px)",
-                    }}
-                    animate={{ opacity: [0.7, 1, 0.75, 1, 0.8] }}
-                    transition={{ duration: 0.25, repeat: Infinity }}
-                  />
-                  {/* main orange flame column */}
-                  <motion.div
-                    style={{
-                      position: "absolute", inset: 0,
-                      background: "linear-gradient(180deg, #fef08a 0%, #fbbf24 18%, #f97316 45%, #ea580c 70%, #b91c1c 88%, transparent 100%)",
-                      clipPath: "polygon(50% 0%, 88% 15%, 100% 45%, 92% 75%, 70% 95%, 50% 100%, 30% 95%, 8% 75%, 0% 45%, 12% 15%)",
-                      filter: "drop-shadow(0 0 20px rgba(249,115,22,0.9))",
-                      transformOrigin: "top center",
-                    }}
-                    animate={{ scaleY: [1, 1.08, 0.95, 1.05, 1], scaleX: [1, 0.95, 1.03, 0.97, 1] }}
-                    transition={{ duration: 0.2, repeat: Infinity }}
-                  />
-                  {/* inner yellow core */}
-                  <motion.div
-                    style={{
-                      position: "absolute", top: 0, left: "22%", right: "22%", bottom: "20%",
-                      background: "linear-gradient(180deg, #ffffff 0%, #fef3c7 25%, #fde047 55%, #f59e0b 90%, transparent 100%)",
-                      clipPath: "polygon(50% 0%, 85% 30%, 75% 85%, 50% 100%, 25% 85%, 15% 30%)",
-                      transformOrigin: "top center",
-                    }}
-                    animate={{ scaleY: [1, 1.1, 0.92, 1.05, 1] }}
-                    transition={{ duration: 0.18, repeat: Infinity }}
-                  />
-                  {/* white hot spot right at the nozzle */}
-                  <motion.div
-                    style={{
-                      position: "absolute", top: "-8%", left: "32%", right: "32%", height: "22%",
-                      background: "radial-gradient(ellipse, #ffffff 0%, #fef3c7 45%, transparent 80%)",
-                      filter: "blur(3px)",
-                    }}
-                    animate={{ opacity: [0.9, 1, 0.85, 1] }}
-                    transition={{ duration: 0.15, repeat: Infinity }}
-                  />
-                </div>
-              </motion.div>
-            );
-          })()}
-
-          {/* Round ID — overlays baked one (top-left) */}
-          <div className="absolute top-[3%] left-[3%] px-2.5 py-1 rounded-xl text-[10px] font-black"
+      {/* ── STAGE (edge-to-edge) ── */}
+      <div className="relative z-10 mt-2">
+        <div
+          className="relative overflow-hidden mx-3 rounded-[28px] jetx-glass-strong"
+          style={{ aspectRatio: "9 / 11" }}
+        >
+          {/* Inner star drift (parallax faster inside stage) */}
+          <div
+            className="absolute inset-0 jetx-stars opacity-80"
+            style={{ animation: `jetx-stars-move ${phase === "flying" ? 6 : 30}s linear infinite` }}
+          />
+          {/* Aurora glow behind rocket */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
             style={{
-              background: "linear-gradient(180deg,#0b1220,#000)",
-              border: "1px solid rgba(34,197,94,0.4)",
-              boxShadow: "0 2px 0 #000",
-            }}>
-            <div className="text-[8px] text-green-400 uppercase tracking-wider">Round ID</div>
-            <div className="text-green-300">#{100000 + roundNumber}</div>
-          </div>
+              background:
+                "radial-gradient(60% 60% at 50% 100%, rgba(249,115,22,0.35), rgba(168,85,247,0.15) 45%, transparent 75%)",
+            }}
+          />
 
-          {/* Players — overlays baked one (top-right) */}
-          <div className="absolute top-[3%] right-[3%] px-2.5 py-1 rounded-xl text-[10px] font-black flex items-center gap-1.5"
-            style={{
-              background: "linear-gradient(180deg,#0b1220,#000)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 2px 0 #000",
-            }}>
+          {/* Round ID */}
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-xl text-[10px] font-black jetx-glass">
+            <div className="text-[8px] text-emerald-300/80 uppercase tracking-wider">Round</div>
+            <div className="text-emerald-200">#{100000 + roundNumber}</div>
+          </div>
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-xl text-[10px] font-black flex items-center gap-1.5 jetx-glass">
             <Users className="h-3 w-3 text-white/70" />
             <div>
               <div className="text-white leading-tight">{totalPlayers}</div>
-              <div className="text-[8px] text-white/50 uppercase leading-tight">Playing</div>
+              <div className="text-[8px] text-white/50 uppercase leading-tight">Live</div>
             </div>
           </div>
 
-          {/* Live multiplier — covers the baked "4.35x FLYING HIGH" text exactly */}
-          <div className="absolute pointer-events-none"
-            style={{ top: "26%", left: "8%", width: "42%" }}>
+          {/* Multiplier / Countdown */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-[16%] w-full text-center pointer-events-none">
             <AnimatePresence mode="wait">
               {phase === "betting" && (
-                <motion.div key="b" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                  <div className="text-[9px] text-white/70 uppercase tracking-[0.2em] mb-1 font-black">Next round in</div>
-                  <div className="text-[64px] font-black leading-none italic"
+                <motion.div key="b" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                  <div className="text-[10px] text-white/60 uppercase tracking-[0.28em] mb-1 font-black">Next round in</div>
+                  <div
+                    className="text-[84px] font-black leading-none italic"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
-                      background: "linear-gradient(180deg,#fde047,#eab308,#a16207)",
+                      background: "linear-gradient(180deg,#fde047,#eab308,#7c4a05)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 4px 0 #713f12) drop-shadow(0 0 20px rgba(250,204,21,0.6))",
-                    }}>{countdown}</div>
+                      filter: "drop-shadow(0 8px 24px rgba(250,204,21,0.5))",
+                    }}
+                  >
+                    {countdown}
+                  </div>
                 </motion.div>
               )}
               {phase === "flying" && (
-                <motion.div key="f" initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                  {/* Solid black plate to mask the baked "4.35x" behind live value */}
-                  <div className="text-[54px] font-black leading-none italic"
+                <motion.div key="f" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                  <motion.div
+                    className="text-[74px] font-black leading-none italic"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
-                      background: "linear-gradient(180deg,#fef08a,#eab308,#854d0e)",
+                      background: "linear-gradient(180deg,#ffffff,#fde047,#eab308)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 5px 0 #451a03) drop-shadow(0 0 24px rgba(250,204,21,0.9)) drop-shadow(0 0 6px #000) drop-shadow(0 0 6px #000)",
-                      WebkitTextStroke: "1px rgba(0,0,0,0.6)",
-                    }}>{multiplier.toFixed(2)}x</div>
-                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-green-100"
+                      filter: "drop-shadow(0 6px 22px rgba(250,204,21,0.7)) drop-shadow(0 0 12px rgba(255,255,255,0.35))",
+                    }}
+                  >
+                    {multText}
+                  </motion.div>
+                  <div
+                    className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-[11px] font-black text-emerald-50"
                     style={{
-                      background: "linear-gradient(180deg,#22c55e,#166534)",
-                      boxShadow: "0 3px 0 #052e16, inset 0 1px 0 rgba(255,255,255,0.3)",
-                    }}>
-                    FLYING HIGH! 🚀
+                      background: "linear-gradient(180deg,rgba(34,197,94,0.9),rgba(22,101,52,0.9))",
+                      boxShadow: "0 6px 16px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    FLYING HIGH 🚀
                   </div>
                 </motion.div>
               )}
               {phase === "crashed" && (
-                <motion.div key="c" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                  <div className="text-[10px] text-red-300 font-black uppercase tracking-[0.2em] mb-1">💥 Crashed</div>
-                  <div className="text-[54px] font-black italic leading-none"
+                <motion.div key="c" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                  <div className="text-[10px] text-red-300 font-black uppercase tracking-[0.28em] mb-1">💥 Crashed</div>
+                  <div
+                    className="text-[74px] font-black italic leading-none"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
-                      background: "linear-gradient(180deg,#fca5a5,#ef4444,#7f1d1d)",
+                      background: "linear-gradient(180deg,#fecaca,#ef4444,#7f1d1d)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 4px 0 #450a0a) drop-shadow(0 0 24px rgba(239,68,68,0.9)) drop-shadow(0 0 6px #000) drop-shadow(0 0 6px #000)",
-                      WebkitTextStroke: "1px rgba(0,0,0,0.6)",
-                    }}>{(crashAt ?? multiplier).toFixed(2)}x</div>
+                      filter: "drop-shadow(0 6px 22px rgba(239,68,68,0.7))",
+                    }}
+                  >
+                    {(crashAt ?? multiplier).toFixed(2)}x
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+
+          {/* Rocket + flame */}
+          <motion.div
+            className="absolute pointer-events-none left-1/2"
+            style={{ width: "34%", x: "-50%" }}
+            animate={{
+              bottom: `${rocketBottomPct}%`,
+              rotate: phase === "flying" ? [-2, 2, -1.5, 1.5, -2] : 0,
+              x: phase === "flying" ? ["-52%", "-48%", "-51%", "-49%", "-50%"] : "-50%",
+              y: phase === "betting" ? [0, -8, 0, 6, 0] : 0,
+            }}
+            transition={{
+              bottom: { duration: 0.35, ease: "linear" },
+              rotate: { duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+              x: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+              y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+            }}
+          >
+            <img
+              src={rocketImg}
+              alt="rocket"
+              className="w-full block relative"
+              style={{
+                filter:
+                  "drop-shadow(0 20px 30px rgba(0,0,0,0.75)) drop-shadow(0 0 26px rgba(120,180,255,0.35)) drop-shadow(0 0 14px rgba(249,115,22,0.35))",
+              }}
+            />
+            {/* Flame plume */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{ top: "94%", width: "56%", height: `${flameHvh}vh`, maxHeight: "60vh" }}
+            >
+              <motion.div
+                style={{
+                  position: "absolute", inset: "0 -70% 0 -70%",
+                  background:
+                    "radial-gradient(ellipse at top, rgba(251,146,60,0.55) 0%, rgba(234,88,12,0.25) 40%, transparent 75%)",
+                  filter: "blur(18px)",
+                }}
+                animate={{ opacity: [0.7, 1, 0.75, 1, 0.8] }}
+                transition={{ duration: 0.25, repeat: Infinity }}
+              />
+              <motion.div
+                style={{
+                  position: "absolute", inset: 0,
+                  background:
+                    "linear-gradient(180deg, #fef08a 0%, #fbbf24 18%, #f97316 45%, #ea580c 70%, #b91c1c 88%, transparent 100%)",
+                  clipPath:
+                    "polygon(50% 0%, 88% 15%, 100% 45%, 92% 75%, 70% 95%, 50% 100%, 30% 95%, 8% 75%, 0% 45%, 12% 15%)",
+                  filter: "drop-shadow(0 0 26px rgba(249,115,22,0.9))",
+                  transformOrigin: "top center",
+                }}
+                animate={{ scaleY: [1, 1.1, 0.94, 1.06, 1], scaleX: [1, 0.95, 1.04, 0.97, 1] }}
+                transition={{ duration: 0.2, repeat: Infinity }}
+              />
+              <motion.div
+                style={{
+                  position: "absolute", top: 0, left: "24%", right: "24%", bottom: "22%",
+                  background:
+                    "linear-gradient(180deg, #ffffff 0%, #fef3c7 25%, #fde047 55%, #f59e0b 90%, transparent 100%)",
+                  clipPath: "polygon(50% 0%, 85% 30%, 75% 85%, 50% 100%, 25% 85%, 15% 30%)",
+                  transformOrigin: "top center",
+                }}
+                animate={{ scaleY: [1, 1.12, 0.9, 1.06, 1] }}
+                transition={{ duration: 0.18, repeat: Infinity }}
+              />
+              <motion.div
+                style={{
+                  position: "absolute", top: "-6%", left: "34%", right: "34%", height: "22%",
+                  background: "radial-gradient(ellipse, #ffffff 0%, #fef3c7 45%, transparent 80%)",
+                  filter: "blur(3px)",
+                }}
+                animate={{ opacity: [0.9, 1, 0.85, 1] }}
+                transition={{ duration: 0.15, repeat: Infinity }}
+              />
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      {/* ── HISTORY CHIPS ────────────────────── */}
-      <div className="flex gap-1.5 px-3 mt-3 overflow-x-auto no-scrollbar pb-1">
-        {history.slice(0, 8).map((h, i) => {
+      {/* ── HISTORY CHIPS ── */}
+      <div className="relative z-10 flex gap-1.5 px-4 mt-3 overflow-x-auto scrollbar-hide pb-1">
+        {history.slice(0, 10).map((h, i) => {
           const c = CHIP_COLORS[i % CHIP_COLORS.length];
           return (
-            <div key={i} className="px-2.5 py-1 rounded-lg text-[11px] font-black text-white whitespace-nowrap"
+            <div
+              key={i}
+              className="px-2.5 py-1 rounded-lg text-[11px] font-black text-white whitespace-nowrap"
               style={{
                 background: c.bg,
                 border: `1px solid ${c.ring}`,
-                boxShadow: `0 3px 0 rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)`,
+                boxShadow: "0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
                 textShadow: "0 1px 2px rgba(0,0,0,0.6)",
-              }}>
+              }}
+            >
               {h.toFixed(2)}x
             </div>
           );
         })}
       </div>
 
-      {/* ── CONTROL PANELS ────────────────── */}
-      <div className="px-3 mt-3 grid grid-cols-2 gap-2">
-        {/* Bet amount */}
-        <div className="rounded-2xl p-2.5"
-          style={{
-            background: "linear-gradient(180deg,#0f172a,#000)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 4px 0 #000",
-          }}>
+      {/* ── CONTROL PANELS ── */}
+      <div className="relative z-10 px-3 mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-2xl p-2.5 jetx-glass">
           <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Bet Amount</div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setBetAmount(v => Math.max(1, +(v - (currencyMode === "INR" ? 100 : 1)).toFixed(2)))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
-              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+            <button
+              onClick={() => setBetAmount(v => Math.max(1, +(v - (currencyMode === "INR" ? 100 : 1)).toFixed(2)))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+            >
               <Minus className="h-3.5 w-3.5" />
             </button>
             <input
@@ -514,59 +501,64 @@ const JetXGame = () => {
               onChange={e => setBetAmount(Math.max(0, Number(e.target.value) || 0))}
               className="flex-1 bg-transparent text-center text-base font-black outline-none w-0"
             />
-            <button onClick={() => setBetAmount(v => +(v + (currencyMode === "INR" ? 100 : 1)).toFixed(2))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
-              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+            <button
+              onClick={() => setBetAmount(v => +(v + (currencyMode === "INR" ? 100 : 1)).toFixed(2))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+            >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="grid grid-cols-4 gap-1 mt-1.5">
             {PRESETS[currency].map(p => (
-              <button key={p} onClick={() => setBetAmount(p)}
-                className="text-[9px] font-black py-1 rounded-md"
+              <button
+                key={p}
+                onClick={() => setBetAmount(p)}
+                className="text-[9px] font-black py-1 rounded-md transition"
                 style={{
                   background: betAmount === p
                     ? "linear-gradient(180deg,#22c55e,#166534)"
-                    : "linear-gradient(180deg,#1f2937,#000)",
-                  boxShadow: "0 2px 0 #000",
-                }}>
+                    : "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: betAmount === p ? "0 4px 10px rgba(34,197,94,0.4)" : "none",
+                }}
+              >
                 {modeSymbol}{p}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Auto cashout */}
-        <div className="rounded-2xl p-2.5"
-          style={{
-            background: "linear-gradient(180deg,#0f172a,#000)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 4px 0 #000",
-          }}>
+        <div className="rounded-2xl p-2.5 jetx-glass">
           <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Auto Cashout</div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setAutoCashout(v => Math.max(1.1, +(v - 0.1).toFixed(2)))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
-              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+            <button
+              onClick={() => setAutoCashout(v => Math.max(1.1, +(v - 0.1).toFixed(2)))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+            >
               <Minus className="h-3.5 w-3.5" />
             </button>
             <div className="flex-1 text-center text-base font-black">{autoCashout.toFixed(2)}x</div>
-            <button onClick={() => setAutoCashout(v => +(v + 0.1).toFixed(2))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
-              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+            <button
+              onClick={() => setAutoCashout(v => +(v + 0.1).toFixed(2))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+            >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="grid grid-cols-4 gap-1 mt-1.5">
             {CASHOUT_PRESETS.map(p => (
-              <button key={p} onClick={() => setAutoCashout(p)}
-                className="text-[9px] font-black py-1 rounded-md"
+              <button
+                key={p}
+                onClick={() => setAutoCashout(p)}
+                className="text-[9px] font-black py-1 rounded-md transition"
                 style={{
                   background: autoCashout === p
                     ? "linear-gradient(180deg,#22c55e,#166534)"
-                    : "linear-gradient(180deg,#1f2937,#000)",
-                  boxShadow: "0 2px 0 #000",
-                }}>
+                    : "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: autoCashout === p ? "0 4px 10px rgba(34,197,94,0.4)" : "none",
+                }}
+              >
                 {p.toFixed(2)}x
               </button>
             ))}
@@ -575,22 +567,21 @@ const JetXGame = () => {
       </div>
 
       {/* Auto bet row */}
-      <div className="px-3 mt-2">
-        <div className="flex items-center justify-between rounded-2xl p-2.5"
-          style={{
-            background: "linear-gradient(180deg,#0f172a,#000)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 4px 0 #000",
-          }}>
+      <div className="relative z-10 px-3 mt-2">
+        <div className="flex items-center justify-between rounded-2xl p-2.5 jetx-glass">
           <div className="text-[10px] text-white/70 font-black uppercase tracking-wider">Auto Bet</div>
-          <button onClick={() => setAutoBet(v => !v)}
+          <button
+            onClick={() => setAutoBet(v => !v)}
             className="relative w-14 h-7 rounded-full transition-colors"
             style={{
               background: autoBet ? "linear-gradient(180deg,#22c55e,#166534)" : "linear-gradient(180deg,#374151,#111)",
               boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
-            }}>
-            <div className="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform"
-              style={{ transform: autoBet ? "translateX(28px)" : "translateX(2px)", boxShadow: "0 2px 4px rgba(0,0,0,0.5)" }} />
+            }}
+          >
+            <div
+              className="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform"
+              style={{ transform: autoBet ? "translateX(28px)" : "translateX(2px)", boxShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+            />
           </button>
           <div className="flex items-center gap-1 text-[11px] font-black">
             <span className="text-white/60">×</span>
@@ -600,8 +591,8 @@ const JetXGame = () => {
         </div>
       </div>
 
-      {/* ── MAIN ACTION BUTTON ─────────────────── */}
-      <div className="px-3 mt-3 pb-4">
+      {/* Main action */}
+      <div className="relative z-10 px-3 mt-3 pb-4">
         {canCashout ? (
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -610,18 +601,18 @@ const JetXGame = () => {
             className="w-full py-4 rounded-2xl relative overflow-hidden"
             style={{
               background: "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)",
-              boxShadow: "0 6px 0 #713f12, 0 12px 24px rgba(234,179,8,0.5), inset 0 2px 0 rgba(255,255,255,0.5)",
+              boxShadow: "0 10px 24px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)",
               border: "1px solid #fde047",
             }}
           >
-            <div className="text-black font-black text-xl leading-tight" style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}>CASH OUT</div>
-            <div className="text-black font-black text-lg" style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}>{fmt(potentialWin)}</div>
+            <div className="text-black font-black text-xl leading-tight">CASH OUT</div>
+            <div className="text-black font-black text-lg">{fmt(potentialWin)}</div>
           </motion.button>
         ) : myBet?.cashedOutAt ? (
           <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
             style={{
               background: "linear-gradient(180deg,#22c55e,#166534)",
-              boxShadow: "0 6px 0 #052e16, inset 0 2px 0 rgba(255,255,255,0.3)",
+              boxShadow: "0 10px 24px rgba(34,197,94,0.4), inset 0 2px 0 rgba(255,255,255,0.3)",
             }}>
             ✓ Won {fmt(toDisplayAmount(myBet.winAmount, currencyMode))} @ {myBet.cashedOutAt.toFixed(2)}x
           </div>
@@ -629,7 +620,7 @@ const JetXGame = () => {
           <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
             style={{
               background: "linear-gradient(180deg,#ef4444,#7f1d1d)",
-              boxShadow: "0 6px 0 #450a0a, inset 0 2px 0 rgba(255,255,255,0.2)",
+              boxShadow: "0 10px 24px rgba(239,68,68,0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
             }}>
             {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `Waiting for takeoff...`}
           </div>
@@ -644,27 +635,21 @@ const JetXGame = () => {
                 ? "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)"
                 : "linear-gradient(180deg,#374151,#111)",
               boxShadow: canBet
-                ? "0 6px 0 #713f12, 0 12px 24px rgba(234,179,8,0.5), inset 0 2px 0 rgba(255,255,255,0.5)"
+                ? "0 10px 24px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)"
                 : "0 4px 0 #000",
               border: canBet ? "1px solid #fde047" : "1px solid rgba(255,255,255,0.1)",
             }}
           >
-            <div className={`font-black text-xl ${canBet ? "text-black" : "text-white/60"}`}
-              style={canBet ? { textShadow: "0 1px 0 rgba(255,255,255,0.4)" } : {}}>
+            <div className={`font-black text-xl ${canBet ? "text-black" : "text-white/60"}`}>
               {placing ? "PLACING..." : phase === "betting" ? `BET ${fmt(betAmount)}` : "WAIT FOR NEXT ROUND"}
             </div>
           </motion.button>
         )}
       </div>
 
-      {/* ── PLAYERS TABLE ─────────────────── */}
-      <div className="px-3 pb-8">
-        <div className="rounded-2xl overflow-hidden"
-          style={{
-            background: "linear-gradient(180deg,#0f172a,#000)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            boxShadow: "0 4px 0 #000",
-          }}>
+      {/* Players table */}
+      <div className="relative z-10 px-3 pb-8">
+        <div className="rounded-2xl overflow-hidden jetx-glass">
           <div className="grid grid-cols-4 gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 border-b border-white/5">
             <div>Players ({totalPlayers})</div>
             <div className="text-center">Bet</div>
