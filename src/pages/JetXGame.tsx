@@ -400,7 +400,7 @@ const JetXGame = () => {
             }}
           >
             <img
-              src={rocketAsset.url}
+              src={rocketImg}
               alt="rocket"
               className="w-full block relative"
               style={{
