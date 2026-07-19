@@ -475,15 +475,13 @@ const JetXGame = () => {
           {/* Rocket + flame */}
           <motion.div
             className="absolute pointer-events-none left-1/2"
-            style={{ width: "34%", x: "-50%" }}
+            style={{ width: "34%", x: "-50%", bottom: bottomStyle }}
             animate={{
-              bottom: `${rocketBottomPct}%`,
               x: phase === "flying" ? ["-52%", "-48%", "-51%", "-49%", "-50%"] : "-50%",
               y: phase === "betting" ? [0, -8, 0, 6, 0] : 0,
             }}
             transition={{
-              bottom: { duration: 0.35, ease: "linear" },
-              x: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+              x: { duration: 1.6, repeat: Infinity, ease: "easeInOut" },
               y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
             }}
           >
