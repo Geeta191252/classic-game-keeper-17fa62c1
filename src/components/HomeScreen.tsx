@@ -129,6 +129,7 @@ const HomeScreen = () => {
   const goToChickenClassic = () => navigate("/chicken-classic");
   const goToTwist = () => navigate("/twist");
   const goToGoblinTower = () => navigate("/goblin-tower");
+  const goToJetX = () => navigate("/jetx");
   const goToAdmin = () => navigate("/admin");
 
   const telegramUser = getTelegramUser();
