@@ -14,7 +14,7 @@ import {
 } from "@/lib/telegram";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket-v2.png";
-import bgNight from "@/assets/jetx-bg-night.jpg.asset.json";
+import bgNight from "@/assets/jetx-bg-long.jpg.asset.json";
 
 type Phase = "betting" | "flying" | "crashed";
 
@@ -265,19 +265,18 @@ const JetXGame = () => {
           className="relative overflow-hidden mx-3 rounded-[28px] jetx-glass-strong"
           style={{ aspectRatio: "9 / 11" }}
         >
-          {/* Scrolling night-sky background (stage only) */}
+          {/* Scrolling varied space background (single tall image, no repeat, alternates direction) */}
           <div
-            className="absolute inset-x-0 top-0"
+            className="absolute inset-0"
             style={{
-              height: "200%",
               backgroundImage: `url(${bgNight.url})`,
-              backgroundSize: "100% 50%",
-              backgroundRepeat: "repeat-y",
-              backgroundPosition: "center top",
-              animation: `jetx-bg-scroll ${phase === "flying" ? 10 : 45}s linear infinite`,
-              willChange: "transform",
+              backgroundSize: "100% auto",
+              backgroundRepeat: "no-repeat",
+              animation: `jetx-bg-pan ${phase === "flying" ? 40 : 120}s linear infinite alternate`,
+              willChange: "background-position",
             }}
           />
+
           {/* Inner star drift (parallax faster inside stage) */}
           <div
             className="absolute inset-0 jetx-stars opacity-60 mix-blend-screen"
