@@ -172,42 +172,8 @@ const JetXGame = () => {
           "radial-gradient(ellipse at 20% 10%, #1a2a5a 0%, #0a0f24 40%, #04060f 100%)",
       }}
     >
-      {/* ── Animated deep-space background (user photo, scrolling) ── */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        {/* Scrolling night-sky image (two stacked copies for seamless loop) */}
-        <div
-          className="absolute inset-x-0 top-0"
-          style={{
-            height: "200%",
-            backgroundImage: `url(${bgNight.url})`,
-            backgroundSize: "100% 50%",
-            backgroundRepeat: "repeat-y",
-            backgroundPosition: "center top",
-            animation: `jetx-bg-scroll ${phase === "flying" ? 10 : 45}s linear infinite`,
-            willChange: "transform",
-          }}
-        />
-        {/* Extra parallax star layer for depth */}
-        <div
-          className="absolute inset-0 jetx-stars opacity-70 mix-blend-screen"
-          style={{ animation: `jetx-stars-move ${phase === "flying" ? 8 : 30}s linear infinite` }}
-        />
-        {/* Soft nebula wash to blend rocket area */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(55% 40% at 50% 40%, rgba(80,60,180,0.18), transparent 70%)",
-            animation: "jetx-nebula-drift 14s ease-in-out infinite",
-            mixBlendMode: "screen",
-          }}
-        />
-        {/* Vignette */}
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.55) 100%)" }}
-        />
-      </div>
+      {/* Background is applied only inside the stage below */}
+
 
       {/* ── HEADER ── */}
       <div className="relative z-10 px-4 pt-3 pb-2">
