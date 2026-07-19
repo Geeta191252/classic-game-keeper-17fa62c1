@@ -304,12 +304,12 @@ const JetXGame = () => {
               ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(15))
               : 0;
             // Rocket rises from lower area up
-            const bottomPct = phase === "crashed" ? 120 : 18 + progress * 45;
-            const flameH = phase === "flying" ? 55 + progress * 25 : phase === "betting" ? 40 : 30;
+            const bottomPct = phase === "crashed" ? 120 : 2 + progress * 35;
+            const flameH = phase === "flying" ? 30 + progress * 15 : phase === "betting" ? 22 : 18;
             return (
               <motion.div
                 className="absolute pointer-events-none"
-                style={{ right: "6%", width: "58%" }}
+                style={{ right: "4%", width: "40%" }}
                 animate={{
                   bottom: `${bottomPct}%`,
                   x: phase === "flying" ? [0, -3, 3, -2, 0] : 0,
