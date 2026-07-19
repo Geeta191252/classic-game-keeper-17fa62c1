@@ -317,52 +317,96 @@ const JetXGame = () => {
             </div>
           </div>
 
-          {/* Rocket — smooth continuous rise, no jitter */}
+          {/* Rocket — upright, centered, rising with huge flame plume like reference */}
           <AnimatePresence>
             {phase !== "crashed" && (
               <motion.div
                 key="rocket-wrap"
-                className="absolute pointer-events-none"
-                initial={{ opacity: 0, bottom: "5%", right: "22%" }}
+                className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                initial={{ opacity: 0, bottom: "8%" }}
                 animate={{
                   opacity: 1,
                   bottom: phase === "flying"
-                    ? `${Math.min(62, 10 + Math.log(multiplier + 1) * 24)}%`
-                    : "8%",
-                  right: phase === "flying"
-                    ? `${Math.max(20, 42 - Math.log(multiplier + 1) * 9)}%`
-                    : "22%",
+                    ? `${Math.min(45, 12 + Math.log(multiplier + 1) * 18)}%`
+                    : "12%",
                 }}
-                exit={{ opacity: 0, y: -260, transition: { duration: 0.6 } }}
+                exit={{ opacity: 0, y: -300, transition: { duration: 0.6 } }}
                 transition={{ type: "tween", ease: "linear", duration: 0.6 }}
-                style={{ width: "55%" }}
+                style={{ width: "42%" }}
               >
-                {/* Flame trail */}
-                {phase === "flying" && (
-                  <motion.div
-                    className="absolute left-1/2 -translate-x-1/2"
-                    style={{
-                      bottom: "-6%",
-                      width: "34%",
-                      height: "42%",
-                      background: "radial-gradient(ellipse at top,rgba(255,220,80,0.9),rgba(255,120,0,0.6) 40%,rgba(255,40,0,0.2) 70%,transparent)",
-                      filter: "blur(6px)",
-                    }}
-                    animate={{ scaleY: [0.9, 1.25, 0.9], opacity: [0.75, 1, 0.75] }}
-                    transition={{ duration: 0.3, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                )}
-                {/* Rocket gentle hover */}
+                {/* Rocket body */}
                 <motion.img
                   src={rocketImg}
                   alt=""
-                  className="w-full block"
-                  animate={{ y: [0, -8, 0], rotate: [-20, -18, -20] }}
-                  transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  style={{ filter: "drop-shadow(0 0 24px rgba(250,150,0,0.6))" }}
+                  className="w-full block relative z-10"
+                  animate={{ y: [0, -4, 0], x: [-1, 1, -1] }}
+                  transition={{ duration: 0.4, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ filter: "drop-shadow(0 0 22px rgba(255,180,60,0.55))" }}
                   width={768}
                   height={1024}
                 />
+
+                {/* MASSIVE vertical flame plume below rocket */}
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+                  style={{
+                    top: "88%",
+                    width: "55%",
+                    height: "420px",
+                  }}
+                >
+                  {/* Outer smoke glow */}
+                  <motion.div
+                    className="absolute inset-0"
+                    style={{
+                      background: "radial-gradient(ellipse 60% 45% at 50% 15%, rgba(255,140,40,0.55), rgba(120,60,20,0.25) 45%, transparent 75%)",
+                      filter: "blur(14px)",
+                    }}
+                    animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 0.5, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  {/* Main flame column */}
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2"
+                    style={{
+                      top: 0,
+                      width: "60%",
+                      height: "100%",
+                      background: "linear-gradient(180deg, rgba(255,240,150,1) 0%, rgba(255,180,40,0.95) 20%, rgba(255,100,20,0.85) 45%, rgba(220,60,10,0.6) 70%, rgba(120,40,10,0.2) 90%, transparent 100%)",
+                      borderRadius: "50% 50% 40% 40% / 20% 20% 80% 80%",
+                      filter: "blur(4px)",
+                    }}
+                    animate={{ scaleY: [1, 1.15, 0.95, 1.1, 1], scaleX: [1, 0.92, 1.05, 0.95, 1] }}
+                    transition={{ duration: 0.35, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  {/* Inner bright core */}
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2"
+                    style={{
+                      top: 0,
+                      width: "28%",
+                      height: "75%",
+                      background: "linear-gradient(180deg, #ffffff 0%, #fff5c8 15%, #ffd166 40%, #ff8a1f 70%, transparent 100%)",
+                      borderRadius: "50% 50% 40% 40% / 15% 15% 85% 85%",
+                      filter: "blur(2px)",
+                    }}
+                    animate={{ scaleY: [1, 1.2, 0.9, 1.1, 1], opacity: [0.9, 1, 0.85, 1, 0.9] }}
+                    transition={{ duration: 0.28, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  {/* Bright hotspot at nozzle */}
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2 rounded-full"
+                    style={{
+                      top: "-4%",
+                      width: "38%",
+                      height: "18%",
+                      background: "radial-gradient(circle, #ffffff 0%, #fff2a8 35%, rgba(255,180,40,0.6) 70%, transparent 100%)",
+                      filter: "blur(2px)",
+                    }}
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.85, 1, 0.85] }}
+                    transition={{ duration: 0.25, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
