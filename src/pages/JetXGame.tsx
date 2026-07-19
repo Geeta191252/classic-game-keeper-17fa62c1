@@ -317,27 +317,61 @@ const JetXGame = () => {
             </div>
           </div>
 
-          {/* Rocket */}
-          <AnimatePresence mode="wait">
-            {phase === "flying" && (
-              <motion.img
-                key="rocket"
-                src={rocketImg}
-                alt=""
+          {/* Rocket — always visible, flies with multiplier, hovers while waiting */}
+          <AnimatePresence>
+            {phase !== "crashed" && (
+              <motion.div
+                key="rocket-wrap"
                 className="absolute pointer-events-none"
-                initial={{ bottom: "-20%", right: "10%", opacity: 0, rotate: -15 }}
+                initial={{ opacity: 0 }}
                 animate={{
-                  bottom: `${Math.min(50, 5 + multiplier * 8)}%`,
-                  right: `${Math.max(15, 45 - multiplier * 3)}%`,
                   opacity: 1,
-                  rotate: -20,
+                  bottom: phase === "flying"
+                    ? `${Math.min(58, 8 + Math.log(multiplier + 1) * 22)}%`
+                    : "8%",
+                  right: phase === "flying"
+                    ? `${Math.max(18, 42 - Math.log(multiplier + 1) * 10)}%`
+                    : "22%",
                 }}
-                exit={{ opacity: 0, y: -100 }}
-                transition={{ type: "tween", duration: 0.4 }}
-                style={{ width: "55%", filter: "drop-shadow(0 0 20px rgba(250,150,0,0.5))" }}
-                width={768}
-                height={1024}
-              />
+                exit={{ opacity: 0, y: -200, transition: { duration: 0.5 } }}
+                transition={{ type: "spring", stiffness: 60, damping: 18 }}
+                style={{ width: "55%" }}
+              >
+                {/* Flame trail */}
+                {phase === "flying" && (
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2"
+                    style={{
+                      bottom: "-8%",
+                      width: "35%",
+                      height: "40%",
+                      background: "radial-gradient(ellipse at top,rgba(255,220,80,0.9),rgba(255,120,0,0.6) 40%,rgba(255,40,0,0.2) 70%,transparent)",
+                      filter: "blur(6px)",
+                    }}
+                    animate={{ scaleY: [0.9, 1.3, 0.9], opacity: [0.8, 1, 0.8] }}
+                    transition={{ duration: 0.25, repeat: Infinity }}
+                  />
+                )}
+                {/* Rocket with hover + shake */}
+                <motion.img
+                  src={rocketImg}
+                  alt=""
+                  className="w-full block"
+                  animate={
+                    phase === "flying"
+                      ? { y: [0, -6, 0, 4, 0], rotate: [-20, -22, -19, -21, -20] }
+                      : { y: [0, -12, 0], rotate: [-18, -22, -18] }
+                  }
+                  transition={{
+                    duration: phase === "flying" ? 0.35 : 2.2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  style={{ filter: "drop-shadow(0 0 24px rgba(250,150,0,0.6))" }}
+                  width={768}
+                  height={1024}
+                />
+              </motion.div>
             )}
           </AnimatePresence>
 
