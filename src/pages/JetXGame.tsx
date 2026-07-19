@@ -289,14 +289,22 @@ const JetXGame = () => {
             boxShadow: "0 8px 0 #000, inset 0 1px 0 rgba(255,255,255,0.08)",
             aspectRatio: "973 / 630",
           }}>
-          {/* Clean space + clouds background */}
-          <img
-            src={stageBg.url}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            width={973}
-            height={630}
-          />
+          {/* Scrolling space + clouds background (two stacked tiles → seamless loop) */}
+          <div className="absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute left-0 w-full"
+              style={{ top: 0, height: "200%" }}
+              animate={{ y: phase === "flying" ? ["0%", "-50%"] : ["0%", "-50%"] }}
+              transition={{
+                duration: phase === "flying" ? 6 : 18,
+                ease: "linear",
+                repeat: Infinity,
+              }}
+            >
+              <img src={stageBg.url} alt="" className="absolute top-0 left-0 w-full h-1/2 object-cover" />
+              <img src={stageBg.url} alt="" className="absolute top-1/2 left-0 w-full h-1/2 object-cover" />
+            </motion.div>
+          </div>
 
           {/* Animated Rocket + massive vertical Flame plume — matches reference */}
           {(() => {
