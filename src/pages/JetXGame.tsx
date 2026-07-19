@@ -190,7 +190,7 @@ const JetXGame = () => {
     filter.Q.value = 0.8;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.4);
+    gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.4);
     src.connect(filter).connect(gain).connect(ctx.destination);
     src.start();
     a.thrustSrc = src; a.thrustGain = gain; a.thrustFilter = filter;
@@ -201,8 +201,8 @@ const JetXGame = () => {
     if (!a.ctx || !a.thrustFilter || !a.thrustGain) return;
     const p = Math.min(1, Math.log(Math.max(1, mult)) / Math.log(20));
     const t = a.ctx.currentTime;
-    a.thrustFilter.frequency.setTargetAtTime(500 + p * 1800, t, 0.15);
-    a.thrustGain.gain.setTargetAtTime(0.22 + p * 0.25, t, 0.2);
+    a.thrustFilter.frequency.setTargetAtTime(600 + p * 2000, t, 0.15);
+    a.thrustGain.gain.setTargetAtTime(0.45 + p * 0.45, t, 0.2);
   }, []);
 
   const stopThrust = useCallback(() => {
