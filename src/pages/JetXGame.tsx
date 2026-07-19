@@ -258,6 +258,22 @@ const JetXGame = () => {
   const rocketBottomPct = phase === "crashed" ? 130 : 8 + progress * 48;
   const flameHvh = phase === "flying" ? 4 + progress * 3 : phase === "betting" ? 3 : 2;
 
+  // Drive smooth rocket bottom + thrust intensity when values change
+  useEffect(() => { bottomMv.set(rocketBottomPct); }, [rocketBottomPct, bottomMv]);
+  useEffect(() => { if (phase === "flying") setThrustIntensity(multiplier); }, [multiplier, phase, setThrustIntensity]);
+
+  // Phase-based sound lifecycle
+  useEffect(() => {
+    if (phase === "flying") {
+      startThrust();
+    } else if (phase === "crashed") {
+      stopThrust();
+      playCrash();
+    } else {
+      stopThrust();
+    }
+  }, [phase, startThrust, stopThrust, playCrash]);
+
   return (
     <div
       className="min-h-screen w-full text-white select-none relative overflow-hidden"
