@@ -13,7 +13,7 @@ import {
   type JetXState,
 } from "@/lib/telegram";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
-import rocketAsset from "@/assets/jetx-rocket-v2.png.asset.json";
+import rocketImg from "@/assets/jetx-rocket-v2.png";
 
 type Phase = "betting" | "flying" | "crashed";
 
