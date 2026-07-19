@@ -281,6 +281,38 @@ const JetXGame = () => {
     }
   }, [phase, startThrust, stopThrust, playCrash]);
 
+  // Continuous background scroll: speed scales with multiplier
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const loop = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (phase === "flying") {
+        const starSpeed = 60 + multiplier * 35;
+        const bgSpeed = 2 + multiplier * 1.2;
+        const nextStar = (starY.get() + starSpeed * dt) % 2000;
+        starY.set(nextStar);
+        bgY.set(Math.min(100, bgY.get() + bgSpeed * dt));
+      } else {
+        const nextStar = (starY.get() + 2 * dt) % 2000;
+        starY.set(nextStar);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [phase, multiplier, bgY, starY]);
+
+  // Reset background position on new round
+  const lastBgPhaseRef = useRef<Phase>("betting");
+  useEffect(() => {
+    if (phase === "betting" && lastBgPhaseRef.current === "crashed") {
+      bgY.set(0);
+    }
+    lastBgPhaseRef.current = phase;
+  }, [phase, bgY]);
+
   return (
     <div
       className="min-h-screen w-full text-white select-none relative overflow-hidden"
