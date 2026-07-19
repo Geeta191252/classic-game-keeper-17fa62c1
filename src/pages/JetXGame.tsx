@@ -289,14 +289,22 @@ const JetXGame = () => {
             boxShadow: "0 8px 0 #000, inset 0 1px 0 rgba(255,255,255,0.08)",
             aspectRatio: "973 / 630",
           }}>
-          {/* Clean space + clouds background */}
-          <img
-            src={stageBg.url}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            width={973}
-            height={630}
-          />
+          {/* Scrolling space + clouds background (two stacked tiles → seamless loop) */}
+          <div className="absolute inset-0 overflow-hidden">
+            <motion.div
+              className="absolute left-0 w-full"
+              style={{ top: 0, height: "200%" }}
+              animate={{ y: phase === "flying" ? ["0%", "-50%"] : ["0%", "-50%"] }}
+              transition={{
+                duration: phase === "flying" ? 6 : 18,
+                ease: "linear",
+                repeat: Infinity,
+              }}
+            >
+              <img src={stageBg.url} alt="" className="absolute top-0 left-0 w-full h-1/2 object-cover" />
+              <img src={stageBg.url} alt="" className="absolute top-1/2 left-0 w-full h-1/2 object-cover" />
+            </motion.div>
+          </div>
 
           {/* Animated Rocket + massive vertical Flame plume — matches reference */}
           {(() => {
@@ -309,7 +317,7 @@ const JetXGame = () => {
             return (
               <motion.div
                 className="absolute pointer-events-none"
-                style={{ right: "6%", width: "32%" }}
+                style={{ right: "8%", width: "28%" }}
                 animate={{
                   bottom: `${bottomPct}%`,
                   x: phase === "flying" ? [0, -3, 3, -2, 0] : 0,
@@ -321,10 +329,20 @@ const JetXGame = () => {
                   y: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
                 }}
               >
-                {/* Massive vertical flame column BELOW rocket */}
+                {/* Rocket — upright, nozzle points straight down */}
+                <img
+                  src={rocketImg}
+                  alt="rocket"
+                  className="relative w-full block"
+                  style={{
+                    filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.75)) drop-shadow(0 0 25px rgba(249,115,22,0.4))",
+                  }}
+                />
+
+                {/* Massive vertical flame column shooting DOWN from rocket's nozzle */}
                 <div
                   className="absolute left-1/2 -translate-x-1/2"
-                  style={{ top: "78%", width: "42%", height: `${flameH}vh`, maxHeight: "70vh" }}
+                  style={{ top: "96%", width: "55%", height: `${flameH}vh`, maxHeight: "70vh" }}
                 >
                   {/* outer smoke glow */}
                   <motion.div
@@ -343,6 +361,7 @@ const JetXGame = () => {
                       background: "linear-gradient(180deg, #fef08a 0%, #fbbf24 18%, #f97316 45%, #ea580c 70%, #b91c1c 88%, transparent 100%)",
                       clipPath: "polygon(50% 0%, 88% 15%, 100% 45%, 92% 75%, 70% 95%, 50% 100%, 30% 95%, 8% 75%, 0% 45%, 12% 15%)",
                       filter: "drop-shadow(0 0 20px rgba(249,115,22,0.9))",
+                      transformOrigin: "top center",
                     }}
                     animate={{ scaleY: [1, 1.08, 0.95, 1.05, 1], scaleX: [1, 0.95, 1.03, 0.97, 1] }}
                     transition={{ duration: 0.2, repeat: Infinity }}
@@ -353,32 +372,22 @@ const JetXGame = () => {
                       position: "absolute", top: 0, left: "22%", right: "22%", bottom: "20%",
                       background: "linear-gradient(180deg, #ffffff 0%, #fef3c7 25%, #fde047 55%, #f59e0b 90%, transparent 100%)",
                       clipPath: "polygon(50% 0%, 85% 30%, 75% 85%, 50% 100%, 25% 85%, 15% 30%)",
+                      transformOrigin: "top center",
                     }}
                     animate={{ scaleY: [1, 1.1, 0.92, 1.05, 1] }}
                     transition={{ duration: 0.18, repeat: Infinity }}
                   />
-                  {/* white hot spot at nozzle */}
+                  {/* white hot spot right at the nozzle */}
                   <motion.div
                     style={{
-                      position: "absolute", top: "-5%", left: "35%", right: "35%", height: "20%",
-                      background: "radial-gradient(ellipse, #ffffff 0%, #fef3c7 40%, transparent 75%)",
+                      position: "absolute", top: "-8%", left: "32%", right: "32%", height: "22%",
+                      background: "radial-gradient(ellipse, #ffffff 0%, #fef3c7 45%, transparent 80%)",
                       filter: "blur(3px)",
                     }}
                     animate={{ opacity: [0.9, 1, 0.85, 1] }}
                     transition={{ duration: 0.15, repeat: Infinity }}
                   />
                 </div>
-
-                {/* Rocket — upright & large */}
-                <img
-                  src={rocketImg}
-                  alt="rocket"
-                  className="relative w-full block"
-                  style={{
-                    transform: "rotate(-12deg)",
-                    filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.75)) drop-shadow(0 0 25px rgba(249,115,22,0.4))",
-                  }}
-                />
               </motion.div>
             );
           })()}
