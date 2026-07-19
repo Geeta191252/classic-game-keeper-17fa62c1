@@ -78,9 +78,103 @@ const JetXGame = () => {
 
   // ── Smoothed multiplier for buttery number animation
   const multMv = useMotionValue(1);
-  const multSpring = useSpring(multMv, { stiffness: 120, damping: 22, mass: 0.6 });
+  const multSpring = useSpring(multMv, { stiffness: 90, damping: 20, mass: 0.7 });
   const multText = useTransform(multSpring, (v) => `${v.toFixed(2)}x`);
   useEffect(() => { multMv.set(multiplier); }, [multiplier, multMv]);
+
+  // ── Smooth rocket vertical position driven by spring (no per-poll jumps)
+  const bottomMv = useMotionValue(8);
+  const bottomSpring = useSpring(bottomMv, { stiffness: 55, damping: 18, mass: 1 });
+  const bottomStyle = useTransform(bottomSpring, (v) => `${v}%`);
+
+  // ── Sound: continuous rocket thrust + crash boom (Web Audio)
+  const audioRef = useRef<{
+    ctx: AudioContext | null;
+    thrustGain: GainNode | null;
+    thrustSrc: AudioBufferSourceNode | null;
+    thrustFilter: BiquadFilterNode | null;
+  }>({ ctx: null, thrustGain: null, thrustSrc: null, thrustFilter: null });
+
+  const ensureAudio = useCallback(() => {
+    const a = audioRef.current;
+    if (a.ctx) return a.ctx;
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return null;
+    a.ctx = new Ctx();
+    return a.ctx;
+  }, []);
+
+  const startThrust = useCallback(() => {
+    const a = audioRef.current;
+    const ctx = ensureAudio();
+    if (!ctx || a.thrustSrc) return;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < data.length; i++) {
+      const white = Math.random() * 2 - 1;
+      last = (last + 0.02 * white) / 1.02;
+      data[i] = last * 3.2;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 700;
+    filter.Q.value = 0.8;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.4);
+    src.connect(filter).connect(gain).connect(ctx.destination);
+    src.start();
+    a.thrustSrc = src; a.thrustGain = gain; a.thrustFilter = filter;
+  }, [ensureAudio]);
+
+  const setThrustIntensity = useCallback((mult: number) => {
+    const a = audioRef.current;
+    if (!a.ctx || !a.thrustFilter || !a.thrustGain) return;
+    const p = Math.min(1, Math.log(Math.max(1, mult)) / Math.log(20));
+    const t = a.ctx.currentTime;
+    a.thrustFilter.frequency.setTargetAtTime(500 + p * 1800, t, 0.15);
+    a.thrustGain.gain.setTargetAtTime(0.22 + p * 0.25, t, 0.2);
+  }, []);
+
+  const stopThrust = useCallback(() => {
+    const a = audioRef.current;
+    if (!a.ctx || !a.thrustSrc || !a.thrustGain) return;
+    const t = a.ctx.currentTime;
+    a.thrustGain.gain.cancelScheduledValues(t);
+    a.thrustGain.gain.setValueAtTime(a.thrustGain.gain.value, t);
+    a.thrustGain.gain.linearRampToValueAtTime(0.0001, t + 0.15);
+    const src = a.thrustSrc;
+    setTimeout(() => { try { src.stop(); } catch {} }, 200);
+    a.thrustSrc = null;
+  }, []);
+
+  const playCrash = useCallback(() => {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const og = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(180, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.6);
+    og.gain.setValueAtTime(0.6, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    osc.connect(og).connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.75);
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.6), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+    const nsrc = ctx.createBufferSource(); nsrc.buffer = buf;
+    const nf = ctx.createBiquadFilter(); nf.type = "lowpass"; nf.frequency.value = 1200;
+    const ng = ctx.createGain(); ng.gain.setValueAtTime(0.5, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    nsrc.connect(nf).connect(ng).connect(ctx.destination);
+    nsrc.start(t); nsrc.stop(t + 0.6);
+  }, [ensureAudio]);
+
+  useEffect(() => () => { stopThrust(); }, [stopThrust]);
 
   // Poll server state
   useEffect(() => {
