@@ -135,15 +135,15 @@ const JetXGame = () => {
   const modeSymbol = currencySymbol(currencyMode);
   const fmt = (v: number) => `${modeSymbol}${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-  // ── Smoothed multiplier for buttery number animation
+  // ── Smoothed multiplier for snappy number animation (matches faster flight)
   const multMv = useMotionValue(1);
-  const multSpring = useSpring(multMv, { stiffness: 90, damping: 20, mass: 0.7 });
+  const multSpring = useSpring(multMv, { stiffness: 140, damping: 18, mass: 0.55 });
   const multText = useTransform(multSpring, (v) => `${v.toFixed(2)}x`);
   useEffect(() => { multMv.set(multiplier); }, [multiplier, multMv]);
 
   // ── Smooth rocket vertical position driven by spring (no per-poll jumps)
   const bottomMv = useMotionValue(8);
-  const bottomSpring = useSpring(bottomMv, { stiffness: 260, damping: 16, mass: 0.35 });
+  const bottomSpring = useSpring(bottomMv, { stiffness: 380, damping: 14, mass: 0.28 });
   const bottomStyle = useTransform(bottomSpring, (v) => `${v}%`);
 
   // ── Cloud parallax scroll (two layers, continuous, varied)
@@ -199,10 +199,10 @@ const JetXGame = () => {
   const setThrustIntensity = useCallback((mult: number) => {
     const a = audioRef.current;
     if (!a.ctx || !a.thrustFilter || !a.thrustGain) return;
-    const p = Math.min(1, Math.log(Math.max(1, mult)) / Math.log(20));
+    const p = Math.min(1, Math.log(Math.max(1, mult)) / Math.log(12));
     const t = a.ctx.currentTime;
-    a.thrustFilter.frequency.setTargetAtTime(600 + p * 2000, t, 0.15);
-    a.thrustGain.gain.setTargetAtTime(0.45 + p * 0.45, t, 0.2);
+    a.thrustFilter.frequency.setTargetAtTime(600 + p * 2200, t, 0.12);
+    a.thrustGain.gain.setTargetAtTime(0.5 + p * 0.55, t, 0.15);
   }, []);
 
   const stopThrust = useCallback(() => {
@@ -320,9 +320,10 @@ const JetXGame = () => {
   ];
 
   // Rocket flight math — cap around centre of the screen so it never flies off
-  const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(4.5)) : 0;
-  const rocketBottomPct = phase === "crashed" ? 120 : 6 + progress * 44;
-  const flameHvh = phase === "flying" ? 5 + progress * 5 : phase === "betting" ? 3.5 : 2;
+  // Lower log base so the rocket reaches centre faster (feels 2x quicker at 1x-2x)
+  const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(3)) : 0;
+  const rocketBottomPct = phase === "crashed" ? 120 : 6 + progress * 48;
+  const flameHvh = phase === "flying" ? 6 + progress * 6 : phase === "betting" ? 3.5 : 2;
 
   // Drive smooth rocket bottom + thrust intensity when values change
   useEffect(() => { bottomMv.set(rocketBottomPct); }, [rocketBottomPct, bottomMv]);
@@ -349,8 +350,8 @@ const JetXGame = () => {
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      // Base idle drift + multiplier-driven boost (very fast)
-      const boost = phase === "flying" ? 300 + multiplier * 220 : 55;
+      // Base idle drift + multiplier-driven boost (2x faster than before)
+      const boost = phase === "flying" ? 600 + multiplier * 440 : 90;
       const frontSpeed = boost;         // front layer faster
       const backSpeed = boost * 0.55;    // back layer slower (parallax)
       // Positive Y offset = clouds move downward
