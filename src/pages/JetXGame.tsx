@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Minus, Plus, Rocket, Trophy } from "lucide-react";
+import { ArrowLeft, HelpCircle, Volume2, Users, Minus, Plus, ChevronDown, Wallet, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useBalanceContext } from "@/contexts/BalanceContext";
@@ -12,28 +12,39 @@ import {
   type CurrencyType,
   type JetXState,
 } from "@/lib/telegram";
-import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
-import gameJetx from "@/assets/game-jetx.jpg";
+import rocketImg from "@/assets/jetx-rocket.png";
+import spaceBg from "@/assets/jetx-space-bg.jpg";
 
 type Phase = "betting" | "flying" | "crashed";
 
 const PRESETS: Record<CurrencyType, number[]> = {
-  dollar: [1, 5, 10, 25, 50, 100],
-  rupee: [10, 50, 100, 500, 1000, 2500],
-  star: [10, 25, 50, 100, 250, 500],
+  dollar: [1, 5, 10, 50],
+  rupee: [100, 500, 1000, 5000],
+  star: [10, 50, 100, 500],
 };
+
+const CASHOUT_PRESETS = [1.5, 2, 2.45, 5];
+
+// History chip colors (cycled) — matches reference multi-color pills
+const CHIP_COLORS = [
+  { bg: "linear-gradient(180deg,#1e90ff,#0b5bbf)", ring: "#3aa4ff" }, // blue
+  { bg: "linear-gradient(180deg,#22c55e,#166534)", ring: "#4ade80" }, // green
+  { bg: "linear-gradient(180deg,#14b8a6,#0f766e)", ring: "#2dd4bf" }, // teal
+  { bg: "linear-gradient(180deg,#a855f7,#6b21a8)", ring: "#c084fc" }, // purple
+  { bg: "linear-gradient(180deg,#eab308,#a16207)", ring: "#facc15" }, // yellow
+  { bg: "linear-gradient(180deg,#f97316,#9a3412)", ring: "#fb923c" }, // orange
+  { bg: "linear-gradient(180deg,#ec4899,#9d174d)", ring: "#f472b6" }, // pink
+];
 
 const JetXGame = () => {
   const navigate = useNavigate();
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance } = useBalanceContext();
   const tgUser = getTelegramUser();
 
-  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("INR");
   const currency: CurrencyType = modeToWallet(currencyMode);
-  useEffect(() => {
-    setBetAmount(currencyMode === "INR" ? 10 : currencyMode === "STAR" ? 10 : 1);
-  }, [currencyMode]);
+
   const [phase, setPhase] = useState<Phase>("betting");
   const [multiplier, setMultiplier] = useState(1);
   const [crashAt, setCrashAt] = useState<number | null>(null);
@@ -42,18 +53,31 @@ const JetXGame = () => {
   const [roundNumber, setRoundNumber] = useState(0);
   const [totalPlayers, setTotalPlayers] = useState(0);
 
-  const [betAmount, setBetAmount] = useState(1);
+  const [betAmount, setBetAmount] = useState(500);
+  const [autoCashout, setAutoCashout] = useState(2.45);
+  const [autoBet, setAutoBet] = useState(false);
   const [myBet, setMyBet] = useState<{ amount: number; cashedOutAt: number | null; winAmount: number } | null>(null);
   const [placing, setPlacing] = useState(false);
   const [cashing, setCashing] = useState(false);
 
   const lastPhaseRef = useRef<Phase>("betting");
   const lastRoundRef = useRef(0);
+  const autoBetRef = useRef(autoBet);
+  autoBetRef.current = autoBet;
+  const autoCashRef = useRef(autoCashout);
+  autoCashRef.current = autoCashout;
 
-  const totalBal = currency === "dollar" ? dollarBalance + dollarWinning : currency === "rupee" ? rupeeBalance + rupeeWinning : starBalance + starWinning;
+  useEffect(() => {
+    setBetAmount(currencyMode === "INR" ? 500 : currencyMode === "STAR" ? 50 : 5);
+  }, [currencyMode]);
+
+  const totalBal =
+    currency === "dollar" ? dollarBalance + dollarWinning :
+    currency === "rupee" ? rupeeBalance + rupeeWinning :
+    starBalance + starWinning;
   const displayBalance = toDisplayAmount(totalBal, currencyMode);
   const modeSymbol = currencySymbol(currencyMode);
-  const fmtMode = (v: number) => `${modeSymbol}${v.toFixed(2)}`;
+  const fmt = (v: number) => `${modeSymbol}${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
   // Poll server state
   useEffect(() => {
@@ -70,20 +94,15 @@ const JetXGame = () => {
         setRoundNumber(s.roundNumber);
         setTotalPlayers(s.totalPlayers);
 
-        // New round → clear my bet
         if (s.roundNumber !== lastRoundRef.current) {
           lastRoundRef.current = s.roundNumber;
           setMyBet(null);
         }
-
-        // On crash refresh balance (winners already credited server-side)
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") {
           refreshBalance();
         }
         lastPhaseRef.current = s.phase;
-      } catch {
-        /* silent */
-      }
+      } catch { /* silent */ }
     };
     tick();
     const id = setInterval(tick, 300);
@@ -91,7 +110,7 @@ const JetXGame = () => {
   }, [currency, refreshBalance]);
 
   const canBet = phase === "betting" && !myBet && !placing;
-  const canCashout = phase === "flying" && myBet && !myBet.cashedOutAt && !cashing;
+  const canCashout = phase === "flying" && !!myBet && !myBet.cashedOutAt && !cashing;
 
   const handleBet = useCallback(async () => {
     if (!canBet) return;
@@ -108,13 +127,13 @@ const JetXGame = () => {
       });
       setMyBet({ amount: betAmount, cashedOutAt: null, winAmount: 0 });
       refreshBalance();
-      toast.success(`Bet ${fmtMode(betAmount)} placed`);
+      toast.success(`Bet ${fmt(betAmount)} placed`);
     } catch (e: any) {
       toast.error(e?.message || "Bet failed");
     } finally {
       setPlacing(false);
     }
-  }, [canBet, betAmount, totalBal, tgUser, currency, currencyMode, modeSymbol, refreshBalance]);
+  }, [canBet, betAmount, totalBal, tgUser, currency, currencyMode, modeSymbol]);
 
   const handleCashout = useCallback(async () => {
     if (!canCashout) return;
@@ -123,183 +142,477 @@ const JetXGame = () => {
       const res = await cashOutJetX(tgUser?.id || "demo", currency);
       setMyBet((prev) => prev ? { ...prev, cashedOutAt: res.multiplier, winAmount: res.winAmount } : prev);
       refreshBalance();
-      toast.success(`Won ${fmtMode(toDisplayAmount(res.winAmount, currencyMode))} @ ${res.multiplier.toFixed(2)}x`);
+      toast.success(`Won ${fmt(toDisplayAmount(res.winAmount, currencyMode))} @ ${res.multiplier.toFixed(2)}x`);
     } catch (e: any) {
       toast.error(e?.message || "Cashout failed");
     } finally {
       setCashing(false);
     }
-  }, [canCashout, tgUser, currency, refreshBalance]);
+  }, [canCashout, tgUser, currency, currencyMode]);
 
-  const multColor = useMemo(() => {
-    if (phase === "crashed") return "hsl(0 90% 60%)";
-    if (multiplier < 1.5) return "hsl(45 90% 55%)";
-    if (multiplier < 3) return "hsl(25 95% 55%)";
-    return "hsl(0 90% 60%)";
-  }, [phase, multiplier]);
+  // Auto-cashout
+  useEffect(() => {
+    if (phase === "flying" && myBet && !myBet.cashedOutAt && autoBetRef.current && multiplier >= autoCashRef.current) {
+      handleCashout();
+    }
+  }, [multiplier, phase, myBet, handleCashout]);
+
+  const potentialWin = useMemo(() => myBet ? myBet.amount * 0.98 * multiplier : betAmount * 0.98 * multiplier, [myBet, betAmount, multiplier]);
+
+  const currencyOptions: { mode: GameCurrencyMode; label: string }[] = [
+    { mode: "INR", label: "₹" },
+    { mode: "USD", label: "$" },
+    { mode: "STAR", label: "★" },
+  ];
 
   return (
-    <div className="min-h-screen text-white" style={{
-      background: `radial-gradient(ellipse at top, hsl(0 60% 15%) 0%, hsl(0 0% 3%) 60%, hsl(0 0% 0%) 100%)`,
-    }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-        <button onClick={() => navigate("/")} className="p-2 rounded-full bg-white/5 active:scale-90 transition">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex items-center gap-2">
-          <Rocket className="h-5 w-5 text-red-400" />
-          <span className="font-black text-lg tracking-wider">JETX</span>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px] text-white/50">Balance</div>
-          <div className="text-sm font-bold">{fmtMode(displayBalance)}</div>
-        </div>
-      </div>
-
-      {/* Currency chips */}
-      <div className="flex justify-center px-4 mt-3">
-        <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting"} />
-      </div>
-
-      {/* History */}
-      <div className="flex gap-1.5 px-4 mt-3 overflow-x-auto no-scrollbar">
-        {history.slice(0, 12).map((h, i) => (
-          <span
-            key={i}
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+    <div className="min-h-screen w-full text-white select-none" style={{ background: "#000" }}>
+      {/* ── HEADER ─────────────────────────── */}
+      <div className="relative px-3 pt-3 pb-2">
+        <div className="flex items-start justify-between">
+          {/* Back */}
+          <button
+            onClick={() => navigate("/")}
+            className="w-11 h-11 rounded-2xl flex items-center justify-center active:scale-90 transition"
             style={{
-              background: h >= 2 ? "hsla(140, 70%, 45%, 0.2)" : "hsla(0, 70%, 55%, 0.2)",
-              color: h >= 2 ? "hsl(140 70% 65%)" : "hsl(0 80% 70%)",
-              border: `1px solid ${h >= 2 ? "hsla(140, 70%, 45%, 0.4)" : "hsla(0, 70%, 55%, 0.4)"}`,
+              background: "linear-gradient(180deg,#1f2937,#0b1220)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 4px 0 #000, inset 0 1px 0 rgba(255,255,255,0.1)",
             }}
           >
-            {h.toFixed(2)}x
-          </span>
-        ))}
-      </div>
+            <ArrowLeft className="h-5 w-5" />
+          </button>
 
-      {/* Main stage */}
-      <div className="relative mx-4 mt-4 rounded-2xl overflow-hidden border border-red-500/20" style={{ height: 260 }}>
-        <img src={gameJetx} alt="JetX" className="absolute inset-0 w-full h-full object-cover opacity-40" loading="lazy" width={1024} height={1024} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, transparent, hsla(0,0%,0%,0.6))" }} />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <AnimatePresence mode="wait">
-            {phase === "betting" && (
-              <motion.div key="b" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-center">
-                <div className="text-xs text-white/60 uppercase tracking-widest mb-2">Next round in</div>
-                <div className="text-6xl font-black text-white" style={{ textShadow: "0 0 30px hsla(0,80%,60%,0.8)" }}>
-                  {countdown}s
-                </div>
-              </motion.div>
-            )}
-            {phase === "flying" && (
-              <motion.div key="f" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="text-center">
-                <motion.div
-                  key={Math.floor(multiplier * 10)}
-                  initial={{ scale: 1 }}
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 0.15 }}
-                  className="text-7xl font-black tabular-nums"
-                  style={{ color: multColor, textShadow: `0 0 40px ${multColor}` }}
-                >
-                  {multiplier.toFixed(2)}x
-                </motion.div>
-                <Rocket className="h-10 w-10 text-red-400 mx-auto mt-3 animate-pulse" style={{ filter: "drop-shadow(0 0 12px hsl(0 90% 60%))" }} />
-              </motion.div>
-            )}
-            {phase === "crashed" && (
-              <motion.div key="c" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="text-center">
-                <div className="text-xs text-red-400 font-black uppercase tracking-widest mb-2">💥 Crashed</div>
-                <div className="text-6xl font-black" style={{ color: "hsl(0 90% 60%)", textShadow: "0 0 40px hsl(0 90% 60%)" }}>
-                  {(crashAt ?? multiplier).toFixed(2)}x
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="absolute top-2 left-2 text-[10px] text-white/50">Round #{roundNumber}</div>
-        <div className="absolute top-2 right-2 text-[10px] text-white/50 flex items-center gap-1">
-          <Trophy className="h-3 w-3" /> {totalPlayers} players
-        </div>
-      </div>
-
-      {/* Bet controls */}
-      <div className="px-4 mt-4 pb-8">
-        <div className="rounded-2xl p-4 border border-red-500/20 bg-white/[0.02]">
-          <div className="text-[11px] text-white/50 uppercase tracking-wider mb-2">Bet amount</div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setBetAmount((v) => Math.max(1, +(v - 1).toFixed(2)))}
-              className="p-3 rounded-lg bg-white/5 active:scale-90"><Minus className="h-4 w-4" /></button>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={betAmount}
-              onChange={(e) => setBetAmount(Math.max(0, Number(e.target.value) || 0))}
-              className="flex-1 bg-white/5 rounded-lg text-center text-xl font-black py-2 outline-none border border-white/10 focus:border-red-500/50"
-            />
-            <button onClick={() => setBetAmount((v) => +(v + 1).toFixed(2))}
-              className="p-3 rounded-lg bg-white/5 active:scale-90"><Plus className="h-4 w-4" /></button>
-          </div>
-          <div className="grid grid-cols-6 gap-1.5 mt-3">
-            {PRESETS[currency].map((p) => (
-              <button
-                key={p}
-                onClick={() => setBetAmount(p)}
-                className="text-[11px] font-bold py-1.5 rounded-md bg-white/5 hover:bg-white/10"
+          {/* 3D JetX Logo */}
+          <div className="flex-1 flex justify-center -mt-1">
+            <div className="relative">
+              <h1
+                className="text-[42px] font-black italic tracking-tight leading-none"
+                style={{
+                  fontFamily: "'Arial Black', system-ui, sans-serif",
+                  background: "linear-gradient(180deg,#ffffff 0%,#e5e7eb 55%,#9ca3af 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  textShadow: "0 4px 0 #4b5563, 0 6px 12px rgba(0,0,0,0.6)",
+                  filter: "drop-shadow(0 3px 0 #374151)",
+                }}
               >
-                {modeSymbol}{p}
+                Jet<span style={{
+                  background: "linear-gradient(180deg,#fde047 0%,#eab308 55%,#a16207 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  filter: "drop-shadow(0 0 12px rgba(250,204,21,0.7))",
+                }}>X</span>
+              </h1>
+            </div>
+          </div>
+
+          {/* Right buttons */}
+          <div className="flex flex-col gap-1.5">
+            <button className="px-2.5 h-9 rounded-xl flex items-center gap-1.5 text-[11px] font-bold"
+              style={{
+                background: "linear-gradient(180deg,#1e3a8a,#0c1d4a)",
+                border: "1px solid #3b5fbf",
+                boxShadow: "0 3px 0 #030712, inset 0 1px 0 rgba(255,255,255,0.15)",
+              }}>
+              <HelpCircle className="h-3.5 w-3.5 text-sky-300" />
+              <span>How to play?</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Wallet chip + volume */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-2 px-2 py-1.5 rounded-2xl"
+            style={{
+              background: "linear-gradient(180deg,#0b1220,#000)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              boxShadow: "0 3px 0 #000",
+            }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: "linear-gradient(180deg,#22c55e,#166534)",
+                boxShadow: "0 3px 0 #052e16, inset 0 1px 0 rgba(255,255,255,0.3)",
+              }}>
+              <Wallet className="h-4 w-4 text-white" />
+            </div>
+            <div className="pr-2">
+              <div className="text-[13px] font-black leading-tight">{fmt(displayBalance)}</div>
+              <div className="text-[9px] text-white/50 uppercase tracking-wider leading-tight">Main Balance</div>
+            </div>
+          </div>
+
+          {/* Currency switch */}
+          <div className="flex items-center gap-1 p-1 rounded-2xl"
+            style={{
+              background: "linear-gradient(180deg,#0b1220,#000)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+            {currencyOptions.map(o => (
+              <button
+                key={o.mode}
+                onClick={() => setCurrencyMode(o.mode)}
+                disabled={phase !== "betting"}
+                className="w-8 h-8 rounded-xl font-black text-sm disabled:opacity-50"
+                style={{
+                  background: currencyMode === o.mode
+                    ? "linear-gradient(180deg,#eab308,#a16207)"
+                    : "linear-gradient(180deg,#1f2937,#0b1220)",
+                  color: currencyMode === o.mode ? "#111" : "#fff",
+                  boxShadow: currencyMode === o.mode
+                    ? "0 2px 0 #713f12, inset 0 1px 0 rgba(255,255,255,0.4)"
+                    : "0 2px 0 #000",
+                }}
+              >
+                {o.label}
               </button>
             ))}
           </div>
 
-          {/* Action button */}
-          <div className="mt-4">
-            {canCashout ? (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleCashout}
-                disabled={cashing}
-                className="w-full py-4 rounded-xl font-black text-lg"
-                style={{
-                  background: "linear-gradient(135deg, hsl(140 70% 45%), hsl(160 70% 40%))",
-                  boxShadow: "0 8px 24px hsla(140, 70%, 45%, 0.4)",
-                }}
-              >
-                CASH OUT {fmtMode(myBet!.amount * 0.98 * multiplier)}
-              </motion.button>
-            ) : myBet?.cashedOutAt ? (
-              <div className="w-full py-4 rounded-xl font-black text-center text-lg"
-                style={{ background: "hsla(140, 70%, 45%, 0.15)", color: "hsl(140 70% 65%)" }}>
-                ✓ Won {fmtMode(toDisplayAmount(myBet.winAmount, currencyMode))} @ {myBet.cashedOutAt.toFixed(2)}x
-              </div>
-            ) : myBet ? (
-              <div className="w-full py-4 rounded-xl font-black text-center text-lg"
-                style={{ background: "hsla(0, 70%, 55%, 0.15)", color: "hsl(0 80% 70%)" }}>
-                {phase === "crashed" ? `💥 Lost ${fmtMode(myBet.amount)}` : `Waiting to fly...`}
-              </div>
-            ) : (
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={handleBet}
-                disabled={!canBet}
-                className="w-full py-4 rounded-xl font-black text-lg disabled:opacity-50"
-                style={{
-                  background: canBet
-                    ? "linear-gradient(135deg, hsl(0 80% 55%), hsl(15 85% 55%))"
-                    : "hsla(0, 0%, 100%, 0.05)",
-                  boxShadow: canBet ? "0 8px 24px hsla(0, 80%, 55%, 0.4)" : "none",
-                }}
-              >
-                {placing ? "Placing..." : phase === "betting" ? `BET ${fmtMode(betAmount)}` : "Wait for next round"}
-              </motion.button>
-            )}
+          <button className="w-11 h-11 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(180deg,#1e3a8a,#0c1d4a)",
+              border: "1px solid #3b5fbf",
+              boxShadow: "0 3px 0 #030712",
+            }}>
+            <Volume2 className="h-4 w-4 text-sky-300" />
+          </button>
+        </div>
+      </div>
+
+      {/* ── STAGE ────────────────────────── */}
+      <div className="px-3">
+        <div className="relative rounded-[28px] overflow-hidden"
+          style={{
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 8px 0 #000, inset 0 1px 0 rgba(255,255,255,0.08)",
+            aspectRatio: "1 / 1.05",
+          }}>
+          {/* Space bg */}
+          <img src={spaceBg} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" width={1024} height={768} />
+          <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,0.6) 100%)" }} />
+
+          {/* Round ID */}
+          <div className="absolute top-2 left-2 px-2.5 py-1 rounded-xl text-[10px] font-black"
+            style={{
+              background: "linear-gradient(180deg,#0b1220,#000)",
+              border: "1px solid rgba(34,197,94,0.4)",
+              boxShadow: "0 2px 0 #000",
+            }}>
+            <div className="text-[8px] text-green-400 uppercase tracking-wider">Round ID</div>
+            <div className="text-green-300">#{100000 + roundNumber}</div>
           </div>
+
+          {/* Players */}
+          <div className="absolute top-2 right-2 px-2.5 py-1 rounded-xl text-[10px] font-black flex items-center gap-1.5"
+            style={{
+              background: "linear-gradient(180deg,#0b1220,#000)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 2px 0 #000",
+            }}>
+            <Users className="h-3 w-3 text-white/70" />
+            <div>
+              <div className="text-white leading-tight">{totalPlayers}</div>
+              <div className="text-[8px] text-white/50 uppercase leading-tight">Playing</div>
+            </div>
+          </div>
+
+          {/* Rocket */}
+          <AnimatePresence mode="wait">
+            {phase === "flying" && (
+              <motion.img
+                key="rocket"
+                src={rocketImg}
+                alt=""
+                className="absolute pointer-events-none"
+                initial={{ bottom: "-20%", right: "10%", opacity: 0, rotate: -15 }}
+                animate={{
+                  bottom: `${Math.min(50, 5 + multiplier * 8)}%`,
+                  right: `${Math.max(15, 45 - multiplier * 3)}%`,
+                  opacity: 1,
+                  rotate: -20,
+                }}
+                exit={{ opacity: 0, y: -100 }}
+                transition={{ type: "tween", duration: 0.4 }}
+                style={{ width: "55%", filter: "drop-shadow(0 0 20px rgba(250,150,0,0.5))" }}
+                width={768}
+                height={1024}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Multiplier */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <AnimatePresence mode="wait">
+              {phase === "betting" && (
+                <motion.div key="b" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-center">
+                  <div className="text-[10px] text-white/60 uppercase tracking-[0.2em] mb-2">Next round in</div>
+                  <div className="text-[80px] font-black leading-none italic"
+                    style={{
+                      fontFamily: "'Arial Black', sans-serif",
+                      background: "linear-gradient(180deg,#fde047,#eab308,#a16207)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      filter: "drop-shadow(0 4px 0 #713f12) drop-shadow(0 0 20px rgba(250,204,21,0.6))",
+                    }}>{countdown}</div>
+                </motion.div>
+              )}
+              {phase === "flying" && (
+                <motion.div key="f" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center -mt-8 ml-[-30%]">
+                  <div className="text-[68px] font-black leading-none italic"
+                    style={{
+                      fontFamily: "'Arial Black', sans-serif",
+                      background: "linear-gradient(180deg,#fef08a,#eab308,#854d0e)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      filter: "drop-shadow(0 5px 0 #451a03) drop-shadow(0 0 30px rgba(250,204,21,0.7))",
+                    }}>{multiplier.toFixed(2)}x</div>
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-green-100"
+                    style={{
+                      background: "linear-gradient(180deg,#22c55e,#166534)",
+                      boxShadow: "0 3px 0 #052e16, inset 0 1px 0 rgba(255,255,255,0.3)",
+                    }}>
+                    FLYING HIGH! 🚀
+                  </div>
+                </motion.div>
+              )}
+              {phase === "crashed" && (
+                <motion.div key="c" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="text-center">
+                  <div className="text-[10px] text-red-300 font-black uppercase tracking-[0.2em] mb-1">💥 Crashed</div>
+                  <div className="text-[64px] font-black italic leading-none"
+                    style={{
+                      fontFamily: "'Arial Black', sans-serif",
+                      background: "linear-gradient(180deg,#fca5a5,#ef4444,#7f1d1d)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      filter: "drop-shadow(0 4px 0 #450a0a) drop-shadow(0 0 30px rgba(239,68,68,0.7))",
+                    }}>{(crashAt ?? multiplier).toFixed(2)}x</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Bottom clouds gradient */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 pointer-events-none"
+            style={{ background: "linear-gradient(180deg,transparent,rgba(30,20,60,0.6),rgba(0,0,0,0.9))" }} />
+        </div>
+      </div>
+
+      {/* ── HISTORY CHIPS ────────────────────── */}
+      <div className="flex gap-1.5 px-3 mt-3 overflow-x-auto no-scrollbar pb-1">
+        {history.slice(0, 8).map((h, i) => {
+          const c = CHIP_COLORS[i % CHIP_COLORS.length];
+          return (
+            <div key={i} className="px-2.5 py-1 rounded-lg text-[11px] font-black text-white whitespace-nowrap"
+              style={{
+                background: c.bg,
+                border: `1px solid ${c.ring}`,
+                boxShadow: `0 3px 0 rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)`,
+                textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+              }}>
+              {h.toFixed(2)}x
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── CONTROL PANELS ────────────────── */}
+      <div className="px-3 mt-3 grid grid-cols-2 gap-2">
+        {/* Bet amount */}
+        <div className="rounded-2xl p-2.5"
+          style={{
+            background: "linear-gradient(180deg,#0f172a,#000)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 4px 0 #000",
+          }}>
+          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Bet Amount</div>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setBetAmount(v => Math.max(1, +(v - (currencyMode === "INR" ? 100 : 1)).toFixed(2)))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
+              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <input
+              type="number"
+              value={betAmount}
+              onChange={e => setBetAmount(Math.max(0, Number(e.target.value) || 0))}
+              className="flex-1 bg-transparent text-center text-base font-black outline-none w-0"
+            />
+            <button onClick={() => setBetAmount(v => +(v + (currencyMode === "INR" ? 100 : 1)).toFixed(2))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
+              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-1 mt-1.5">
+            {PRESETS[currency].map(p => (
+              <button key={p} onClick={() => setBetAmount(p)}
+                className="text-[9px] font-black py-1 rounded-md"
+                style={{
+                  background: betAmount === p
+                    ? "linear-gradient(180deg,#22c55e,#166534)"
+                    : "linear-gradient(180deg,#1f2937,#000)",
+                  boxShadow: "0 2px 0 #000",
+                }}>
+                {modeSymbol}{p}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Auto cashout */}
+        <div className="rounded-2xl p-2.5"
+          style={{
+            background: "linear-gradient(180deg,#0f172a,#000)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 4px 0 #000",
+          }}>
+          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Auto Cashout</div>
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setAutoCashout(v => Math.max(1.1, +(v - 0.1).toFixed(2)))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
+              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <div className="flex-1 text-center text-base font-black">{autoCashout.toFixed(2)}x</div>
+            <button onClick={() => setAutoCashout(v => +(v + 0.1).toFixed(2))}
+              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90"
+              style={{ background: "linear-gradient(180deg,#1f2937,#000)", boxShadow: "0 2px 0 #000" }}>
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-1 mt-1.5">
+            {CASHOUT_PRESETS.map(p => (
+              <button key={p} onClick={() => setAutoCashout(p)}
+                className="text-[9px] font-black py-1 rounded-md"
+                style={{
+                  background: autoCashout === p
+                    ? "linear-gradient(180deg,#22c55e,#166534)"
+                    : "linear-gradient(180deg,#1f2937,#000)",
+                  boxShadow: "0 2px 0 #000",
+                }}>
+                {p.toFixed(2)}x
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Auto bet row */}
+      <div className="px-3 mt-2">
+        <div className="flex items-center justify-between rounded-2xl p-2.5"
+          style={{
+            background: "linear-gradient(180deg,#0f172a,#000)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 4px 0 #000",
+          }}>
+          <div className="text-[10px] text-white/70 font-black uppercase tracking-wider">Auto Bet</div>
+          <button onClick={() => setAutoBet(v => !v)}
+            className="relative w-14 h-7 rounded-full transition-colors"
+            style={{
+              background: autoBet ? "linear-gradient(180deg,#22c55e,#166534)" : "linear-gradient(180deg,#374151,#111)",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}>
+            <div className="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform"
+              style={{ transform: autoBet ? "translateX(28px)" : "translateX(2px)", boxShadow: "0 2px 4px rgba(0,0,0,0.5)" }} />
+          </button>
+          <div className="flex items-center gap-1 text-[11px] font-black">
+            <span className="text-white/60">×</span>
+            <span>2.0</span>
+            <Info className="h-3 w-3 text-white/40" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── MAIN ACTION BUTTON ─────────────────── */}
+      <div className="px-3 mt-3 pb-4">
+        {canCashout ? (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleCashout}
+            disabled={cashing}
+            className="w-full py-4 rounded-2xl relative overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)",
+              boxShadow: "0 6px 0 #713f12, 0 12px 24px rgba(234,179,8,0.5), inset 0 2px 0 rgba(255,255,255,0.5)",
+              border: "1px solid #fde047",
+            }}
+          >
+            <div className="text-black font-black text-xl leading-tight" style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}>CASH OUT</div>
+            <div className="text-black font-black text-lg" style={{ textShadow: "0 1px 0 rgba(255,255,255,0.4)" }}>{fmt(potentialWin)}</div>
+          </motion.button>
+        ) : myBet?.cashedOutAt ? (
+          <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
+            style={{
+              background: "linear-gradient(180deg,#22c55e,#166534)",
+              boxShadow: "0 6px 0 #052e16, inset 0 2px 0 rgba(255,255,255,0.3)",
+            }}>
+            ✓ Won {fmt(toDisplayAmount(myBet.winAmount, currencyMode))} @ {myBet.cashedOutAt.toFixed(2)}x
+          </div>
+        ) : myBet ? (
+          <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
+            style={{
+              background: "linear-gradient(180deg,#ef4444,#7f1d1d)",
+              boxShadow: "0 6px 0 #450a0a, inset 0 2px 0 rgba(255,255,255,0.2)",
+            }}>
+            {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `Waiting for takeoff...`}
+          </div>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={handleBet}
+            disabled={!canBet}
+            className="w-full py-4 rounded-2xl relative overflow-hidden disabled:opacity-60"
+            style={{
+              background: canBet
+                ? "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)"
+                : "linear-gradient(180deg,#374151,#111)",
+              boxShadow: canBet
+                ? "0 6px 0 #713f12, 0 12px 24px rgba(234,179,8,0.5), inset 0 2px 0 rgba(255,255,255,0.5)"
+                : "0 4px 0 #000",
+              border: canBet ? "1px solid #fde047" : "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            <div className={`font-black text-xl ${canBet ? "text-black" : "text-white/60"}`}
+              style={canBet ? { textShadow: "0 1px 0 rgba(255,255,255,0.4)" } : {}}>
+              {placing ? "PLACING..." : phase === "betting" ? `BET ${fmt(betAmount)}` : "WAIT FOR NEXT ROUND"}
+            </div>
+          </motion.button>
+        )}
+      </div>
+
+      {/* ── PLAYERS TABLE ─────────────────── */}
+      <div className="px-3 pb-8">
+        <div className="rounded-2xl overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg,#0f172a,#000)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "0 4px 0 #000",
+          }}>
+          <div className="grid grid-cols-4 gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 border-b border-white/5">
+            <div>Players ({totalPlayers})</div>
+            <div className="text-center">Bet</div>
+            <div className="text-center">Cash Out</div>
+            <div className="text-right">Win</div>
+          </div>
+          {myBet ? (
+            <div className="grid grid-cols-4 gap-1 px-3 py-2.5 text-[11px] font-bold items-center"
+              style={{ background: "rgba(34,197,94,0.08)" }}>
+              <div className="flex items-center gap-1.5 truncate">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black"
+                  style={{ background: "linear-gradient(180deg,#a855f7,#6b21a8)" }}>You</div>
+              </div>
+              <div className="text-center">{fmt(myBet.amount)}</div>
+              <div className="text-center" style={{ color: myBet.cashedOutAt ? "#4ade80" : "#94a3b8" }}>
+                {myBet.cashedOutAt ? `${myBet.cashedOutAt.toFixed(2)}x` : "—"}
+              </div>
+              <div className="text-right" style={{ color: myBet.cashedOutAt ? "#4ade80" : "#64748b" }}>
+                {myBet.cashedOutAt ? fmt(toDisplayAmount(myBet.winAmount, currencyMode)) : "—"}
+              </div>
+            </div>
+          ) : (
+            <div className="px-3 py-6 text-center text-white/40 text-xs">No bets yet — place yours!</div>
+          )}
         </div>
       </div>
     </div>
