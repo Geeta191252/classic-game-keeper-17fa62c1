@@ -349,10 +349,10 @@ const JetXGame = () => {
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      // Base idle drift + multiplier-driven boost (faster)
-      const boost = phase === "flying" ? 180 + multiplier * 140 : 45;
+      // Base idle drift + multiplier-driven boost (very fast)
+      const boost = phase === "flying" ? 300 + multiplier * 220 : 55;
       const frontSpeed = boost;         // front layer faster
-      const backSpeed = boost * 0.5;    // back layer slower (parallax)
+      const backSpeed = boost * 0.55;    // back layer slower (parallax)
       // Positive Y offset = clouds move downward
       const nb = (cloudBackY.get() + backSpeed * dt) % TILE_BACK;
       const nf = (cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT;
