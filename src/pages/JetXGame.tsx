@@ -15,7 +15,7 @@ import {
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket.png";
 import spaceBg from "@/assets/jetx-space-bg.jpg";
-import stageRef from "@/assets/jetx-stage.png.asset.json";
+import stageBg from "@/assets/jetx-stage-bg.png.asset.json";
 
 type Phase = "betting" | "flying" | "crashed";
 
@@ -289,26 +289,84 @@ const JetXGame = () => {
             boxShadow: "0 8px 0 #000, inset 0 1px 0 rgba(255,255,255,0.08)",
             aspectRatio: "973 / 630",
           }}>
-          {/* Baked reference stage: space + rocket + clouds + flame (exact copy) */}
-          <motion.img
-            src={stageRef.url}
+          {/* Clean space + clouds background */}
+          <img
+            src={stageBg.url}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
-            animate={
-              phase === "flying"
-                ? { y: [0, -3, 0, 2, 0], scale: [1, 1.005, 1] }
-                : phase === "crashed"
-                ? { y: [0, 8, 16], opacity: [1, 0.7, 0.5] }
-                : { y: 0, scale: 1 }
-            }
-            transition={
-              phase === "flying"
-                ? { duration: 0.4, repeat: Infinity, ease: "easeInOut" }
-                : { duration: 0.6, ease: "easeOut" }
-            }
             width={973}
             height={630}
           />
+
+          {/* Animated Rocket + Flame */}
+          {(() => {
+            // Rocket rises from bottom-center as multiplier grows
+            const progress = phase === "flying"
+              ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(20))
+              : 0;
+            const bottomPct = phase === "crashed"
+              ? 110
+              : 8 + progress * 55; // 8% -> 63% from bottom
+            const rotate = phase === "flying" ? -8 - progress * 6 : 0;
+            const flameScale = phase === "flying" ? 1 + progress * 0.6 : 0.9;
+            const rocketVisible = phase !== "betting" || true;
+            return (
+              <motion.div
+                className="absolute left-1/2 pointer-events-none"
+                style={{ width: "34%", translateX: "-50%" }}
+                animate={{
+                  bottom: `${bottomPct}%`,
+                  rotate,
+                  x: phase === "flying" ? [0, -4, 4, -3, 0] : 0,
+                }}
+                transition={{
+                  bottom: { duration: 0.4, ease: "linear" },
+                  rotate: { duration: 0.4, ease: "linear" },
+                  x: { duration: 0.5, repeat: Infinity, ease: "easeInOut" },
+                }}
+              >
+                {/* Flame plume under rocket */}
+                {phase === "flying" && (
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2"
+                    style={{ top: "88%", width: "55%" }}
+                    animate={{ scaleY: [flameScale, flameScale * 1.15, flameScale * 0.95, flameScale] }}
+                    transition={{ duration: 0.18, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    {/* outer glow */}
+                    <div style={{
+                      position: "absolute", inset: "-20% -30% 0 -30%",
+                      background: "radial-gradient(ellipse at top, rgba(251,146,60,0.7), rgba(251,146,60,0) 70%)",
+                      filter: "blur(10px)",
+                      height: "260%",
+                    }} />
+                    {/* main flame */}
+                    <div style={{
+                      height: "230%",
+                      background: "linear-gradient(180deg, #fef08a 0%, #fbbf24 25%, #f97316 55%, #dc2626 85%, transparent 100%)",
+                      clipPath: "polygon(50% 0%, 90% 30%, 100% 70%, 75% 95%, 50% 100%, 25% 95%, 0% 70%, 10% 30%)",
+                      filter: "drop-shadow(0 0 12px #f97316)",
+                    }} />
+                    {/* inner white core */}
+                    <div style={{
+                      position: "absolute", top: 0, left: "25%", right: "25%",
+                      height: "140%",
+                      background: "linear-gradient(180deg, #ffffff 0%, #fef3c7 40%, #fbbf24 100%)",
+                      clipPath: "polygon(50% 0%, 85% 40%, 70% 90%, 50% 100%, 30% 90%, 15% 40%)",
+                    }} />
+                  </motion.div>
+                )}
+                {rocketVisible && (
+                  <img
+                    src={rocketImg}
+                    alt="rocket"
+                    className="relative w-full"
+                    style={{ filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.7))" }}
+                  />
+                )}
+              </motion.div>
+            );
+          })()}
 
           {/* Round ID — overlays baked one (top-left) */}
           <div className="absolute top-[3%] left-[3%] px-2.5 py-1 rounded-xl text-[10px] font-black"
