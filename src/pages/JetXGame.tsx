@@ -143,7 +143,7 @@ const JetXGame = () => {
 
   // ── Smooth rocket vertical position driven by spring (no per-poll jumps)
   const bottomMv = useMotionValue(8);
-  const bottomSpring = useSpring(bottomMv, { stiffness: 140, damping: 22, mass: 0.6 });
+  const bottomSpring = useSpring(bottomMv, { stiffness: 260, damping: 16, mass: 0.35 });
   const bottomStyle = useTransform(bottomSpring, (v) => `${v}%`);
 
   // ── Cloud parallax scroll (two layers, continuous, varied)
@@ -190,7 +190,7 @@ const JetXGame = () => {
     filter.Q.value = 0.8;
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.4);
+    gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + 0.4);
     src.connect(filter).connect(gain).connect(ctx.destination);
     src.start();
     a.thrustSrc = src; a.thrustGain = gain; a.thrustFilter = filter;
@@ -201,8 +201,8 @@ const JetXGame = () => {
     if (!a.ctx || !a.thrustFilter || !a.thrustGain) return;
     const p = Math.min(1, Math.log(Math.max(1, mult)) / Math.log(20));
     const t = a.ctx.currentTime;
-    a.thrustFilter.frequency.setTargetAtTime(500 + p * 1800, t, 0.15);
-    a.thrustGain.gain.setTargetAtTime(0.22 + p * 0.25, t, 0.2);
+    a.thrustFilter.frequency.setTargetAtTime(600 + p * 2000, t, 0.15);
+    a.thrustGain.gain.setTargetAtTime(0.45 + p * 0.45, t, 0.2);
   }, []);
 
   const stopThrust = useCallback(() => {
@@ -319,10 +319,10 @@ const JetXGame = () => {
     { mode: "STAR", label: "★" },
   ];
 
-  // Rocket flight math — faster rise
-  const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(8)) : 0;
-  const rocketBottomPct = phase === "crashed" ? 140 : 8 + progress * 62;
-  const flameHvh = phase === "flying" ? 5 + progress * 4 : phase === "betting" ? 3 : 2;
+  // Rocket flight math — very fast rise
+  const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(4.5)) : 0;
+  const rocketBottomPct = phase === "crashed" ? 170 : 6 + progress * 78;
+  const flameHvh = phase === "flying" ? 6 + progress * 6 : phase === "betting" ? 3.5 : 2;
 
   // Drive smooth rocket bottom + thrust intensity when values change
   useEffect(() => { bottomMv.set(rocketBottomPct); }, [rocketBottomPct, bottomMv]);
@@ -349,10 +349,10 @@ const JetXGame = () => {
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      // Base idle drift + multiplier-driven boost (faster)
-      const boost = phase === "flying" ? 180 + multiplier * 140 : 45;
+      // Base idle drift + multiplier-driven boost (very fast)
+      const boost = phase === "flying" ? 300 + multiplier * 220 : 55;
       const frontSpeed = boost;         // front layer faster
-      const backSpeed = boost * 0.5;    // back layer slower (parallax)
+      const backSpeed = boost * 0.55;    // back layer slower (parallax)
       // Positive Y offset = clouds move downward
       const nb = (cloudBackY.get() + backSpeed * dt) % TILE_BACK;
       const nf = (cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT;
