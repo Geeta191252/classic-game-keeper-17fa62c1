@@ -340,37 +340,29 @@ const JetXGame = () => {
     }
   }, [phase, startThrust, stopThrust, playCrash]);
 
-  // Continuous background scroll: speed scales with multiplier
+  // Continuous cloud scroll: speed scales with multiplier. Clouds drift DOWN as rocket rises.
   useEffect(() => {
+    const TILE_BACK = 800;
+    const TILE_FRONT = 900;
     let raf = 0;
     let last = performance.now();
     const loop = (now: number) => {
       const dt = (now - last) / 1000;
       last = now;
-      if (phase === "flying") {
-        const starSpeed = 60 + multiplier * 35;
-        const bgSpeed = 2 + multiplier * 1.2;
-        const nextStar = (starY.get() + starSpeed * dt) % 2000;
-        starY.set(nextStar);
-        bgY.set(Math.min(100, bgY.get() + bgSpeed * dt));
-      } else {
-        const nextStar = (starY.get() + 2 * dt) % 2000;
-        starY.set(nextStar);
-      }
+      // Base idle drift + multiplier-driven boost
+      const boost = phase === "flying" ? 40 + multiplier * 55 : 18;
+      const frontSpeed = boost;         // front layer faster
+      const backSpeed = boost * 0.45;   // back layer slower (parallax)
+      // Positive Y offset = clouds move downward
+      const nb = (cloudBackY.get() + backSpeed * dt) % TILE_BACK;
+      const nf = (cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT;
+      cloudBackY.set(nb);
+      cloudFrontY.set(nf);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [phase, multiplier, bgY, starY]);
-
-  // Reset background position on new round
-  const lastBgPhaseRef = useRef<Phase>("betting");
-  useEffect(() => {
-    if (phase === "betting" && lastBgPhaseRef.current === "crashed") {
-      bgY.set(0);
-    }
-    lastBgPhaseRef.current = phase;
-  }, [phase, bgY]);
+  }, [phase, multiplier, cloudBackY, cloudFrontY]);
 
   return (
     <div
