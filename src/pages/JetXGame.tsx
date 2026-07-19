@@ -87,6 +87,13 @@ const JetXGame = () => {
   const bottomSpring = useSpring(bottomMv, { stiffness: 55, damping: 18, mass: 1 });
   const bottomStyle = useTransform(bottomSpring, (v) => `${v}%`);
 
+  // ── Background + starfield speed tied to rocket/multiplier
+  const bgY = useMotionValue(0);
+  const starY = useMotionValue(0);
+  const bgPos = useTransform(bgY, (v) => `50% ${Math.max(0, 100 - v)}%`);
+  const starPos = useTransform(starY, (v) => `0 ${-v}px, 0 ${-v * 0.7}px, 0 ${-v * 0.45}px`);
+
+
   // ── Sound: continuous rocket thrust + crash boom (Web Audio)
   const audioRef = useRef<{
     ctx: AudioContext | null;
