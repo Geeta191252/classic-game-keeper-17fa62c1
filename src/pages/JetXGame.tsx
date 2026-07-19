@@ -391,7 +391,6 @@ const JetXGame = () => {
           </div>
         </div>
       </div>
-      </div>
 
       {/* ── HISTORY CHIPS ────────────────────── */}
       <div className="flex gap-1.5 px-3 mt-3 overflow-x-auto no-scrollbar pb-1">
