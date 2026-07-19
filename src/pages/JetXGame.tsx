@@ -15,6 +15,7 @@ import {
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket.png";
 import spaceBg from "@/assets/jetx-space-bg.jpg";
+import stageRef from "@/assets/jetx-stage.png.asset.json";
 
 type Phase = "betting" | "flying" | "crashed";
 
