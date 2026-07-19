@@ -14,7 +14,7 @@ import {
 } from "@/lib/telegram";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket-v2.png";
-import bgNight from "@/assets/jetx-bg-night.jpg.asset.json";
+import bgNight from "@/assets/jetx-bg-long.jpg.asset.json";
 
 type Phase = "betting" | "flying" | "crashed";
 
