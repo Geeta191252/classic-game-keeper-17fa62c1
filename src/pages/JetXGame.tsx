@@ -363,7 +363,10 @@ const JetXGame = () => {
             })}
           </div>
 
-          <button className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass">
+          <button
+            onClick={() => { const c = ensureAudio(); if (c && c.state === "suspended") c.resume(); }}
+            className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass"
+          >
             <Volume2 className="h-4 w-4 text-sky-300" />
           </button>
         </div>
