@@ -143,7 +143,7 @@ const JetXGame = () => {
 
   // ── Smooth rocket vertical position driven by spring (no per-poll jumps)
   const bottomMv = useMotionValue(8);
-  const bottomSpring = useSpring(bottomMv, { stiffness: 140, damping: 22, mass: 0.6 });
+  const bottomSpring = useSpring(bottomMv, { stiffness: 260, damping: 16, mass: 0.35 });
   const bottomStyle = useTransform(bottomSpring, (v) => `${v}%`);
 
   // ── Cloud parallax scroll (two layers, continuous, varied)
