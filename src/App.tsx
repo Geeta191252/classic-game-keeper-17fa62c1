@@ -91,7 +91,6 @@ const StartParamNavigator = () => {
 // Prefetch ALL game chunks in parallel immediately so any click opens instantly.
 const prefetchGames = () => {
   const loaders: Array<() => Promise<unknown>> = [
-    () => import("./pages/JetXGame"),
     () => import("./pages/AviatorGame"),
     () => import("./pages/AviatorFunGame"),
     () => import("./pages/GreedyKingGame"),
