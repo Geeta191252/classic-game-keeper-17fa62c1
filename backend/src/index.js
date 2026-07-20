@@ -1589,7 +1589,7 @@ app.post("/api/crypto/create-payment", async (req, res) => {
         pay_currency: currency,
         order_id: orderId,
         order_description: `Deposit $${amount} for user ${userId}`,
-        ipn_callback_url: `${process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app"}/api/crypto/ipn`,
+        ipn_callback_url: `${getBackendUrl()}/api/crypto/ipn`,
       }),
     });
 
@@ -1697,15 +1697,10 @@ app.post("/api/crypto/ipn", async (req, res) => {
 
       // Notify user via Telegram bot
       try {
-        await bot.sendMessage(tx.telegramId,
+        await sendWebAppMessage(tx.telegramId,
           `✅ Payment Received!\n\n💰 $${tx.amount} has been added to your wallet.\n\nOpen the game to start playing! 🎮`,
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "🎮 Open Game", web_app: { url: process.env.WEBAPP_URL || process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app" } }],
-              ],
-            },
-          }
+          "🎮 Open Game",
+          getWebAppBaseUrl()
         );
       } catch (e) { console.error("Failed to notify user:", e.message); }
 
@@ -4171,8 +4166,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
   // Set Telegram webhook automatically
-  const KOYEB_URL = process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app";
-  bot.setWebHook(`${KOYEB_URL}/api/telegram-webhook`)
-    .then(() => console.log("✅ Webhook set successfully"))
-    .catch((err) => console.error("❌ Webhook error:", err));
+  const webhookUrl = `${getBackendUrl()}/api/telegram-webhook`;
+  bot.setWebHook(webhookUrl)
+    .then(() => console.log(`✅ Webhook set successfully: ${webhookUrl}`))
+    .catch((err) => console.error("❌ Webhook error:", err?.response?.body?.description || err.message));
 });
