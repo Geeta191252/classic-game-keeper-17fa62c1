@@ -2038,3 +2038,180 @@ export function AviatorFunControlPage() {
   );
 }
 
+/* ============= JetX Control (mirrors Aviator Fun) ============= */
+import {
+  getJetXOverview, getJetXProfit, setJetXProfit,
+  addJetXManual, removeJetXManual, clearJetXManual,
+  forceCrashJetX, resetJetXLedger,
+  type JetXOverview, type JetXCurrency, type JetXPoolOverview,
+} from "@/lib/adminApi";
+
+function JetXPoolCard({
+  currencyKey, symbol, label, pool, onAdd, onRemove, onClear, onForce, onReset,
+}: {
+  currencyKey: JetXCurrency; symbol: string; label: string; pool: JetXPoolOverview;
+  onAdd: (v: number) => void; onRemove: (i: number) => void; onClear: () => void;
+  onForce: () => void; onReset: () => void;
+}) {
+  const [newVal, setNewVal] = useState("");
+  return (
+    <div className="a-card">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-white font-bold text-[15px]">{label} pool <span style={{color:"var(--a-text-mute)"}}>#{pool.roundNumber}</span></div>
+        <PhaseBadge phase={pool.phase} />
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-[12px] mb-3">
+        <div><span style={{color:"var(--a-text-mute)"}}>Multiplier:</span> <span className="text-white font-semibold">{pool.multiplier.toFixed(2)}x</span></div>
+        <div><span style={{color:"var(--a-text-mute)"}}>Players:</span> <span className="text-white">{pool.totalPlayers}</span></div>
+        <div><span style={{color:"var(--a-text-mute)"}}>Round pool:</span> <span className="text-white">{symbol}{pool.totalPool.toFixed(2)}</span></div>
+        <div><span style={{color:"var(--a-text-mute)"}}>Paid:</span> <span className="text-white">{symbol}{pool.totalPaidOut.toFixed(2)}</span></div>
+        <div><span style={{color:"var(--a-text-mute)"}}>Cum pool:</span> <span className="text-white">{symbol}{pool.cumPool.toFixed(2)}</span></div>
+        <div><span style={{color:"var(--a-text-mute)"}}>Cum paid:</span> <span className="text-white">{symbol}{pool.cumPaid.toFixed(2)}</span></div>
+        <div className="col-span-2"><span style={{color:"var(--a-text-mute)"}}>House net:</span> <span className="text-white font-semibold" style={{color: pool.houseNet >= 0 ? "#33d69f" : "#ff6b6b"}}>{symbol}{pool.houseNet.toFixed(2)}</span></div>
+      </div>
+      <div className="mb-3">
+        <div className="text-[12px] mb-1" style={{color:"var(--a-text-mute)"}}>Manual crash queue {pool.manualOverride && <span style={{color:"#ffb547"}}>· ACTIVE this round</span>}</div>
+        <div className="flex gap-2 mb-2">
+          <input className="a-input flex-1" placeholder="e.g. 1.20" value={newVal} onChange={(e)=>setNewVal(e.target.value)} />
+          <button className="a-btn" onClick={() => { const n = Number(newVal); if (n>0){ onAdd(n); setNewVal(""); } }}><Plus size={12}/> Add</button>
+          <button className="a-btn" onClick={onClear}><Trash2 size={12}/> Clear</button>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {pool.manualQueue.length === 0 ? (
+            <span className="text-[11px]" style={{color:"var(--a-text-mute)"}}>Queue empty — auto-crash active</span>
+          ) : pool.manualQueue.map((v,i)=>(
+            <span key={i} className="a-chip" style={{cursor:"pointer"}} onClick={()=>onRemove(i)} title="Click to remove">{v.toFixed(2)}x ✕</span>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button className="a-btn" style={{background:"#ff6b6b",color:"#fff"}} onClick={onForce} disabled={pool.phase!=="flying"}><Zap size={12}/> Force crash</button>
+        <button className="a-btn" onClick={onReset}><RotateCcw size={12}/> Reset ledger</button>
+      </div>
+    </div>
+  );
+}
+
+export function JetXControlPage() {
+  const [overview, setOverview] = useState<JetXOverview["overview"] | null>(null);
+  const [profit, setProfit] = useState<number | null>(null);
+  const [profitInput, setProfitInput] = useState<string>("");
+  const [profitDirty, setProfitDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = async () => {
+    const results = await Promise.allSettled([getJetXOverview(), getJetXProfit()]);
+    const ov = results[0]; const pf = results[1];
+    if (ov.status === "fulfilled" && ov.value?.overview) setOverview(ov.value.overview);
+    if (pf.status === "fulfilled" && typeof pf.value?.percent === "number") {
+      setProfit(pf.value.percent);
+      if (!profitDirty) setProfitInput(String(pf.value.percent));
+    }
+    if (ov.status === "rejected" && pf.status === "rejected") {
+      setError((ov.reason as Error)?.message || "Failed to load JetX data");
+    } else setError(null);
+    setLoaded(true);
+  };
+
+  useEffect(() => { load(); const t = setInterval(load, 1500); return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profitDirty]);
+
+  const saveProfit = async () => {
+    const n = Number(profitInput);
+    if (isNaN(n) || n < 0 || n > 95) { setError("Profit must be 0-95"); return; }
+    setSaving(true);
+    try {
+      const res = await setJetXProfit(n);
+      setProfit(res.percent ?? n);
+      setProfitInput(String(res.percent ?? n));
+      setProfitDirty(false); setError(null);
+    } catch (e: any) { setError(e?.message || "Failed to save"); }
+    finally { setSaving(false); }
+  };
+
+  const profitDisplay = profit === null ? "—" : `${profit}%`;
+
+  return (
+    <div>
+      <PageHeader icon={<Plane size={18} />} title="JetX Control"
+        subtitle="Owner house-edge & manual crash controls for JetX (3D). Independent from Aviator Fun."
+        tone="orange"
+        right={<button className="a-btn" onClick={load}><RefreshCw size={14}/> Refresh</button>} />
+
+      {error && (
+        <div className="a-card mb-4" style={{ borderColor: "#ff6b6b" }}>
+          <div className="text-[13px]" style={{ color: "#ff6b6b" }}>⚠ {error}</div>
+          <div className="text-[11px] mt-1" style={{ color: "var(--a-text-mute)" }}>
+            Backend endpoint <code>/api/admin/jetx/*</code> unreachable.
+          </div>
+        </div>
+      )}
+
+      <div className="a-card mb-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <div className="text-white font-bold text-[16px]">House profit target</div>
+            <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>
+              Currently <span className="text-white font-semibold">{profitDisplay}</span>. Owner keeps at least this % of every JetX pool.
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input className="a-input w-24 text-center" type="number" min={0} max={95}
+              placeholder="50" value={profitInput}
+              onChange={(e) => { setProfitInput(e.target.value); setProfitDirty(true); }} />
+            <span className="text-white">%</span>
+            <button className="a-btn" style={{ background: "#ff9a3d", color: "#04070d" }}
+                    onClick={saveProfit} disabled={saving || !profitInput}>
+              {saving ? <Loader2 size={14} className="animate-spin" /> : null} Save
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!overview && !loaded ? (
+        <div className="a-card flex items-center gap-2 text-[13px]" style={{ color: "var(--a-text-mute)" }}>
+          <Loader2 className="animate-spin" size={16} /> Loading pools…
+        </div>
+      ) : !overview ? (
+        <div className="a-card text-[13px]" style={{ color: "var(--a-text-mute)" }}>No pool data yet…</div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {CURRENCIES.map((c) => {
+            const raw = overview[c.key];
+            const pool: JetXPoolOverview = {
+              roundNumber: raw?.roundNumber ?? 0,
+              phase: raw?.phase ?? "betting",
+              multiplier: Number(raw?.multiplier ?? 1),
+              timeLeft: raw?.timeLeft ?? 0,
+              totalPool: Number(raw?.totalPool ?? 0),
+              totalPaidOut: Number(raw?.totalPaidOut ?? 0),
+              cumPool: Number(raw?.cumPool ?? 0),
+              cumPaid: Number(raw?.cumPaid ?? 0),
+              houseNet: Number(raw?.houseNet ?? 0),
+              totalPlayers: raw?.totalPlayers ?? 0,
+              manualQueue: Array.isArray(raw?.manualQueue) ? raw!.manualQueue : [],
+              manualOverride: !!raw?.manualOverride,
+              crashAt: raw?.crashAt ?? null,
+              history: Array.isArray(raw?.history) ? raw!.history : [],
+              bets: Array.isArray(raw?.bets) ? raw!.bets : [],
+            };
+            return (
+              <JetXPoolCard key={c.key} currencyKey={c.key} symbol={c.symbol} label={c.label} pool={pool}
+                onAdd={async (v) => { await addJetXManual(c.key, v); load(); }}
+                onRemove={async (i) => { await removeJetXManual(c.key, i); load(); }}
+                onClear={async () => { await clearJetXManual(c.key); load(); }}
+                onForce={async () => { await forceCrashJetX(c.key); load(); }}
+                onReset={async () => { if (confirm("Reset cumulative ledger for " + c.label + " JetX pool?")) { await resetJetXLedger(c.key); load(); } }}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
