@@ -102,6 +102,7 @@ mongoose
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
 const NEW_USER_CHANNEL = process.env.NEW_USER_CHANNEL || "@royalkinggamedata";
+const WITHDRAWAL_CHANNEL = process.env.WITHDRAWAL_CHANNEL || "@royal_king_game_Withdrawal";
 
 const ownerNotifyQueue = [];
 let ownerNotifyTimer = null;
@@ -339,12 +340,16 @@ app.post("/api/withdraw", async (req, res) => {
       description: `Withdrawal of ${currency === "dollar" ? "$" + amount : amount + " Stars"} to ${cryptoAddress}`,
     });
 
-    // Send notification to admin
+    // Notifications: admin DM + withdrawal channel + user confirmation
+    const symbol = currency === "dollar" ? "$" : currency === "rupee" ? "₹" : "⭐";
+    const displayName = user.firstName || user.username || `User ${userId}`;
+    const userTag = user.username ? `@${user.username}` : `\`${userId}\``;
+
     try {
-      const symbol = currency === "dollar" ? "$" : "⭐";
       await bot.sendMessage(6965488457,
         `🔔 *New Withdrawal Request!*\n\n` +
-        `👤 User ID: \`${userId}\`\n` +
+        `👤 User: ${displayName} (${userTag})\n` +
+        `🆔 ID: \`${userId}\`\n` +
         `💰 Amount: ${symbol}${amount}\n` +
         `🔗 Network: ${network || "N/A"}\n` +
         `📍 Address: \`${cryptoAddress}\`\n\n` +
@@ -353,6 +358,34 @@ app.post("/api/withdraw", async (req, res) => {
       );
     } catch (botErr) {
       console.error("Failed to send admin withdrawal notification:", botErr.message);
+    }
+
+    try {
+      await bot.sendMessage(WITHDRAWAL_CHANNEL,
+        `💸 *New Withdrawal Request*\n\n` +
+        `👤 User: ${displayName} (${userTag})\n` +
+        `💰 Amount: ${symbol}${amount}\n` +
+        `🔗 Network: ${network || "N/A"}\n` +
+        `📍 Address: \`${cryptoAddress}\`\n` +
+        `⏳ Status: Pending`,
+        { parse_mode: "Markdown", disable_web_page_preview: true }
+      );
+    } catch (channelErr) {
+      console.error("Failed to send withdrawal channel notification:", channelErr?.response?.body?.description || channelErr.message);
+    }
+
+    try {
+      await bot.sendMessage(userId,
+        `✅ *Withdrawal Request Submitted*\n\n` +
+        `💰 Amount: ${symbol}${amount}\n` +
+        `🔗 Network: ${network || "N/A"}\n` +
+        `📍 Address: \`${cryptoAddress}\`\n\n` +
+        `⏳ Status: *Pending*\n` +
+        `Admin review kar raha hai. Approve hote hi payment aa jayegi.`,
+        { parse_mode: "Markdown" }
+      );
+    } catch (userErr) {
+      console.error("Failed to send user withdrawal confirmation:", userErr.message);
     }
 
     return res.json({
@@ -397,6 +430,20 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
       );
     } catch (botErr) {
       console.error("Failed to send approval notification:", botErr.message);
+    }
+
+    try {
+      const amount = Math.abs(tx.amount);
+      const symbol = tx.currency === "dollar" ? "$" : tx.currency === "rupee" ? "₹" : "⭐";
+      await bot.sendMessage(WITHDRAWAL_CHANNEL,
+        `✅ *Withdrawal Paid*\n\n` +
+        `💰 Amount: ${symbol}${amount}\n` +
+        `🔗 Network: ${tx.withdrawalNetwork || "N/A"}\n` +
+        `📍 Address: \`${tx.cryptoAddress}\``,
+        { parse_mode: "Markdown", disable_web_page_preview: true }
+      );
+    } catch (channelErr) {
+      console.error("Failed to post withdrawal approval to channel:", channelErr?.response?.body?.description || channelErr.message);
     }
 
     return res.json({ success: true, message: "Withdrawal approved and user notified" });
