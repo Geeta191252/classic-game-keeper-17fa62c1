@@ -526,7 +526,7 @@ app.post("/api/admin/reject-withdrawal", async (req, res) => {
     // Send Telegram notification to user
     try {
       const amount = Math.abs(tx.amount);
-      const symbol = tx.currency === "dollar" ? "$" : "⭐";
+      const symbol = tx.currency === "dollar" ? "$" : tx.currency === "rupee" ? "₹" : "⭐";
       await bot.sendMessage(tx.telegramId,
         `❌ *Withdrawal Rejected*\n\n` +
         `💰 Amount: ${symbol}${amount}\n` +
