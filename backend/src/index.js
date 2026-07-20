@@ -14,6 +14,48 @@ const Tournament = require("./models/Tournament");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const DEFAULT_PUBLIC_URL = "https://broken-bria-chetan1-ea890b93.koyeb.app";
+
+function normalizeHttpsUrl(rawUrl, fallback = DEFAULT_PUBLIC_URL) {
+  const value = String(rawUrl || fallback || "").trim();
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    parsed.protocol = "https:";
+    parsed.hash = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function getBackendUrl() {
+  return normalizeHttpsUrl(process.env.KOYEB_URL || process.env.BACKEND_URL || process.env.WEBHOOK_URL);
+}
+
+function getWebAppBaseUrl() {
+  return normalizeHttpsUrl(process.env.WEBAPP_URL || process.env.KOYEB_URL || process.env.BACKEND_URL || getBackendUrl());
+}
+
+function getWebAppUrl(suffix = "") {
+  return `${getWebAppBaseUrl()}${suffix}`;
+}
+
+async function sendWebAppMessage(chatId, text, buttonText, url, options = {}) {
+  const safeUrl = normalizeHttpsUrl(url, getWebAppBaseUrl());
+  try {
+    return await bot.sendMessage(chatId, text, {
+      ...options,
+      reply_markup: {
+        inline_keyboard: [[{ text: buttonText, web_app: { url: safeUrl } }]],
+      },
+    });
+  } catch (error) {
+    console.error("Telegram web_app button error:", error?.response?.body?.description || error.message);
+    return bot.sendMessage(chatId, `${text}\n\nOpen game: ${safeUrl}`, options);
+  }
+}
 
 // Middleware
 app.use(cors());
@@ -887,7 +929,7 @@ app.post("/api/telegram-webhook", async (req, res) => {
       const parts = messageText.split(" ");
       const startParam = parts.length > 1 ? parts[1] : null;
 
-      const webAppUrl = process.env.WEBAPP_URL || process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app";
+      const webAppUrl = getWebAppBaseUrl();
 
       // If referral link, process referral and open app with startapp param
       if (startParam && startParam.startsWith("ref_")) {
@@ -933,22 +975,16 @@ app.post("/api/telegram-webhook", async (req, res) => {
       }
 
       // Send welcome message with Play button (startapp param included for Mini App)
-      const appUrl = startParam 
-        ? `${webAppUrl}?startapp=${startParam}` 
+      const appUrl = startParam
+        ? `${webAppUrl}?startapp=${encodeURIComponent(startParam)}`
         : webAppUrl;
 
-      await bot.sendMessage(chatId, `🎮 Welcome ${firstName} to Royal King Game!\n\nTap the button below to start playing!`, {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🎮 Play Now",
-                web_app: { url: appUrl },
-              },
-            ],
-          ],
-        },
-      });
+      await sendWebAppMessage(
+        chatId,
+        `🎮 Welcome ${firstName} to Royal King Game!\n\nTap the button below to start playing!`,
+        "🎮 Play Now",
+        appUrl
+      );
 
       return res.sendStatus(200);
     }
@@ -963,19 +999,12 @@ app.post("/api/telegram-webhook", async (req, res) => {
         return res.sendStatus(200);
       }
 
-      const webAppUrl = process.env.WEBAPP_URL || process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app";
-      await bot.sendMessage(chatId, "👑 Admin Panel\n\nTap below to open the admin dashboard:", {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "🛡️ Open Admin Panel",
-                web_app: { url: `${webAppUrl}/admin` },
-              },
-            ],
-          ],
-        },
-      });
+      await sendWebAppMessage(
+        chatId,
+        "👑 Admin Panel\n\nTap below to open the admin dashboard:",
+        "🛡️ Open Admin Panel",
+        getWebAppUrl("/admin")
+      );
 
       return res.sendStatus(200);
     }
@@ -990,7 +1019,7 @@ app.post("/api/telegram-webhook", async (req, res) => {
         return res.sendStatus(200);
       }
 
-      const webAppUrl = process.env.WEBAPP_URL || process.env.KOYEB_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app";
+      const webAppUrl = getWebAppBaseUrl();
 
       // Check if replying to a photo
       const replyMsg = update.message.reply_to_message;
