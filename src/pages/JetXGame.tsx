@@ -120,6 +120,9 @@ const JetXGame = () => {
 
   const lastPhaseRef = useRef<Phase>("betting");
   const lastRoundRef = useRef(0);
+  // Only display the live multiplier for rounds where we saw the betting→flying takeoff.
+  // If the user joins mid-flight, we hold at 1.00x until the next fresh round starts.
+  const witnessedTakeoffRef = useRef(false);
   const autoBetRef = useRef(autoBet); autoBetRef.current = autoBet;
   const autoCashRef = useRef(autoCashout); autoCashRef.current = autoCashout;
 
