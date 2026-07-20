@@ -15,6 +15,8 @@ Koyeb pe deploy karne ke liye Node.js backend.
 3. Environment variables set karo:
    - `TELEGRAM_BOT_TOKEN` — BotFather se
    - `MONGODB_URI` — MongoDB Atlas se
+   - `KOYEB_URL` — apna backend URL, example `https://your-service.koyeb.app`
+   - `WEBAPP_URL` — apna published game URL; agar frontend isi Koyeb service se serve ho raha hai to same `KOYEB_URL` set karo
    - `PAYMENT_PROVIDER_TOKEN` — (optional, dollar payments ke liye, BotFather → Payments)
 4. Deploy karo
 5. Deploy hone ke baad `index.js` mein webhook URL uncomment karo:
@@ -39,5 +41,7 @@ Koyeb pe deploy karne ke liye Node.js backend.
 |----------|----------|-------------|
 | `TELEGRAM_BOT_TOKEN` | ✅ | Bot token from BotFather |
 | `MONGODB_URI` | ✅ | MongoDB connection string |
+| `KOYEB_URL` | ✅ | Public backend URL used for Telegram webhook |
+| `WEBAPP_URL` | ✅ | HTTPS game URL used in Telegram Web App buttons |
 | `PAYMENT_PROVIDER_TOKEN` | ❌ | For $ payments (Stripe via BotFather) |
 | `PORT` | ❌ | Server port (default: 8000) |
