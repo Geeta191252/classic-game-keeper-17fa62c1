@@ -44,18 +44,34 @@ function getWebAppUrl(suffix = "") {
 
 // Extra promotional buttons (configured via Koyeb env)
 // EXTRA_BTN_1_TEXT / EXTRA_BTN_1_URL ... up to _3_
+function normalizeButtonUrl(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  let url = raw.trim();
+  if (!url) return null;
+  // Ignore unresolved template placeholders like {{ KOYEB_PUBLIC_DOMAIN }}
+  if (url.includes("{{") || url.includes("}}")) return null;
+  if (/^https:\/\//i.test(url)) return url;
+  if (/^http:\/\//i.test(url)) return "https://" + url.slice(7);
+  // Telegram-style username or t.me link without protocol
+  if (url.startsWith("@")) return `https://t.me/${url.slice(1)}`;
+  if (/^t\.me\//i.test(url)) return `https://${url}`;
+  // Bare username / channel handle
+  if (/^[A-Za-z0-9_+]+$/.test(url)) return `https://t.me/${url}`;
+  return null;
+}
+
 function getExtraButtonRows() {
   const rows = [];
   for (let i = 1; i <= 3; i++) {
     const text = process.env[`EXTRA_BTN_${i}_TEXT`];
-    const url = process.env[`EXTRA_BTN_${i}_URL`];
-    if (text && url && /^https:\/\//i.test(url)) {
+    const url = normalizeButtonUrl(process.env[`EXTRA_BTN_${i}_URL`]);
+    if (text && url) {
       rows.push([{ text, url }]);
     }
   }
-  const supportUrl = process.env.SUPPORT_URL;
+  const supportUrl = normalizeButtonUrl(process.env.SUPPORT_URL);
   const supportText = process.env.SUPPORT_TEXT || "🆘 Support";
-  if (supportUrl && /^https:\/\//i.test(supportUrl)) {
+  if (supportUrl) {
     rows.push([{ text: supportText, url: supportUrl }]);
   }
   return rows;
