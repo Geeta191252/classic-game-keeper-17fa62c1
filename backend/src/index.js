@@ -4323,4 +4323,26 @@ app.listen(PORT, () => {
   bot.setWebHook(webhookUrl)
     .then(() => console.log(`✅ Webhook set successfully: ${webhookUrl}`))
     .catch((err) => console.error("❌ Webhook error:", err?.response?.body?.description || err.message));
+
+  // Register bot command menus (public + owner-scoped)
+  const publicCommands = [
+    { command: "start", description: "🎮 Open Royal King Game" },
+    { command: "help", description: "ℹ️ Show available commands" },
+  ];
+  const ownerCommands = [
+    ...publicCommands,
+    { command: "admin", description: "👑 Open admin panel" },
+    { command: "stats", description: "📊 Live game stats" },
+    { command: "users", description: "👥 Recent users list" },
+    { command: "broadcast", description: "📢 Broadcast message to all users" },
+    { command: "broadcastgame", description: "🎯 Broadcast with Play button" },
+    { command: "cancelbroadcast", description: "🛑 Stop running broadcast" },
+    { command: "post", description: "🖼️ Post photo to channel" },
+  ];
+  bot.setMyCommands(publicCommands, { scope: { type: "default" } })
+    .then(() => console.log("✅ Public bot commands registered"))
+    .catch((err) => console.error("❌ setMyCommands (public) error:", err?.response?.body?.description || err.message));
+  bot.setMyCommands(ownerCommands, { scope: { type: "chat", chat_id: 6965488457 } })
+    .then(() => console.log("✅ Owner bot commands registered"))
+    .catch((err) => console.error("❌ setMyCommands (owner) error:", err?.response?.body?.description || err.message));
 });
