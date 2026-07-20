@@ -899,7 +899,13 @@ const JetXGame = () => {
             }}
           >
             <div className={`font-black text-xl ${canBet ? "text-black" : "text-white/60"}`}>
-              {placing ? "PLACING..." : phase === "betting" ? `BET ${fmt(betAmount)}` : "WAIT FOR NEXT ROUND"}
+              {placing
+                ? "PLACING..."
+                : phase === "betting"
+                ? `BET ${fmt(betAmount)}`
+                : phase === "flying"
+                ? `ROUND IN PROGRESS • ${multiplier.toFixed(2)}x`
+                : "WAIT FOR NEXT ROUND"}
             </div>
           </motion.button>
         )}
