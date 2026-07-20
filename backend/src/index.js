@@ -88,6 +88,60 @@ mongoose
 
 // Telegram Bot (polling mode for dev, webhook for production)
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
+
+const ownerNotifyQueue = [];
+let ownerNotifyTimer = null;
+let ownerNotifyPausedUntil = 0;
+
+function formatOwnerUserLine(item) {
+  const name = [item.firstName, item.lastName].filter(Boolean).join(" ") || "Player";
+  const username = item.username ? `@${item.username}` : "no username";
+  const startParam = item.startParam ? ` | start: ${item.startParam}` : "";
+  return `• ${name} (${username}) | ID: ${item.telegramId}${startParam}`;
+}
+
+function scheduleOwnerNotify(delayMs = 60000) {
+  if (ownerNotifyTimer) return;
+  const waitMs = Math.max(delayMs, ownerNotifyPausedUntil - Date.now(), 1000);
+  ownerNotifyTimer = setTimeout(flushOwnerNotifyQueue, waitMs);
+}
+
+async function flushOwnerNotifyQueue() {
+  ownerNotifyTimer = null;
+  if (!ownerNotifyQueue.length) return;
+
+  const batch = ownerNotifyQueue.splice(0, 10);
+  try {
+    const totalUsers = await User.countDocuments({});
+    const extraCount = ownerNotifyQueue.length;
+    const message = [
+      `🆕 New bot users: ${batch.length}${extraCount ? ` (+${extraCount} pending)` : ""}`,
+      `👥 Total users: ${totalUsers}`,
+      "",
+      ...batch.map(formatOwnerUserLine),
+    ].join("\n");
+
+    await bot.sendMessage(OWNER_TELEGRAM_ID, message);
+  } catch (e) {
+    ownerNotifyQueue.unshift(...batch);
+    const retryAfter = e?.response?.body?.parameters?.retry_after;
+    if (retryAfter) {
+      ownerNotifyPausedUntil = Date.now() + (Number(retryAfter) + 5) * 1000;
+      console.error(`Owner notify rate-limited: retry after ${retryAfter}s`);
+    } else {
+      console.error("Owner notify:", e?.response?.body?.description || e.message);
+      ownerNotifyPausedUntil = Date.now() + 5 * 60 * 1000;
+    }
+  }
+
+  if (ownerNotifyQueue.length) scheduleOwnerNotify(60000);
+}
+
+function queueOwnerNewUserNotify(userInfo) {
+  ownerNotifyQueue.push(userInfo);
+  scheduleOwnerNotify(60000);
+}
 
 // ============================================
 // HELPER: Get or create user
