@@ -2914,6 +2914,16 @@ const JETX_BETTING_MS = 5000;
 const JETX_CRASHED_MS = 8000;
 const JETX_HISTORY_LEN = 18;
 
+const JETX_SETTING_KEY = "jetxProfitPercent";
+
+async function jetxGetProfitPercent() {
+  try {
+    const doc = await Setting.findOne({ key: JETX_SETTING_KEY });
+    const v = doc && typeof doc.value === "number" ? doc.value : 50;
+    return Math.max(0, Math.min(95, v));
+  } catch { return 50; }
+}
+
 function makeJetxPool() {
   return {
     roundNumber: 1,
@@ -2925,7 +2935,13 @@ function makeJetxPool() {
     flyTimer: null,
     bets: {},                      // { telegramId: { amount, firstName, cashedOutAt, winAmount } }
     totalPool: 0,
+    totalPaidOut: 0,
     history: [],
+    cumPool: 0,
+    cumPaid: 0,
+    manualQueue: [],
+    manualOverride: false,
+    profitPct: 50,
   };
 }
 const jetxState = {
@@ -2934,18 +2950,55 @@ const jetxState = {
   star: makeJetxPool(),
 };
 
-function jetxComputeCrash(pool) {
-  const total = pool.totalPool;
-  if (total === 0) {
-    pool.finalCrash = Math.floor(Math.random() * 6) + 2;         // 2..7
-    pool.tickIntervalMs = 200;
-  } else if (total <= 100) {
-    pool.finalCrash = Number((Math.random() * 0.5 + 1).toFixed(2));
-    pool.tickIntervalMs = 300;
-  } else {
-    pool.finalCrash = Number((Math.random() * 0.5 + 1).toFixed(2));
-    pool.tickIntervalMs = 200;
+// Natural random crash point (before house-edge cap)
+function jetxRandomCrash() {
+  const r = Math.random();
+  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2));
+  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2));
+  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2));
+  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2));
+  return Number((7.0 + Math.random() * 8.0).toFixed(2));
+}
+
+async function jetxComputeCrash(pool) {
+  const profitPct = await jetxGetProfitPercent();
+  pool.profitPct = profitPct;
+  pool.cumPool = (pool.cumPool || 0) + (pool.totalPool || 0);
+  pool.manualOverride = false;
+  pool.tickIntervalMs = 200;
+
+  // Manual admin override wins first
+  if (Array.isArray(pool.manualQueue) && pool.manualQueue.length > 0) {
+    const next = Number(pool.manualQueue.shift());
+    if (!isNaN(next) && next >= 1.0) {
+      pool.finalCrash = Number(next.toFixed(2));
+      pool.manualOverride = true;
+      return;
+    }
   }
+
+  let crash = jetxRandomCrash();
+
+  // House-edge cap using cumulative ledger — enforce owner ≥ profitPct%
+  const cumBudget = (pool.cumPool || 0) * (1 - profitPct / 100);
+  const remainingBudget = Math.max(0, cumBudget - (pool.cumPaid || 0));
+  let maxBet = 0;
+  for (const k of Object.keys(pool.bets)) {
+    if (pool.bets[k].amount > maxBet) maxBet = pool.bets[k].amount;
+  }
+  if (maxBet > 0) {
+    // Payout formula uses 0.98 * mult; keep parity
+    const dynCap = remainingBudget / (maxBet * 0.98);
+    if (dynCap < crash) crash = Math.max(1.0, Number(dynCap.toFixed(2)));
+  }
+  // Also cap by round budget to keep single-round variance bounded
+  const roundBudget = (pool.totalPool || 0) * (1 - profitPct / 100);
+  const roundBetSum = Object.values(pool.bets).reduce((a, b) => a + b.amount, 0);
+  if (roundBetSum > 0) {
+    const roundCap = roundBudget / (roundBetSum * 0.98);
+    if (roundCap < crash) crash = Math.max(1.0, Number(roundCap.toFixed(2)));
+  }
+  pool.finalCrash = Number(crash.toFixed(2));
 }
 
 async function jetxStartFlying(currency) {
@@ -2953,7 +3006,8 @@ async function jetxStartFlying(currency) {
   s.phase = "flying";
   s.phaseStartTime = Date.now();
   s.crashPosition = 0.99;
-  jetxComputeCrash(s);
+  s.totalPaidOut = 0;
+  await jetxComputeCrash(s);
 
   if (s.flyTimer) clearInterval(s.flyTimer);
   s.flyTimer = setInterval(() => {
@@ -3001,8 +3055,10 @@ function jetxResetRound(currency) {
   s.phaseStartTime = Date.now();
   s.bets = {};
   s.totalPool = 0;
+  s.totalPaidOut = 0;
   s.crashPosition = 0.99;
   s.finalCrash = 1;
+  s.manualOverride = false;
 }
 
 function jetxSupervisor(currency) {
