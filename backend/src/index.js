@@ -4293,9 +4293,7 @@ app.get("/api/admin/game-analytics", requireAdmin, async (req, res) => {
   }
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
+// SPA catch-all moved to end of file (after all API routes are registered)
 
 // ============================================
 // Admin UPI config (token-authenticated)
@@ -4420,6 +4418,13 @@ try {
 } catch (err) {
   console.error("❌ Failed to mount Aviator Fun:", err);
 }
+
+// ============================================
+// SPA catch-all — MUST be last so /api/* routes above take priority
+// ============================================
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
 
 
 // ============================================
