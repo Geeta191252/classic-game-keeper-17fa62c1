@@ -633,6 +633,10 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "telegram-wallet-backend", version: "6.0-wallet-winning-split" });
 });
 
+// Ultra-light keep-alive endpoint (no DB call, instant response)
+app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+
+
 // ============================================
 // POST /api/admin/cleanup-wins - Remove all old win transactions
 // so winnings start fresh from 0. Only owner can call this.
