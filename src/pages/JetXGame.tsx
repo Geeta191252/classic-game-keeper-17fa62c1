@@ -120,6 +120,9 @@ const JetXGame = () => {
 
   const lastPhaseRef = useRef<Phase>("betting");
   const lastRoundRef = useRef(0);
+  // Only display the live multiplier for rounds where we saw the betting→flying takeoff.
+  // If the user joins mid-flight, we hold at 1.00x until the next fresh round starts.
+  const witnessedTakeoffRef = useRef(false);
   const autoBetRef = useRef(autoBet); autoBetRef.current = autoBet;
   const autoCashRef = useRef(autoCashout); autoCashRef.current = autoCashout;
 
@@ -250,7 +253,6 @@ const JetXGame = () => {
         const s: JetXState = await fetchJetXState(currency);
         if (cancel) return;
         setPhase(s.phase);
-        setMultiplier(s.multiplier);
         setCrashAt(s.crashAt);
         setCountdown(s.timeLeft);
         setHistory(s.history);
@@ -259,6 +261,21 @@ const JetXGame = () => {
         if (s.roundNumber !== lastRoundRef.current) {
           lastRoundRef.current = s.roundNumber;
           setMyBet(null);
+          witnessedTakeoffRef.current = false;
+          setMultiplier(1);
+        }
+        // Mark takeoff only when we transition from betting → flying for this round.
+        if (lastPhaseRef.current === "betting" && s.phase === "flying") {
+          witnessedTakeoffRef.current = true;
+        }
+        // Only follow server multiplier if we witnessed this round's takeoff (start from 1x).
+        if (s.phase === "flying") {
+          if (witnessedTakeoffRef.current) setMultiplier(s.multiplier);
+          else setMultiplier(1);
+        } else if (s.phase === "crashed") {
+          setMultiplier(witnessedTakeoffRef.current ? s.multiplier : 1);
+        } else {
+          setMultiplier(1);
         }
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
