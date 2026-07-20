@@ -4293,9 +4293,7 @@ app.get("/api/admin/game-analytics", requireAdmin, async (req, res) => {
   }
 });
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
-});
+// SPA catch-all moved to end of file (after all API routes are registered)
 
 // ============================================
 // Admin UPI config (token-authenticated)
