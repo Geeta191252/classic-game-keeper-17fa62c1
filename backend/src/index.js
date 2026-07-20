@@ -1095,6 +1095,73 @@ app.post("/api/telegram-webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // Handle /stats command - owner only
+    if (update.message?.text === "/stats") {
+      const chatId = update.message.chat.id;
+      const fromId = update.message.from.id;
+      if (String(fromId) !== "6965488457") {
+        await bot.sendMessage(chatId, "⛔ You are not authorized.");
+        return res.sendStatus(200);
+      }
+      try {
+        const now = new Date();
+        const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const start30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const [totalUsers, todayUsers, monthlyUsers, pendingDeposits, pendingWithdraws, depAgg, wdAgg] = await Promise.all([
+          User.countDocuments({}),
+          User.countDocuments({ createdAt: { $gte: startToday } }),
+          User.countDocuments({ createdAt: { $gte: start30 } }),
+          Transaction.countDocuments({ type: "deposit", status: "pending" }),
+          Transaction.countDocuments({ type: "withdraw", status: "pending" }),
+          Transaction.aggregate([{ $match: { type: "deposit", status: "completed" } }, { $group: { _id: "$currency", total: { $sum: "$amount" } } }]),
+          Transaction.aggregate([{ $match: { type: "withdraw", status: "completed" } }, { $group: { _id: "$currency", total: { $sum: "$amount" } } }]),
+        ]);
+        const fmt = (arr) => arr.length ? arr.map(x => `${x._id || "?"}: ${Number(x.total).toFixed(2)}`).join(", ") : "0";
+        const msg = `📊 *Royal King Game Stats*\n\n👥 Total Users: *${totalUsers}*\n🆕 Today: *${todayUsers}*\n📅 Last 30d: *${monthlyUsers}*\n\n⏳ Pending Deposits: *${pendingDeposits}*\n⏳ Pending Withdrawals: *${pendingWithdraws}*\n\n💰 Total Deposits: ${fmt(depAgg)}\n💸 Total Withdrawals: ${fmt(wdAgg)}`;
+        await bot.sendMessage(chatId, msg, { parse_mode: "Markdown" });
+      } catch (err) {
+        await bot.sendMessage(chatId, `❌ Stats error: ${err.message}`);
+      }
+      return res.sendStatus(200);
+    }
+
+    // Handle /users command - owner only, recent users list
+    if (update.message?.text && update.message.text.startsWith("/users")) {
+      const chatId = update.message.chat.id;
+      const fromId = update.message.from.id;
+      if (String(fromId) !== "6965488457") {
+        await bot.sendMessage(chatId, "⛔ You are not authorized.");
+        return res.sendStatus(200);
+      }
+      try {
+        const parts = update.message.text.trim().split(/\s+/);
+        const limit = Math.min(Math.max(parseInt(parts[1] || "20", 10) || 20, 1), 50);
+        const users = await User.find({}).sort({ createdAt: -1 }).limit(limit).select("telegramId username firstName createdAt").lean();
+        const total = await User.countDocuments({});
+        const lines = users.map((u, i) => {
+          const name = u.firstName || u.username || "User";
+          const uname = u.username ? `@${u.username}` : "-";
+          const date = new Date(u.createdAt).toLocaleDateString();
+          return `${i + 1}. ${name} (${uname}) — \`${u.telegramId}\` — ${date}`;
+        }).join("\n");
+        await bot.sendMessage(chatId, `👥 *Recent Users (${limit}/${total})*\n\n${lines || "No users."}\n\nUsage: \`/users 30\``, { parse_mode: "Markdown" });
+      } catch (err) {
+        await bot.sendMessage(chatId, `❌ Users error: ${err.message}`);
+      }
+      return res.sendStatus(200);
+    }
+
+    // Handle /help command
+    if (update.message?.text === "/help") {
+      const chatId = update.message.chat.id;
+      const fromId = update.message.from.id;
+      const isOwner = String(fromId) === "6965488457";
+      const base = "🎮 *Royal King Game*\n\n/start - Open the game\n/help - Show commands";
+      const admin = "\n\n👑 *Admin Commands*\n/admin - Open admin panel\n/stats - Show live stats\n/users [n] - Recent users list\n/broadcast <msg> - Send message to all users\n/broadcastgame <msg> - Broadcast with Play button\n/cancelbroadcast - Stop running broadcast\n/post <chat_id> <caption> - Post photo to channel";
+      await bot.sendMessage(chatId, isOwner ? base + admin : base, { parse_mode: "Markdown" });
+      return res.sendStatus(200);
+    }
+
     // Handle /post command - send photo + Play Now button to channel/group
     if (update.message?.text && update.message.text.startsWith("/post")) {
       const chatId = update.message.chat.id;
