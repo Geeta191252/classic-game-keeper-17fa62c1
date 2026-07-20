@@ -986,8 +986,6 @@ app.post("/api/telegram-webhook", async (req, res) => {
       const startParam = parts.length > 1 ? parts[1] : null;
 
       const webAppUrl = getWebAppBaseUrl();
-      const OWNER_ID = 6965488457;
-
       // Always save/update user in DB and notify owner if new
       let isNewUser = false;
       try {
@@ -1035,20 +1033,13 @@ app.post("/api/telegram-webhook", async (req, res) => {
 
           // Notify owner about new user
           if (isNewUser) {
-            try {
-              const totalUsers = await User.countDocuments({});
-              const displayName = [firstName, lastName].filter(Boolean).join(" ") || "Player";
-              const usernameStr = username ? `@${username}` : "(no username)";
-              await bot.sendMessage(OWNER_ID,
-                `🆕 *New User Started Bot!*\n\n` +
-                `👤 Name: ${displayName}\n` +
-                `🔗 Username: ${usernameStr}\n` +
-                `🆔 Telegram ID: \`${numericUserId}\`\n` +
-                `👥 Total Users: ${totalUsers}` +
-                (startParam ? `\n🎁 Start Param: ${startParam}` : ""),
-                { parse_mode: "Markdown" }
-              );
-            } catch (e) { console.error("Owner notify:", e.message); }
+            queueOwnerNewUserNotify({
+              telegramId: numericUserId,
+              firstName,
+              lastName,
+              username,
+              startParam,
+            });
           }
         }
       } catch (dbErr) {
