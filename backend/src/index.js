@@ -89,6 +89,7 @@ mongoose
 // Telegram Bot (polling mode for dev, webhook for production)
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
+const NEW_USER_CHANNEL = process.env.NEW_USER_CHANNEL || "@royalkinggamedata";
 
 const ownerNotifyQueue = [];
 let ownerNotifyTimer = null;
@@ -122,7 +123,7 @@ async function flushOwnerNotifyQueue() {
       ...batch.map(formatOwnerUserLine),
     ].join("\n");
 
-    await bot.sendMessage(OWNER_TELEGRAM_ID, message);
+    await bot.sendMessage(NEW_USER_CHANNEL, message);
   } catch (e) {
     ownerNotifyQueue.unshift(...batch);
     const retryAfter = e?.response?.body?.parameters?.retry_after;
