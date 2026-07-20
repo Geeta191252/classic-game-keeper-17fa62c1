@@ -12,6 +12,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import GameFrame from "./components/GameFrame";
 import { ReactElement } from "react";
+import jetxLogoCard from "@/assets/jetx-logo-card.webp";
+import jetxRocketFast from "@/assets/jetx-rocket-fast.webp";
 
 const framed = (el: ReactElement) => <GameFrame>{el}</GameFrame>;
 
@@ -87,6 +89,7 @@ const StartParamNavigator = () => {
 // Prefetch ALL game chunks in parallel immediately so any click opens instantly.
 const prefetchGames = () => {
   const loaders: Array<() => Promise<unknown>> = [
+    () => import("./pages/JetXGame"),
     () => import("./pages/AviatorGame"),
     () => import("./pages/AviatorFunGame"),
     () => import("./pages/GreedyKingGame"),
@@ -97,7 +100,6 @@ const prefetchGames = () => {
     () => import("./pages/PlinkoGame"),
     () => import("./pages/ChickenRoadGame"),
     () => import("./pages/ChickenClassicGame"),
-    () => import("./pages/JetXGame"),
     () => import("./pages/TwistGame"),
     () => import("./pages/GoblinTower"),
   ];
@@ -105,11 +107,16 @@ const prefetchGames = () => {
     // Fire all in parallel — browser handles queuing; chunks are small and cached.
     loaders.forEach((l) => { try { l().catch(() => {}); } catch { /* noop */ } });
   };
-  const ric = (window as any).requestIdleCallback as
-    | ((cb: () => void, opts?: { timeout: number }) => number)
-    | undefined;
-  if (ric) ric(start, { timeout: 1000 });
-  else setTimeout(start, 150);
+  start();
+};
+
+const preloadCriticalImages = () => {
+  [jetxLogoCard, jetxRocketFast].forEach((src) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = src;
+  });
 };
 
 const RouteFallback = () => (
@@ -121,6 +128,7 @@ const RouteFallback = () => (
 const App = () => {
   useGlobalClickSound();
   useEffect(() => {
+    preloadCriticalImages();
     prefetchGames();
   }, []);
 

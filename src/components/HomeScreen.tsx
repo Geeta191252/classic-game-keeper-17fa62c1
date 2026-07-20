@@ -30,6 +30,7 @@ import gamePlinko from "@/assets/plinko.webp";
 import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
+import jetxLogoCard from "@/assets/jetx-logo-card.webp";
 
 
 interface GameTileProps {
@@ -39,11 +40,18 @@ interface GameTileProps {
   badge?: string;
   badgeColor?: string;
   fit?: "cover" | "contain";
+  priority?: boolean;
   onClick?: () => void;
 }
 
+interface GameEntry extends GameTileProps {
+  id: string;
+  tab: FilterTab;
+  action: () => void;
+}
+
 // Thunderpick-styled vertical rectangle game card
-const GameTile = ({ image, name, category, badge, badgeColor, fit = "cover", onClick }: GameTileProps) => (
+const GameTile = ({ image, name, category, badge, badgeColor, fit = "cover", priority = false, onClick }: GameTileProps) => (
   <motion.div
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
@@ -53,6 +61,8 @@ const GameTile = ({ image, name, category, badge, badgeColor, fit = "cover", onC
       <img 
         src={image} 
         alt={name} 
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
         className={`w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"} transition-transform duration-300 group-hover:scale-105`} 
       />
       {badge && (
@@ -148,14 +158,14 @@ const HomeScreen = () => {
   ];
 
   // Full Games list categorized
-  const gamesList = [
+  const gamesList: GameEntry[] = [
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
     { id: "mines-classic", name: "Mines Classic", image: gameMines, category: "Originals", tab: "originals", badge: "CLASSIC", badgeColor: "#6366f1", action: goToMinesClassic },
     { id: "dice", name: "Dice Master", image: gameDice, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToDiceMaster },
     { id: "twist", name: "Twist Rings", image: gameTwist, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToTwist },
     { id: "aviator-fun", name: "Aviator Fun", image: gameAviator, category: "Crash", tab: "crash", badge: "TURBO", badgeColor: "#f97316", action: goToAviatorFun },
     { id: "aviator", name: "Aviator Real", image: gameAviator, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToAviator },
-    { id: "jetx", name: "JetX", image: "/images/jetx-logo.png", category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", fit: "contain", action: goToJetX },
+    { id: "jetx", name: "JetX", image: jetxLogoCard, category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", fit: "contain", priority: true, action: goToJetX },
     { id: "chicken-road", name: "Chicken Road", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToChickenRoad },
     { id: "chicken-classic", name: "Chicken Classic", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "CLASSIC", badgeColor: "#6366f1", action: goToChickenClassic },
     { id: "plinko", name: "Plinko Pegs", image: gamePlinko, category: "Slots", tab: "slots", badge: "EASY", badgeColor: "#10b981", action: goToPlinko },
@@ -522,6 +532,8 @@ const HomeScreen = () => {
                       category={g.category}
                       badge={g.badge}
                       badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
                       onClick={g.action}
                     />
                   ))}
@@ -546,6 +558,8 @@ const HomeScreen = () => {
                       category={g.category}
                       badge={g.badge}
                       badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
                       onClick={g.action}
                     />
                   ))}
@@ -570,6 +584,8 @@ const HomeScreen = () => {
                       category={g.category}
                       badge={g.badge}
                       badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
                       onClick={g.action}
                     />
                   ))}
@@ -594,6 +610,8 @@ const HomeScreen = () => {
                       category={g.category}
                       badge={g.badge}
                       badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
                       onClick={g.action}
                     />
                   ))}
