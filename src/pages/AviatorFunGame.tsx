@@ -302,9 +302,8 @@ const AviatorFunGame = () => {
       return prev;
     });
 
-    const sim = generateSimulatedPlayers();
-    setSimPlayers(sim);
-    stateRef.current.simPlayers = sim;
+    setSimPlayers([]);
+    stateRef.current.simPlayers = [];
   }, [currency]);
 
   const startFlyingRound = useCallback(() => {
