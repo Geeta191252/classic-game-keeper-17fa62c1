@@ -3229,6 +3229,121 @@ app.get("/api/jetx/my-bet", (req, res) => {
   });
 });
 
+// ============================================
+// JetX Admin Control Endpoints (JWT via requireAdmin)
+// ============================================
+function jetxPickCurr(req) {
+  const c = (req.body && req.body.currency) || req.query.currency;
+  if (c === "star") return "star";
+  if (c === "rupee") return "rupee";
+  return "dollar";
+}
+
+app.get("/api/admin/jetx/profit", requireAdmin, async (_req, res) => {
+  const percent = await jetxGetProfitPercent();
+  res.json({ percent });
+});
+
+app.post("/api/admin/jetx/profit", requireAdmin, async (req, res) => {
+  try {
+    const { percent } = req.body || {};
+    const num = Number(percent);
+    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    await Setting.findOneAndUpdate(
+      { key: JETX_SETTING_KEY },
+      { key: JETX_SETTING_KEY, value: num },
+      { upsert: true, new: true }
+    );
+    res.json({ success: true, percent: num });
+  } catch (err) {
+    console.error("Set jetx profit error:", err);
+    res.status(500).json({ error: "Failed to update" });
+  }
+});
+
+app.get("/api/admin/jetx/overview", requireAdmin, async (_req, res) => {
+  const overview = {};
+  const now = Date.now();
+  for (const curr of ["dollar", "rupee", "star"]) {
+    const s = jetxState[curr];
+    let multiplier = 1;
+    let timeLeft = 0;
+    if (s.phase === "betting") {
+      timeLeft = Math.max(0, Math.ceil((JETX_BETTING_MS - (now - s.phaseStartTime)) / 1000));
+    } else {
+      multiplier = Number(s.crashPosition);
+    }
+    overview[curr] = {
+      roundNumber: s.roundNumber,
+      phase: s.phase,
+      multiplier: Number(multiplier.toFixed(2)),
+      timeLeft,
+      totalPool: Number((s.totalPool || 0).toFixed(2)),
+      totalPaidOut: Number((s.totalPaidOut || 0).toFixed(2)),
+      cumPool: Number((s.cumPool || 0).toFixed(2)),
+      cumPaid: Number((s.cumPaid || 0).toFixed(2)),
+      houseNet: Number(((s.cumPool || 0) - (s.cumPaid || 0)).toFixed(2)),
+      totalPlayers: Object.keys(s.bets).length,
+      manualQueue: s.manualQueue || [],
+      manualOverride: !!s.manualOverride,
+      crashAt: s.phase === "crashed" ? Number(s.crashPosition) : null,
+      history: s.history,
+      bets: Object.entries(s.bets).map(([k, b]) => ({
+        key: k, userId: Number(k), firstName: b.firstName,
+        amount: b.amount, cashedOutAt: b.cashedOutAt, winAmount: b.winAmount,
+      })),
+    };
+  }
+  res.json({ overview });
+});
+
+app.get("/api/admin/jetx/manual", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  res.json({ currency: curr, queue: s.manualQueue || [], active: !!s.manualOverride, currentCrashAt: s.finalCrash });
+});
+
+app.post("/api/admin/jetx/manual/add", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const num = Number(req.body && req.body.value);
+  if (isNaN(num) || num <= 0 || num > 100000) return res.status(400).json({ error: "Value must be > 0 and ≤ 100000" });
+  const s = jetxState[curr];
+  s.manualQueue = s.manualQueue || [];
+  s.manualQueue.push(Number(num.toFixed(2)));
+  res.json({ success: true, queue: s.manualQueue });
+});
+
+app.post("/api/admin/jetx/manual/remove", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  const i = Number(req.body && req.body.index);
+  if (isNaN(i) || i < 0 || i >= (s.manualQueue || []).length) return res.status(400).json({ error: "Invalid index" });
+  s.manualQueue.splice(i, 1);
+  res.json({ success: true, queue: s.manualQueue });
+});
+
+app.post("/api/admin/jetx/manual/clear", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  jetxState[curr].manualQueue = [];
+  res.json({ success: true });
+});
+
+app.post("/api/admin/jetx/force-crash", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  if (s.phase !== "flying") return res.status(400).json({ error: "Not in flying phase" });
+  s.finalCrash = Math.max(1.0, Number(Number(s.crashPosition).toFixed(2)));
+  res.json({ success: true, crashAt: s.finalCrash });
+});
+
+app.post("/api/admin/jetx/reset-ledger", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  jetxState[curr].cumPool = 0;
+  jetxState[curr].cumPaid = 0;
+  res.json({ success: true });
+});
+
+
 
 
 // ============================================
