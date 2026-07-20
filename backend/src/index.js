@@ -633,6 +633,10 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "telegram-wallet-backend", version: "6.0-wallet-winning-split" });
 });
 
+// Ultra-light keep-alive endpoint (no DB call, instant response)
+app.get("/healthz", (_req, res) => res.status(200).send("ok"));
+
+
 // ============================================
 // POST /api/admin/cleanup-wins - Remove all old win transactions
 // so winnings start fresh from 0. Only owner can call this.
@@ -4423,6 +4427,25 @@ try {
 // ============================================
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+
+  // ---- Keep-alive: prevent Koyeb "Sleeping" state ----
+  // Lightweight self-ping every 60s so the instance never goes idle.
+  const selfUrl = getBackendUrl();
+  if (selfUrl) {
+    const ping = () => {
+      const url = `${selfUrl}/healthz`;
+      const started = Date.now();
+      fetch(url).then((r) => {
+        console.log(`[keep-alive] ${url} → ${r.status} in ${Date.now() - started}ms`);
+      }).catch((e) => console.warn(`[keep-alive] ${url} failed:`, e.message));
+    };
+    setInterval(ping, 60 * 1000);
+    setTimeout(ping, 10 * 1000);
+    console.log(`[keep-alive] self-ping enabled → ${selfUrl}/healthz every 60s`);
+  } else {
+    console.warn("[keep-alive] KOYEB_URL/WEBAPP_URL not set — external uptime monitor recommended");
+  }
+
 
   // Set Telegram webhook automatically
   const webhookUrl = `${getBackendUrl()}/api/telegram-webhook`;
