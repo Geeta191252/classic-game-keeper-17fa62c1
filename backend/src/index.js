@@ -89,6 +89,7 @@ mongoose
 // Telegram Bot (polling mode for dev, webhook for production)
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
+const NEW_USER_CHANNEL = process.env.NEW_USER_CHANNEL || "@royalkinggamedata";
 
 const ownerNotifyQueue = [];
 let ownerNotifyTimer = null;
