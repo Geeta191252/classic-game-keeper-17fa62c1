@@ -544,7 +544,7 @@ const JetXGame = () => {
                 <motion.div key="b" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                   <div className="text-[10px] text-white/60 uppercase tracking-[0.28em] mb-1 font-black">Next round in</div>
                   <div
-                    className="text-[84px] font-black leading-none italic"
+                    className="text-[56px] font-black leading-none italic"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
                       background: "linear-gradient(180deg,#fde047,#eab308,#7c4a05)",
