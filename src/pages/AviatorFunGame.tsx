@@ -22,9 +22,9 @@ import { ArrowLeft } from "lucide-react";
 import "./AviatorFunGame.css";
 
 // Audio engine — uses the same MP3 sounds as the real Aviator game
+// Sounds always play; no user-facing mute toggle exists.
 class AviatorAudioEngine {
   private ctx: AudioContext | null = null;
-  public isMuted: boolean = true; // Start muted by default (user toggles it in header)
 
   private startAudio: HTMLAudioElement | null = null;
   private crashAudio: HTMLAudioElement | null = null;
@@ -60,21 +60,11 @@ class AviatorAudioEngine {
     }
   }
 
-  toggleMute(): boolean {
-    this.init();
-    this.isMuted = !this.isMuted;
-    if (this.isMuted) {
-      this.stopEngine();
-    }
-    return this.isMuted;
-  }
-
   playClick() {
     // no-op (kept for API compatibility)
   }
 
   startEngine() {
-    if (this.isMuted) return;
     this.init();
     if (!this.startAudio) return;
     try {
@@ -87,7 +77,7 @@ class AviatorAudioEngine {
   }
 
   updateEnginePitch(multiplier: number) {
-    if (this.isMuted || !this.startAudio) return;
+    if (!this.startAudio) return;
     try {
       // Speed up loop slightly as multiplier grows (1.0x → ~1.6x)
       const rate = Math.min(1.6, 1.0 + Math.max(0, multiplier - 1) * 0.05);
@@ -104,7 +94,6 @@ class AviatorAudioEngine {
   }
 
   playCashout() {
-    if (this.isMuted) return;
     this.init();
     if (!this.cashoutAudio) return;
     try {
@@ -116,7 +105,6 @@ class AviatorAudioEngine {
   }
 
   playCrash() {
-    if (this.isMuted) return;
     this.init();
     if (!this.crashAudio) return;
     try {
@@ -180,7 +168,6 @@ const AviatorFunGame = () => {
   // Settings
   const [roundSpeedMultiplier, setRoundSpeedMultiplier] = useState(1.0);
   const [enableAutoRefill, setEnableAutoRefill] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
 
   // Modals & Menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -263,13 +250,6 @@ const AviatorFunGame = () => {
   useEffect(() => {
     // Real balance does not auto-refill
   }, [balance, currency, enableAutoRefill]);
-
-  // sound toggle helper
-  const handleSoundToggle = () => {
-    audioRef.current.init();
-    const muted = audioRef.current.toggleMute();
-    setIsMuted(muted);
-  };
 
   // Deposit Submit
   const handleDepositSubmit = () => {
@@ -962,18 +942,6 @@ const AviatorFunGame = () => {
               </div>
             </div>
             
-            <button className={`menu-btn ${!isMuted ? "active-sound" : ""}`} onClick={handleSoundToggle} title="Toggle Sound">
-              {!isMuted ? (
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                  <path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zm-2 15.54l-5-5H3v-6h4l5-5v16zm5-6.77c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                  <path d="M12 4L9.91 6.09L12 8.18M18 12C18 9.97 16.8 8.23 15 7.39V9.61L17.89 12.5C17.96 12.33 18 12.17 18 12M21 12C21 13.5 20.6 14.88 19.9 16.1L21.35 17.55C22.38 15.9 23 13.97 23 12C23 6.94 19.34 2.7 14.5 1.83V3.88C18.23 4.72 21 8.04 21 12M3.12 1.88L1.88 3.12L7.38 8.62L3 13H7L12 18V13.24L16.26 17.5C15.26 18.28 14 18.8 12.63 19V21.05C14.58 20.81 16.36 19.91 17.74 18.62L20.88 21.75L22.12 20.5M12 5.82V10.12L9.26 7.38L12 5.82Z" />
-                </svg>
-              )}
-            </button>
-            
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
@@ -1383,17 +1351,6 @@ const AviatorFunGame = () => {
             <button className="modal-close" onClick={() => setActiveModal(null)}>&times;</button>
           </div>
           <div className="modal-body">
-            <div className="settings-row">
-              <div className="settings-text">
-                <span className="settings-label">Mute Sounds</span>
-                <span className="settings-desc">Disable audio effects and engine Hum</span>
-              </div>
-              <label className="switch-toggle">
-                <input type="checkbox" checked={isMuted} onChange={handleSoundToggle} />
-                <span className="slider-round"></span>
-              </label>
-            </div>
-            
             <div className="settings-row">
               <div className="settings-text">
                 <span className="settings-label">Auto Refill Balance</span>
