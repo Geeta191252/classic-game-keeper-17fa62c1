@@ -1063,7 +1063,7 @@ const AviatorFunGame = () => {
                     <div className="avatar-mini a2"></div>
                     <div className="avatar-mini a3"></div>
                   </div>
-                  <span className="online-count">{(simPlayers.length + 35).toLocaleString()} playing</span>
+                  <span className="online-count">{serverBets.length.toLocaleString()} playing</span>
                 </div>
               </div>
             </div>
