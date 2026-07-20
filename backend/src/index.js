@@ -2914,6 +2914,16 @@ const JETX_BETTING_MS = 5000;
 const JETX_CRASHED_MS = 8000;
 const JETX_HISTORY_LEN = 18;
 
+const JETX_SETTING_KEY = "jetxProfitPercent";
+
+async function jetxGetProfitPercent() {
+  try {
+    const doc = await Setting.findOne({ key: JETX_SETTING_KEY });
+    const v = doc && typeof doc.value === "number" ? doc.value : 50;
+    return Math.max(0, Math.min(95, v));
+  } catch { return 50; }
+}
+
 function makeJetxPool() {
   return {
     roundNumber: 1,
@@ -2925,7 +2935,13 @@ function makeJetxPool() {
     flyTimer: null,
     bets: {},                      // { telegramId: { amount, firstName, cashedOutAt, winAmount } }
     totalPool: 0,
+    totalPaidOut: 0,
     history: [],
+    cumPool: 0,
+    cumPaid: 0,
+    manualQueue: [],
+    manualOverride: false,
+    profitPct: 50,
   };
 }
 const jetxState = {
@@ -2934,18 +2950,55 @@ const jetxState = {
   star: makeJetxPool(),
 };
 
-function jetxComputeCrash(pool) {
-  const total = pool.totalPool;
-  if (total === 0) {
-    pool.finalCrash = Math.floor(Math.random() * 6) + 2;         // 2..7
-    pool.tickIntervalMs = 200;
-  } else if (total <= 100) {
-    pool.finalCrash = Number((Math.random() * 0.5 + 1).toFixed(2));
-    pool.tickIntervalMs = 300;
-  } else {
-    pool.finalCrash = Number((Math.random() * 0.5 + 1).toFixed(2));
-    pool.tickIntervalMs = 200;
+// Natural random crash point (before house-edge cap)
+function jetxRandomCrash() {
+  const r = Math.random();
+  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2));
+  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2));
+  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2));
+  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2));
+  return Number((7.0 + Math.random() * 8.0).toFixed(2));
+}
+
+async function jetxComputeCrash(pool) {
+  const profitPct = await jetxGetProfitPercent();
+  pool.profitPct = profitPct;
+  pool.cumPool = (pool.cumPool || 0) + (pool.totalPool || 0);
+  pool.manualOverride = false;
+  pool.tickIntervalMs = 200;
+
+  // Manual admin override wins first
+  if (Array.isArray(pool.manualQueue) && pool.manualQueue.length > 0) {
+    const next = Number(pool.manualQueue.shift());
+    if (!isNaN(next) && next >= 1.0) {
+      pool.finalCrash = Number(next.toFixed(2));
+      pool.manualOverride = true;
+      return;
+    }
   }
+
+  let crash = jetxRandomCrash();
+
+  // House-edge cap using cumulative ledger — enforce owner ≥ profitPct%
+  const cumBudget = (pool.cumPool || 0) * (1 - profitPct / 100);
+  const remainingBudget = Math.max(0, cumBudget - (pool.cumPaid || 0));
+  let maxBet = 0;
+  for (const k of Object.keys(pool.bets)) {
+    if (pool.bets[k].amount > maxBet) maxBet = pool.bets[k].amount;
+  }
+  if (maxBet > 0) {
+    // Payout formula uses 0.98 * mult; keep parity
+    const dynCap = remainingBudget / (maxBet * 0.98);
+    if (dynCap < crash) crash = Math.max(1.0, Number(dynCap.toFixed(2)));
+  }
+  // Also cap by round budget to keep single-round variance bounded
+  const roundBudget = (pool.totalPool || 0) * (1 - profitPct / 100);
+  const roundBetSum = Object.values(pool.bets).reduce((a, b) => a + b.amount, 0);
+  if (roundBetSum > 0) {
+    const roundCap = roundBudget / (roundBetSum * 0.98);
+    if (roundCap < crash) crash = Math.max(1.0, Number(roundCap.toFixed(2)));
+  }
+  pool.finalCrash = Number(crash.toFixed(2));
 }
 
 async function jetxStartFlying(currency) {
@@ -2953,7 +3006,8 @@ async function jetxStartFlying(currency) {
   s.phase = "flying";
   s.phaseStartTime = Date.now();
   s.crashPosition = 0.99;
-  jetxComputeCrash(s);
+  s.totalPaidOut = 0;
+  await jetxComputeCrash(s);
 
   if (s.flyTimer) clearInterval(s.flyTimer);
   s.flyTimer = setInterval(() => {
@@ -3001,8 +3055,10 @@ function jetxResetRound(currency) {
   s.phaseStartTime = Date.now();
   s.bets = {};
   s.totalPool = 0;
+  s.totalPaidOut = 0;
   s.crashPosition = 0.99;
   s.finalCrash = 1;
+  s.manualOverride = false;
 }
 
 function jetxSupervisor(currency) {
@@ -3112,6 +3168,27 @@ app.post("/api/jetx/cashout", async (req, res) => {
     const win = Number((bet.amount * 0.98 * mult).toFixed(2));
     bet.cashedOutAt = mult;
     bet.winAmount = win;
+    s.totalPaidOut = (s.totalPaidOut || 0) + win;
+    s.cumPaid = (s.cumPaid || 0) + win;
+
+    // If this cashout blows the house budget, tighten finalCrash so remaining bets
+    // cannot push owner profit below the configured percentage.
+    if (!s.manualOverride) {
+      const profitPct = s.profitPct || (await jetxGetProfitPercent());
+      const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
+      const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
+      const remainingBetSum = Object.values(s.bets)
+        .filter((b) => !b.cashedOutAt)
+        .reduce((a, b) => a + b.amount, 0);
+      if (remainingBetSum > 0) {
+        const dynCap = remainingBudget / (remainingBetSum * 0.98);
+        const target = Math.max(1.0, Number(dynCap.toFixed(2)));
+        if (target < s.finalCrash) s.finalCrash = target;
+      } else if (remainingBudget <= 0) {
+        // Nothing left, cap at current mult so round ends
+        s.finalCrash = Math.max(1.0, Number(mult.toFixed(2)));
+      }
+    }
 
     const user = await getOrCreateUser(numericId);
     const { winningField: winField } = getCurrencyFields(curr);
@@ -3151,6 +3228,121 @@ app.get("/api/jetx/my-bet", (req, res) => {
     bet: b ? { amount: b.amount, cashedOutAt: b.cashedOutAt, winAmount: b.winAmount } : null,
   });
 });
+
+// ============================================
+// JetX Admin Control Endpoints (JWT via requireAdmin)
+// ============================================
+function jetxPickCurr(req) {
+  const c = (req.body && req.body.currency) || req.query.currency;
+  if (c === "star") return "star";
+  if (c === "rupee") return "rupee";
+  return "dollar";
+}
+
+app.get("/api/admin/jetx/profit", requireAdmin, async (_req, res) => {
+  const percent = await jetxGetProfitPercent();
+  res.json({ percent });
+});
+
+app.post("/api/admin/jetx/profit", requireAdmin, async (req, res) => {
+  try {
+    const { percent } = req.body || {};
+    const num = Number(percent);
+    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    await Setting.findOneAndUpdate(
+      { key: JETX_SETTING_KEY },
+      { key: JETX_SETTING_KEY, value: num },
+      { upsert: true, new: true }
+    );
+    res.json({ success: true, percent: num });
+  } catch (err) {
+    console.error("Set jetx profit error:", err);
+    res.status(500).json({ error: "Failed to update" });
+  }
+});
+
+app.get("/api/admin/jetx/overview", requireAdmin, async (_req, res) => {
+  const overview = {};
+  const now = Date.now();
+  for (const curr of ["dollar", "rupee", "star"]) {
+    const s = jetxState[curr];
+    let multiplier = 1;
+    let timeLeft = 0;
+    if (s.phase === "betting") {
+      timeLeft = Math.max(0, Math.ceil((JETX_BETTING_MS - (now - s.phaseStartTime)) / 1000));
+    } else {
+      multiplier = Number(s.crashPosition);
+    }
+    overview[curr] = {
+      roundNumber: s.roundNumber,
+      phase: s.phase,
+      multiplier: Number(multiplier.toFixed(2)),
+      timeLeft,
+      totalPool: Number((s.totalPool || 0).toFixed(2)),
+      totalPaidOut: Number((s.totalPaidOut || 0).toFixed(2)),
+      cumPool: Number((s.cumPool || 0).toFixed(2)),
+      cumPaid: Number((s.cumPaid || 0).toFixed(2)),
+      houseNet: Number(((s.cumPool || 0) - (s.cumPaid || 0)).toFixed(2)),
+      totalPlayers: Object.keys(s.bets).length,
+      manualQueue: s.manualQueue || [],
+      manualOverride: !!s.manualOverride,
+      crashAt: s.phase === "crashed" ? Number(s.crashPosition) : null,
+      history: s.history,
+      bets: Object.entries(s.bets).map(([k, b]) => ({
+        key: k, userId: Number(k), firstName: b.firstName,
+        amount: b.amount, cashedOutAt: b.cashedOutAt, winAmount: b.winAmount,
+      })),
+    };
+  }
+  res.json({ overview });
+});
+
+app.get("/api/admin/jetx/manual", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  res.json({ currency: curr, queue: s.manualQueue || [], active: !!s.manualOverride, currentCrashAt: s.finalCrash });
+});
+
+app.post("/api/admin/jetx/manual/add", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const num = Number(req.body && req.body.value);
+  if (isNaN(num) || num <= 0 || num > 100000) return res.status(400).json({ error: "Value must be > 0 and ≤ 100000" });
+  const s = jetxState[curr];
+  s.manualQueue = s.manualQueue || [];
+  s.manualQueue.push(Number(num.toFixed(2)));
+  res.json({ success: true, queue: s.manualQueue });
+});
+
+app.post("/api/admin/jetx/manual/remove", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  const i = Number(req.body && req.body.index);
+  if (isNaN(i) || i < 0 || i >= (s.manualQueue || []).length) return res.status(400).json({ error: "Invalid index" });
+  s.manualQueue.splice(i, 1);
+  res.json({ success: true, queue: s.manualQueue });
+});
+
+app.post("/api/admin/jetx/manual/clear", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  jetxState[curr].manualQueue = [];
+  res.json({ success: true });
+});
+
+app.post("/api/admin/jetx/force-crash", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  const s = jetxState[curr];
+  if (s.phase !== "flying") return res.status(400).json({ error: "Not in flying phase" });
+  s.finalCrash = Math.max(1.0, Number(Number(s.crashPosition).toFixed(2)));
+  res.json({ success: true, crashAt: s.finalCrash });
+});
+
+app.post("/api/admin/jetx/reset-ledger", requireAdmin, (req, res) => {
+  const curr = jetxPickCurr(req);
+  jetxState[curr].cumPool = 0;
+  jetxState[curr].cumPaid = 0;
+  res.json({ success: true });
+});
+
 
 
 
