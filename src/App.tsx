@@ -14,10 +14,13 @@ import GameFrame from "./components/GameFrame";
 import { ReactElement } from "react";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
 import jetxRocketFast from "@/assets/jetx-rocket-fast.webp";
+// JetX is statically imported so it opens INSTANTLY (no Suspense flash)
+// every time the user re-enters, even mid-round.
+import JetXGame from "./pages/JetXGame";
 
 const framed = (el: ReactElement) => <GameFrame>{el}</GameFrame>;
 
-// Lazy-load heavy game pages so the home screen boots instantly and
+// Lazy-load other heavy game pages so the home screen boots instantly and
 // each game only downloads its own chunk on demand (then cached).
 const GreedyKingGame = lazy(() => import("./pages/GreedyKingGame"));
 const DiceMasterGame = lazy(() => import("./pages/DiceMasterGame"));
@@ -29,7 +32,6 @@ const AviatorFunGame = lazy(() => import("./pages/AviatorFunGame"));
 const PlinkoGame = lazy(() => import("./pages/PlinkoGame"));
 const ChickenRoadGame = lazy(() => import("./pages/ChickenRoadGame"));
 const ChickenClassicGame = lazy(() => import("./pages/ChickenClassicGame"));
-const JetXGame = lazy(() => import("./pages/JetXGame"));
 const TwistGame = lazy(() => import("./pages/TwistGame"));
 const GoblinTower = lazy(() => import("./pages/GoblinTower"));
 const RocketCrash = lazy(() => import("./pages/RocketCrash"));
@@ -89,7 +91,6 @@ const StartParamNavigator = () => {
 // Prefetch ALL game chunks in parallel immediately so any click opens instantly.
 const prefetchGames = () => {
   const loaders: Array<() => Promise<unknown>> = [
-    () => import("./pages/JetXGame"),
     () => import("./pages/AviatorGame"),
     () => import("./pages/AviatorFunGame"),
     () => import("./pages/GreedyKingGame"),
