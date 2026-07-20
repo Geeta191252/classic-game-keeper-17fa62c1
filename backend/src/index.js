@@ -514,7 +514,7 @@ app.post("/api/admin/reject-withdrawal", async (req, res) => {
     // Refund amount back to user's winning
     const user = await User.findOne({ telegramId: tx.telegramId });
     if (user) {
-      const winningField = tx.currency === "dollar" ? "dollarWinning" : "starWinning";
+      const winningField = tx.currency === "dollar" ? "dollarWinning" : tx.currency === "rupee" ? "rupeeWinning" : "starWinning";
       user[winningField] = (user[winningField] || 0) + Math.abs(tx.amount);
       await user.save();
     }
