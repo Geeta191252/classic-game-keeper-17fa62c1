@@ -263,32 +263,8 @@ const AviatorFunGame = () => {
     setActiveModal(null);
   };
 
-  // Generate simulated players — seeded by roundNumber so every user sees the same list
+  // Simulated players disabled — only real bets are shown
   const roundSeedRef = useRef(1);
-  const generateSimulatedPlayers = () => {
-    const rand = mulberry32(roundSeedRef.current * 9301 + (currency === "star" ? 1 : 2));
-    const list: SimulatedPlayer[] = [];
-    const numPlayers = Math.floor(rand() * 40) + 90;
-    for (let i = 0; i < numPlayers; i++) {
-      const name = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)] + Math.floor(rand() * 900 + 100);
-      const betAmt = Math.floor(rand() * (currency === "dollar" ? 10 : 100)) + (currency === "dollar" ? 1 : 10);
-
-      const r = rand();
-      let target = 1.05 + rand() * 0.2;
-      if (r > 0.3) target = 1.25 + Math.pow(rand(), 2) * 4.0;
-      if (r > 0.8) target = 5.0 + Math.pow(rand(), 3) * 35.0;
-
-      list.push({
-        name,
-        betAmount: betAmt,
-        targetMultiplier: Math.round(target * 100) / 100,
-        cashedOut: false,
-        winAmount: 0,
-        avatarIdx: Math.floor(rand() * AVATAR_GRADIENTS.length)
-      });
-    }
-    return list;
-  };
 
 
   // Game Round Control
