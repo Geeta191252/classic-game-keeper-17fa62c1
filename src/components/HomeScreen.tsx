@@ -31,27 +31,29 @@ import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
 
+
 interface GameTileProps {
   image: string;
   name: string;
   category: string;
   badge?: string;
   badgeColor?: string;
+  fit?: "cover" | "contain";
   onClick?: () => void;
 }
 
 // Thunderpick-styled vertical rectangle game card
-const GameTile = ({ image, name, category, badge, badgeColor, onClick }: GameTileProps) => (
+const GameTile = ({ image, name, category, badge, badgeColor, fit = "cover", onClick }: GameTileProps) => (
   <motion.div
     whileTap={{ scale: 0.95 }}
     onClick={onClick}
     className="cursor-pointer group flex-shrink-0 w-[115px] sm:w-[130px] flex flex-col bg-[#141b2b] rounded-xl overflow-hidden border border-white/[0.02] hover:border-white/[0.08] transition-all duration-200"
   >
-    <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#0d121f]">
+    <div className={`relative aspect-[3/4] w-full overflow-hidden ${fit === "contain" ? "bg-black" : "bg-[#0d121f]"}`}>
       <img 
         src={image} 
         alt={name} 
-        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+        className={`w-full h-full ${fit === "contain" ? "object-contain" : "object-cover"} transition-transform duration-300 group-hover:scale-105`} 
       />
       {badge && (
         <span
@@ -153,7 +155,7 @@ const HomeScreen = () => {
     { id: "twist", name: "Twist Rings", image: gameTwist, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToTwist },
     { id: "aviator-fun", name: "Aviator Fun", image: gameAviator, category: "Crash", tab: "crash", badge: "TURBO", badgeColor: "#f97316", action: goToAviatorFun },
     { id: "aviator", name: "Aviator Real", image: gameAviator, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToAviator },
-    { id: "jetx", name: "JetX", image: gameAviator, category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", action: goToJetX },
+    { id: "jetx", name: "JetX", image: "/images/jetx-logo.png", category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", fit: "contain", action: goToJetX },
     { id: "chicken-road", name: "Chicken Road", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToChickenRoad },
     { id: "chicken-classic", name: "Chicken Classic", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "CLASSIC", badgeColor: "#6366f1", action: goToChickenClassic },
     { id: "plinko", name: "Plinko Pegs", image: gamePlinko, category: "Slots", tab: "slots", badge: "EASY", badgeColor: "#10b981", action: goToPlinko },
