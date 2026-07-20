@@ -397,7 +397,7 @@ const JetXGame = () => {
 
           <div className="flex-1 flex justify-center">
             <h1
-              className="text-[40px] font-black italic tracking-tight leading-none"
+              className="text-[30px] font-black italic tracking-tight leading-none"
               style={{
                 fontFamily: "'Arial Black', system-ui, sans-serif",
                 background: "linear-gradient(180deg,#ffffff 0%,#dbeafe 55%,#93a4c9 100%)",
