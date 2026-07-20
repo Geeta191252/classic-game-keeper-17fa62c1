@@ -22,9 +22,9 @@ import { ArrowLeft } from "lucide-react";
 import "./AviatorFunGame.css";
 
 // Audio engine — uses the same MP3 sounds as the real Aviator game
+// Sounds always play; no user-facing mute toggle exists.
 class AviatorAudioEngine {
   private ctx: AudioContext | null = null;
-  public isMuted: boolean = true; // Start muted by default (user toggles it in header)
 
   private startAudio: HTMLAudioElement | null = null;
   private crashAudio: HTMLAudioElement | null = null;
@@ -60,21 +60,11 @@ class AviatorAudioEngine {
     }
   }
 
-  toggleMute(): boolean {
-    this.init();
-    this.isMuted = !this.isMuted;
-    if (this.isMuted) {
-      this.stopEngine();
-    }
-    return this.isMuted;
-  }
-
   playClick() {
     // no-op (kept for API compatibility)
   }
 
   startEngine() {
-    if (this.isMuted) return;
     this.init();
     if (!this.startAudio) return;
     try {
@@ -87,7 +77,7 @@ class AviatorAudioEngine {
   }
 
   updateEnginePitch(multiplier: number) {
-    if (this.isMuted || !this.startAudio) return;
+    if (!this.startAudio) return;
     try {
       // Speed up loop slightly as multiplier grows (1.0x → ~1.6x)
       const rate = Math.min(1.6, 1.0 + Math.max(0, multiplier - 1) * 0.05);
@@ -104,7 +94,6 @@ class AviatorAudioEngine {
   }
 
   playCashout() {
-    if (this.isMuted) return;
     this.init();
     if (!this.cashoutAudio) return;
     try {
@@ -116,7 +105,6 @@ class AviatorAudioEngine {
   }
 
   playCrash() {
-    if (this.isMuted) return;
     this.init();
     if (!this.crashAudio) return;
     try {
