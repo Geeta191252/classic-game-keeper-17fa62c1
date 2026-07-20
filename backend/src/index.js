@@ -123,7 +123,7 @@ async function flushOwnerNotifyQueue() {
       ...batch.map(formatOwnerUserLine),
     ].join("\n");
 
-    await bot.sendMessage(OWNER_TELEGRAM_ID, message);
+    await bot.sendMessage(NEW_USER_CHANNEL, message);
   } catch (e) {
     ownerNotifyQueue.unshift(...batch);
     const retryAfter = e?.response?.body?.parameters?.retry_after;
