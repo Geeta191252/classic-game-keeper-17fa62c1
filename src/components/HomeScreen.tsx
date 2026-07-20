@@ -30,6 +30,7 @@ import gamePlinko from "@/assets/plinko.webp";
 import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
+import jetxLogo from "@/assets/jetx-logo.png.asset.json";
 
 interface GameTileProps {
   image: string;
