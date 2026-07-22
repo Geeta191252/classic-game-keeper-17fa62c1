@@ -253,47 +253,63 @@ function balancePayload(user) {
   };
 }
 
-// Credit pending referral reward to referrer when this user makes their first deposit.
-// Idempotent: only fires once via the referralRewarded flag.
-async function creditReferralOnDeposit(depositorTelegramId) {
+// Grant referral reward immediately when a new user joins via ref link.
+// Idempotent per referred user via referralRewarded flag.
+const REFERRAL_REWARD_STARS = 5;
+async function grantReferralReward(referredUser, referrerTelegramId, referredName = "") {
   try {
-    const numericId = Number(depositorTelegramId);
-    if (!numericId) return;
-    const depositor = await User.findOne({ telegramId: numericId });
-    if (!depositor) return;
-    if (!depositor.referredBy || depositor.referralRewarded) return;
+    if (!referredUser || referredUser.referralRewarded) return null;
+    const numericReferrerId = Number(referrerTelegramId);
+    if (!numericReferrerId || numericReferrerId === referredUser.telegramId) return null;
 
-    const referrer = await User.findOne({ telegramId: depositor.referredBy });
-    if (!referrer) return;
+    const referrer = await getOrCreateUser(numericReferrerId);
+    if (!referrer || referrer.telegramId === 0) return null;
 
-    const reward = 5;
-    referrer.starBalance = (referrer.starBalance || 0) + reward;
+    // Link referral if not linked
+    if (!referredUser.referredBy) {
+      referredUser.referredBy = numericReferrerId;
+    } else if (referredUser.referredBy !== numericReferrerId) {
+      return null; // already referred by someone else
+    }
+
+    // Increment count + credit 5 stars
+    referrer.referralCount = (referrer.referralCount || 0) + 1;
+    referrer.starBalance = (referrer.starBalance || 0) + REFERRAL_REWARD_STARS;
     await referrer.save();
 
-    depositor.referralRewarded = true;
-    await depositor.save();
+    referredUser.referralRewarded = true;
+    await referredUser.save();
 
-    await Transaction.create({
-      telegramId: referrer.telegramId,
-      type: "referral",
-      currency: "star",
-      amount: reward,
-      status: "completed",
-      description: `Referral reward: ${reward} ⭐ (referred user ${numericId} made first deposit)`,
-    });
+    try {
+      await Transaction.create({
+        telegramId: referrer.telegramId,
+        type: "referral",
+        currency: "star",
+        amount: REFERRAL_REWARD_STARS,
+        status: "completed",
+        description: `Referral reward: ${REFERRAL_REWARD_STARS} ⭐ (referred ${referredName || referredUser.telegramId})`,
+      });
+    } catch (e) { /* ignore */ }
 
     try {
       await bot.sendMessage(referrer.telegramId,
-        `🎉 *Referral Reward Unlocked!*\n\n` +
-        `👤 Your referred friend just made their first deposit.\n` +
-        `💰 You earned ${reward} ⭐!`,
+        `🎉 *New Referral!*\n\n` +
+        `👤 ${referredName || "A friend"} joined using your link!\n` +
+        `💰 You earned ${REFERRAL_REWARD_STARS} ⭐\n` +
+        `📊 Total referrals: ${referrer.referralCount}`,
         { parse_mode: "Markdown" }
       );
     } catch (e) { /* ignore */ }
+
+    return referrer;
   } catch (err) {
-    console.error("creditReferralOnDeposit error:", err.message);
+    console.error("grantReferralReward error:", err.message);
+    return null;
   }
 }
+
+// Back-compat: no-op wrapper (reward now granted on join, not deposit)
+async function creditReferralOnDeposit(_depositorTelegramId) { /* deprecated */ }
 
 // ============================================
 // POST /api/deposit
