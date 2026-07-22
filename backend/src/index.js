@@ -1844,17 +1844,11 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       throw new Error(npData.message || "Failed to create payment");
     }
 
-    // Save pending transaction
-    await Transaction.create({
-      telegramId: Number(userId),
-      type: "deposit",
-      currency: "dollar",
-      amount: amount,
-      status: "pending",
-      description: `Crypto Deposit: $${amount} via ${currency.toUpperCase()}`,
-      depositComment: orderId,
-      tonTxHash: String(npData.payment_id || npData.id),
-    });
+    // NOTE: Do NOT create a pending Transaction here. If the user backs out
+    // without actually sending crypto, no record should appear in admin panel
+    // or user history. The Transaction is created only when NOWPayments IPN
+    // confirms the user actually paid (see /api/crypto/ipn below).
+
 
     return res.json({
       payAddress: npData.pay_address,
