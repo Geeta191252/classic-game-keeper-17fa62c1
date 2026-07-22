@@ -1844,17 +1844,11 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       throw new Error(npData.message || "Failed to create payment");
     }
 
-    // Save pending transaction
-    await Transaction.create({
-      telegramId: Number(userId),
-      type: "deposit",
-      currency: "dollar",
-      amount: amount,
-      status: "pending",
-      description: `Crypto Deposit: $${amount} via ${currency.toUpperCase()}`,
-      depositComment: orderId,
-      tonTxHash: String(npData.payment_id || npData.id),
-    });
+    // NOTE: Do NOT create a pending Transaction here. If the user backs out
+    // without actually sending crypto, no record should appear in admin panel
+    // or user history. The Transaction is created only when NOWPayments IPN
+    // confirms the user actually paid (see /api/crypto/ipn below).
+
 
     return res.json({
       payAddress: npData.pay_address,
@@ -1912,18 +1906,43 @@ app.post("/api/crypto/ipn", async (req, res) => {
       console.log("✅ IPN signature verified");
     }
 
-    const { order_id, payment_status, price_amount } = data;
+    const { order_id, payment_status, price_amount, pay_currency } = data;
 
     if (!order_id) {
       return res.status(400).json({ error: "Missing order_id" });
     }
 
-    // Find matching pending transaction
-    const tx = await Transaction.findOne({ depositComment: order_id, status: "pending" });
+    // Parse userId from order_id format: dep_<userId>_<timestamp>
+    const orderMatch = String(order_id).match(/^dep_(\d+)_/);
+    const parsedUserId = orderMatch ? Number(orderMatch[1]) : null;
+
+    // Upsert: create the pending transaction on first IPN (user actually paid),
+    // so nothing appears if they backed out.
+    let tx = await Transaction.findOne({ depositComment: order_id });
     if (!tx) {
-      console.log("No pending tx for order:", order_id);
+      if (!parsedUserId) {
+        console.log("IPN: cannot parse userId from order_id:", order_id);
+        return res.sendStatus(200);
+      }
+      // Only create on real payment activity (skip stale/unknown)
+      const activeStatuses = ["waiting", "confirming", "confirmed", "sending", "finished", "partially_paid", "failed", "expired"];
+      if (!activeStatuses.includes(payment_status)) {
+        return res.sendStatus(200);
+      }
+      tx = await Transaction.create({
+        telegramId: parsedUserId,
+        type: "deposit",
+        currency: "dollar",
+        amount: Number(price_amount) || 0,
+        status: "pending",
+        description: `Crypto Deposit: $${price_amount || 0} via ${String(pay_currency || "").toUpperCase()}`,
+        depositComment: order_id,
+      });
+    }
+    if (tx.status !== "pending") {
       return res.sendStatus(200);
     }
+
 
     if (payment_status === "finished" || payment_status === "confirmed") {
       tx.status = "completed";
@@ -3650,8 +3669,14 @@ app.post("/api/upi/deposit-request", async (req, res) => {
     }
 
     const cleanedUtr = String(utr).trim();
-    if (cleanedUtr.length < 10) {
-      return res.status(400).json({ error: "UTR must be a valid transaction ID" });
+    // Real UPI UTR / RRN is exactly 12 digits (numeric). Reject anything else
+    // to stop fake / random text submissions.
+    if (!/^\d{12}$/.test(cleanedUtr)) {
+      return res.status(400).json({ error: "Enter a valid 12-digit UPI UTR / Transaction ID from your bank app." });
+    }
+    // Reject obvious junk like 000000000000 / 111111111111 / 123456789012 etc.
+    if (/^(\d)\1{11}$/.test(cleanedUtr) || cleanedUtr === "123456789012") {
+      return res.status(400).json({ error: "This does not look like a real UTR. Please enter the actual 12-digit UTR from your payment." });
     }
 
     const existingTx = await Transaction.findOne({
@@ -3660,6 +3685,7 @@ app.post("/api/upi/deposit-request", async (req, res) => {
     if (existingTx) {
       return res.status(400).json({ error: "This UTR / Transaction ID has already been submitted." });
     }
+
 
     const numericUserId = Number(userId);
     const user = await getOrCreateUser(numericUserId);
