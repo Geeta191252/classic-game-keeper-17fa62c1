@@ -1150,23 +1150,11 @@ app.post("/api/telegram-webhook", async (req, res) => {
             if (changed) await user.save();
           }
 
-          // Handle referral (only for new users with ref_ param)
-          if (startParam && startParam.startsWith("ref_") && isNewUser && !user.referredBy) {
+          // Handle referral — grant reward immediately on join
+          if (startParam && startParam.startsWith("ref_") && !user.referralRewarded) {
             const numericReferrerId = Number(startParam.replace("ref_", ""));
             if (numericReferrerId && numericReferrerId !== numericUserId) {
-              const referrer = await getOrCreateUser(numericReferrerId);
-              if (referrer && referrer.telegramId !== 0) {
-                user.referredBy = numericReferrerId;
-                await user.save();
-                referrer.referralCount = (referrer.referralCount || 0) + 1;
-                await referrer.save();
-                try {
-                  await bot.sendMessage(numericReferrerId,
-                    `🎉 *New Referral!*\n\n👤 ${firstName} joined using your link!\n🔒 Reward of 5 ⭐ will unlock once they make their first deposit.\n📊 Total referrals: ${referrer.referralCount}`,
-                    { parse_mode: "Markdown" }
-                  );
-                } catch (e) { console.error("Referral notify:", e.message); }
-              }
+              await grantReferralReward(user, numericReferrerId, firstName);
             }
           }
 
