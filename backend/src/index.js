@@ -3669,8 +3669,14 @@ app.post("/api/upi/deposit-request", async (req, res) => {
     }
 
     const cleanedUtr = String(utr).trim();
-    if (cleanedUtr.length < 10) {
-      return res.status(400).json({ error: "UTR must be a valid transaction ID" });
+    // Real UPI UTR / RRN is exactly 12 digits (numeric). Reject anything else
+    // to stop fake / random text submissions.
+    if (!/^\d{12}$/.test(cleanedUtr)) {
+      return res.status(400).json({ error: "Enter a valid 12-digit UPI UTR / Transaction ID from your bank app." });
+    }
+    // Reject obvious junk like 000000000000 / 111111111111 / 123456789012 etc.
+    if (/^(\d)\1{11}$/.test(cleanedUtr) || cleanedUtr === "123456789012") {
+      return res.status(400).json({ error: "This does not look like a real UTR. Please enter the actual 12-digit UTR from your payment." });
     }
 
     const existingTx = await Transaction.findOne({
@@ -3679,6 +3685,7 @@ app.post("/api/upi/deposit-request", async (req, res) => {
     if (existingTx) {
       return res.status(400).json({ error: "This UTR / Transaction ID has already been submitted." });
     }
+
 
     const numericUserId = Number(userId);
     const user = await getOrCreateUser(numericUserId);
