@@ -1906,18 +1906,43 @@ app.post("/api/crypto/ipn", async (req, res) => {
       console.log("✅ IPN signature verified");
     }
 
-    const { order_id, payment_status, price_amount } = data;
+    const { order_id, payment_status, price_amount, pay_currency } = data;
 
     if (!order_id) {
       return res.status(400).json({ error: "Missing order_id" });
     }
 
-    // Find matching pending transaction
-    const tx = await Transaction.findOne({ depositComment: order_id, status: "pending" });
+    // Parse userId from order_id format: dep_<userId>_<timestamp>
+    const orderMatch = String(order_id).match(/^dep_(\d+)_/);
+    const parsedUserId = orderMatch ? Number(orderMatch[1]) : null;
+
+    // Upsert: create the pending transaction on first IPN (user actually paid),
+    // so nothing appears if they backed out.
+    let tx = await Transaction.findOne({ depositComment: order_id });
     if (!tx) {
-      console.log("No pending tx for order:", order_id);
+      if (!parsedUserId) {
+        console.log("IPN: cannot parse userId from order_id:", order_id);
+        return res.sendStatus(200);
+      }
+      // Only create on real payment activity (skip stale/unknown)
+      const activeStatuses = ["waiting", "confirming", "confirmed", "sending", "finished", "partially_paid", "failed", "expired"];
+      if (!activeStatuses.includes(payment_status)) {
+        return res.sendStatus(200);
+      }
+      tx = await Transaction.create({
+        telegramId: parsedUserId,
+        type: "deposit",
+        currency: "dollar",
+        amount: Number(price_amount) || 0,
+        status: "pending",
+        description: `Crypto Deposit: $${price_amount || 0} via ${String(pay_currency || "").toUpperCase()}`,
+        depositComment: order_id,
+      });
+    }
+    if (tx.status !== "pending") {
       return res.sendStatus(200);
     }
+
 
     if (payment_status === "finished" || payment_status === "confirmed") {
       tx.status = "completed";
