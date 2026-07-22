@@ -255,7 +255,27 @@ export const reportGameResult = async (data: {
  * Process referral if user opened app via invite link
  */
 export const processReferral = async (): Promise<void> => {
-  // ... keep existing code
+  try {
+    const tg = getTelegram();
+    const userId = tg?.initDataUnsafe?.user?.id;
+    const startParam = tg?.initDataUnsafe?.start_param;
+    if (!userId || !startParam || !startParam.startsWith("ref_")) return;
+
+    const referrerId = Number(startParam.replace("ref_", ""));
+    if (!referrerId || referrerId === userId) return;
+
+    const key = `ref_processed_${userId}`;
+    if (localStorage.getItem(key)) return;
+
+    await fetch(`${API_BASE_URL}/referral`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, referrerId }),
+    });
+    localStorage.setItem(key, "1");
+  } catch (err) {
+    console.error("processReferral error:", err);
+  }
 };
 
 // ============================================
