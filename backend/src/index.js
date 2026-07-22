@@ -900,16 +900,6 @@ app.post("/api/referral", async (req, res) => {
     }
 
     return res.json({ success: true, totalReferrals: referrer.referralCount, rewardStars: REFERRAL_REWARD_STARS });
-        `👤 A friend joined using your link!\n` +
-        `🔒 Reward of 5 ⭐ will unlock once they make their first deposit.\n` +
-        `📊 Total referrals: ${count}`,
-        { parse_mode: "Markdown" }
-      );
-    } catch (botErr) {
-      console.error("Failed to send referral notification:", botErr.message);
-    }
-
-    return res.json({ success: true, pending: true, totalReferrals: count });
   } catch (error) {
     console.error("Referral error:", error);
     return res.status(500).json({ error: "Referral processing failed" });
