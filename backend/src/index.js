@@ -889,30 +889,17 @@ app.post("/api/referral", async (req, res) => {
 
     // Get or create both users
     const user = await getOrCreateUser(numericUserId);
-    const referrer = await getOrCreateUser(numericReferrerId);
 
-    if (!referrer || referrer.telegramId === 0) {
-      return res.status(400).json({ error: "Referrer not found" });
-    }
-
-    // Check if user already has a referrer
-    if (user.referredBy) {
+    if (user.referralRewarded) {
       return res.json({ success: false, message: "Already referred" });
     }
 
-    // Set referral (reward is granted only after referred user makes a deposit)
-    user.referredBy = numericReferrerId;
-    await user.save();
+    const referrer = await grantReferralReward(user, numericReferrerId, user.firstName || "");
+    if (!referrer) {
+      return res.status(400).json({ error: "Referral could not be processed" });
+    }
 
-    // Increment referrer's count
-    referrer.referralCount = (referrer.referralCount || 0) + 1;
-    const count = referrer.referralCount;
-    await referrer.save();
-
-    // Notify referrer (pending — reward unlocks after first deposit)
-    try {
-      await bot.sendMessage(numericReferrerId,
-        `🎉 *New Referral!*\n\n` +
+    return res.json({ success: true, totalReferrals: referrer.referralCount, rewardStars: REFERRAL_REWARD_STARS });
         `👤 A friend joined using your link!\n` +
         `🔒 Reward of 5 ⭐ will unlock once they make their first deposit.\n` +
         `📊 Total referrals: ${count}`,
