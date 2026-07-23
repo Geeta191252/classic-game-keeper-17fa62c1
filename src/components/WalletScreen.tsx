@@ -915,7 +915,7 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address — credited automatically.
+                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>. Create address only when you are ready to pay.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
@@ -923,13 +923,26 @@ const WalletScreen = () => {
                   </div>
 
                   {!cryptoPayment && (
-                    <button
-                      disabled={cryptoProcessing}
-                      onClick={() => handleCryptoDeposit(cryptoCurrency)}
-                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 text-white transition-colors"
-                    >
-                      {cryptoProcessing ? "Generating…" : `Generate ${cryptoCurrency.toUpperCase()} Address`}
-                    </button>
+                    <div className="space-y-2">
+                      {!cryptoReadyToGenerate && (
+                        <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2">
+                          <p className="text-[9px] leading-relaxed text-amber-100">
+                            Address generate karte hi NOWPayments me payment waiting ban jata hai. Agar abhi payment nahi karni hai to address generate mat karo.
+                          </p>
+                        </div>
+                      )}
+                      <button
+                        disabled={cryptoProcessing}
+                        onClick={() => cryptoReadyToGenerate ? handleCryptoDeposit(cryptoCurrency) : setCryptoReadyToGenerate(true)}
+                        className={`w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider disabled:opacity-50 text-white transition-colors ${cryptoReadyToGenerate ? "bg-[#00a2e8] hover:bg-[#0091d0]" : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.04]"}`}
+                      >
+                        {cryptoProcessing
+                          ? "Generating…"
+                          : cryptoReadyToGenerate
+                            ? `Pay Now • Generate ${cryptoCurrency.toUpperCase()} Address`
+                            : "I Will Pay Now"}
+                      </button>
+                    </div>
                   )}
 
 
@@ -967,7 +980,7 @@ const WalletScreen = () => {
                           Copy Address
                         </button>
                         <p className="text-[8px] text-[#8e97a4] text-center">
-                          Send any amount ≥ ${cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
+                          Send any amount ≥ ${cryptoPayment.minUsd || cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
                         </p>
                         {paymentStatus && paymentStatus !== "completed" && (
                           <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
