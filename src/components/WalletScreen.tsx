@@ -17,8 +17,7 @@ const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
 };
 
-// Conservative fallback minimums. Live values are loaded from NOWPayments via
-// backend so the UI matches the gateway instead of hardcoded guesses.
+// Temporary placeholders only until live NOWPayments minimums load.
 const defaultCryptoMins: Record<string, number> = {
   btc: 22,
   ltc: 5,
@@ -197,8 +196,10 @@ const WalletScreen = () => {
   };
 
   const [limits, setLimits] = useState(defaultLimits);
+  const [cryptoMinsReady, setCryptoMinsReady] = useState(false);
   const cryptoMins = limits.crypto.depositMin;
   const formatUsdMin = (value: number | undefined) => `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const cryptoMinLabel = (coinId: string) => cryptoMinsReady ? formatUsdMin(cryptoMins[coinId]) : "Loading…";
   const inrDepositMin = limits.inr.depositMin;
   const inrWithdrawMin = limits.inr.withdrawMin;
   const starDepositMin = limits.star.depositMin;
@@ -244,19 +245,27 @@ const WalletScreen = () => {
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
             const liveMin = Number(d.min_usd);
-            return [c.id, Number.isFinite(liveMin) && liveMin > 0 ? liveMin : defaultCryptoMins[c.id] || 1] as const;
+            if (!r.ok || d.fallback || !Number.isFinite(liveMin) || liveMin <= 0) {
+              return [c.id, null] as const;
+            }
+            return [c.id, liveMin] as const;
           } catch {
-            return [c.id, defaultCryptoMins[c.id] || 1] as const;
+            return [c.id, null] as const;
           }
         })
       );
+      const liveEntries = entries.filter((entry): entry is readonly [string, number] => entry[1] !== null);
       setLimits((prev) => ({
         ...prev,
         crypto: {
           ...prev.crypto,
-          depositMin: Object.fromEntries(entries),
+          depositMin: {
+            ...prev.crypto.depositMin,
+            ...Object.fromEntries(liveEntries),
+          },
         },
       }));
+      setCryptoMinsReady(liveEntries.length === cryptoOptions.length);
     })();
   }, []);
 
@@ -518,6 +527,10 @@ const WalletScreen = () => {
     const coin = coinIdOverride || cryptoCurrency;
     const minReq = cryptoMins[coin] || 1;
     const requested = Number(amountOverride ?? cryptoUsdAmount);
+    if (!cryptoMinsReady) {
+      toast({ title: "Please wait", description: "Loading exact NOWPayments minimum for this coin.", variant: "destructive" });
+      return;
+    }
     if (!requested || requested < minReq) {
       toast({ title: `Minimum ${formatUsdMin(minReq)}`, description: `Enter at least ${formatUsdMin(minReq)} for ${coin.toUpperCase()}.`, variant: "destructive" });
       return;
