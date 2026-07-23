@@ -17,8 +17,7 @@ const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
 };
 
-// Conservative fallback minimums. Live values are loaded from NOWPayments via
-// backend so the UI matches the gateway instead of hardcoded guesses.
+// Temporary placeholders only until live NOWPayments minimums load.
 const defaultCryptoMins: Record<string, number> = {
   btc: 22,
   ltc: 5,
@@ -197,7 +196,10 @@ const WalletScreen = () => {
   };
 
   const [limits, setLimits] = useState(defaultLimits);
+  const [cryptoMinsReady, setCryptoMinsReady] = useState(false);
   const cryptoMins = limits.crypto.depositMin;
+  const formatUsdMin = (value: number | undefined) => `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const cryptoMinLabel = (coinId: string) => cryptoMinsReady ? formatUsdMin(cryptoMins[coinId]) : "Loading…";
   const inrDepositMin = limits.inr.depositMin;
   const inrWithdrawMin = limits.inr.withdrawMin;
   const starDepositMin = limits.star.depositMin;
@@ -243,19 +245,27 @@ const WalletScreen = () => {
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
             const liveMin = Number(d.min_usd);
-            return [c.id, Number.isFinite(liveMin) && liveMin > 0 ? liveMin : defaultCryptoMins[c.id] || 1] as const;
+            if (!r.ok || d.fallback || !Number.isFinite(liveMin) || liveMin <= 0) {
+              return [c.id, null] as const;
+            }
+            return [c.id, liveMin] as const;
           } catch {
-            return [c.id, defaultCryptoMins[c.id] || 1] as const;
+            return [c.id, null] as const;
           }
         })
       );
+      const liveEntries = entries.filter((entry): entry is readonly [string, number] => entry[1] !== null);
       setLimits((prev) => ({
         ...prev,
         crypto: {
           ...prev.crypto,
-          depositMin: Object.fromEntries(entries),
+          depositMin: {
+            ...prev.crypto.depositMin,
+            ...Object.fromEntries(liveEntries),
+          },
         },
       }));
+      setCryptoMinsReady(liveEntries.length === cryptoOptions.length);
     })();
   }, []);
 
@@ -264,6 +274,7 @@ const WalletScreen = () => {
     setCryptoReadyToGenerate(false);
     setCryptoConfirmChecked(false);
     setPaymentStatus(null);
+    setCryptoUsdAmount("");
   }, [cryptoCurrency]);
 
 
@@ -516,8 +527,12 @@ const WalletScreen = () => {
     const coin = coinIdOverride || cryptoCurrency;
     const minReq = cryptoMins[coin] || 1;
     const requested = Number(amountOverride ?? cryptoUsdAmount);
+    if (!cryptoMinsReady) {
+      toast({ title: "Please wait", description: "Loading exact NOWPayments minimum for this coin.", variant: "destructive" });
+      return;
+    }
     if (!requested || requested < minReq) {
-      toast({ title: `Minimum $${minReq}`, description: `Enter at least $${minReq} for ${coin.toUpperCase()}.`, variant: "destructive" });
+      toast({ title: `Minimum ${formatUsdMin(minReq)}`, description: `Enter at least ${formatUsdMin(minReq)} for ${coin.toUpperCase()}.`, variant: "destructive" });
       return;
     }
 
@@ -533,7 +548,21 @@ const WalletScreen = () => {
         body: JSON.stringify({ userId, amount: requested, currency: apiCurrency }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create payment");
+      if (!res.ok) {
+        if (data.minUsd) {
+          setLimits((prev) => ({
+            ...prev,
+            crypto: {
+              ...prev.crypto,
+              depositMin: {
+                ...prev.crypto.depositMin,
+                [coin]: Number(data.minUsd),
+              },
+            },
+          }));
+        }
+        throw new Error(data.error || "Failed to create payment");
+      }
 
       if (data.payAddress) {
         setCryptoPayment({
@@ -845,7 +874,7 @@ const WalletScreen = () => {
                   Choose Deposit Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: `Min $${Math.min(...Object.values(cryptoMins))}+`, icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: cryptoMinsReady ? `Min ${formatUsdMin(Math.min(...Object.values(cryptoMins)))}+` : "Min Loading…", icon: DollarSign, color: "#00a2e8" },
                   { id: "inr", label: "INR", desc: "UPI / QR Code", min: `Min ₹${inrDepositMin}`, icon: IndianRupee, color: "#10b981" },
                   { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${starDepositMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -919,7 +948,7 @@ const WalletScreen = () => {
                             <span className="text-[13px] font-black text-white tracking-tight">{coin.label}</span>
                           </div>
                           <span className="text-[10px] text-[#8e97a4] font-medium leading-none">{coin.name}</span>
-                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min ${cryptoMins[coin.id] || defaultCryptoMins[coin.id] || 1}</span>
+                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min {cryptoMinLabel(coin.id)}</span>
                         </button>
                       );
                     })}
@@ -927,7 +956,7 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>. Create address only when you are ready to pay.
+                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">{cryptoMinLabel(cryptoCurrency)}</span>. Create address only when you are ready to pay.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
@@ -943,13 +972,13 @@ const WalletScreen = () => {
                           min={cryptoMins[cryptoCurrency] || 1}
                           value={cryptoUsdAmount}
                           onChange={(e) => setCryptoUsdAmount(e.target.value)}
-                          placeholder={`USD amount (min $${cryptoMins[cryptoCurrency] || 1})`}
+                          placeholder={`USD amount (min ${cryptoMinLabel(cryptoCurrency)})`}
                           className="flex-1 bg-transparent outline-none text-sm font-black text-white placeholder:text-[#5a6373] py-3"
                         />
                         <span className="text-[#8e97a4] text-sm font-black">$</span>
                       </div>
                       <button
-                        disabled={cryptoProcessing}
+                        disabled={cryptoProcessing || !cryptoMinsReady}
                         onClick={() => handleCryptoDeposit(cryptoCurrency)}
                         className="rounded-2xl px-5 text-sm font-black uppercase tracking-wider text-white bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 flex items-center gap-1.5"
                       >
