@@ -511,8 +511,6 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
         reply_markup: {
           inline_keyboard: [
             [{ text: "🎮 Play Now", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
-            [{ text: "Royal King Game Main", url: "https://t.me/royalkinggamedata" }],
-            [{ text: "Royal King Game Withrowal", url: "https://t.me/royal_king_game_Withdrawal" }],
           ],
         },
       });
