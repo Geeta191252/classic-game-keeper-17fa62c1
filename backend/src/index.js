@@ -1793,6 +1793,12 @@ const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
 
+// In-memory cache: reuse the same NOWPayments invoice for a user+currency
+// within a ~55min window so repeated "Generate Address" clicks do NOT
+// create new "waiting" entries in the NOWPayments dashboard / owner email.
+const cryptoInvoiceCache = new Map(); // key: `${userId}:${currency}` -> { data, ts }
+const INVOICE_TTL_MS = 55 * 60 * 1000;
+
 // POST /api/crypto/create-payment - Create NOWPayments direct payment
 app.post("/api/crypto/create-payment", async (req, res) => {
   try {
@@ -1802,6 +1808,14 @@ app.post("/api/crypto/create-payment", async (req, res) => {
     }
     if (!NOWPAYMENTS_API_KEY) {
       return res.status(500).json({ error: "NOWPayments not configured" });
+    }
+
+    // Reuse existing invoice if still fresh
+    const cacheKey = `${userId}:${String(currency).toLowerCase()}`;
+    const cached = cryptoInvoiceCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < INVOICE_TTL_MS) {
+      console.log(`♻️  Reusing cached invoice for ${cacheKey} (age ${Math.round((Date.now()-cached.ts)/1000)}s)`);
+      return res.json({ ...cached.data, reused: true });
     }
 
     // Check minimum amount for this currency
@@ -1818,7 +1832,6 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       }
     }
 
-    const orderId = `dep_${userId}_${Date.now()}`;
 
     // Use /payment endpoint for direct address (no hosted page)
     const npRes = await fetch(`${NOWPAYMENTS_API}/payment`, {
