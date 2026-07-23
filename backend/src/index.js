@@ -1338,7 +1338,26 @@ app.post("/api/telegram-webhook", async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // Handle /fake_withdrawal_on and /fake_withdrawal_off - owner only
+    if (update.message?.text && (update.message.text === "/fake_withdrawal_on" || update.message.text === "/fake_withdrawal_off")) {
+      const chatId = update.message.chat.id;
+      const fromId = update.message.from.id;
+      if (String(fromId) !== "6965488457") {
+        await bot.sendMessage(chatId, "⛔ You are not authorized.");
+        return res.sendStatus(200);
+      }
+      if (update.message.text === "/fake_withdrawal_on") {
+        const started = startFakeWithdrawals();
+        await bot.sendMessage(chatId, started ? "✅ Fake withdrawals ON (every 20s)." : "ℹ️ Already running.");
+      } else {
+        const stopped = stopFakeWithdrawals();
+        await bot.sendMessage(chatId, stopped ? "🛑 Fake withdrawals OFF." : "ℹ️ Not running.");
+      }
+      return res.sendStatus(200);
+    }
+
     // Handle /help command
+
     if (update.message?.text === "/help") {
       const chatId = update.message.chat.id;
       const fromId = update.message.from.id;
