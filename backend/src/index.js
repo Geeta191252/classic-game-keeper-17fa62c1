@@ -4303,17 +4303,72 @@ app.post("/api/admin/wallet-adjust", requireAdmin, async (req, res) => {
   }
 });
 
-// POST /api/admin/withdrawals/approve   { transactionId }
+// POST /api/admin/withdrawals/approve   { transactionId, txId?, usdValue? }
 app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
   try {
-    const { transactionId } = req.body || {};
+    const { transactionId, txId, usdValue } = req.body || {};
     if (!transactionId) return res.status(400).json({ error: "transactionId required" });
     const tx = await Transaction.findById(transactionId);
     if (!tx) return res.status(404).json({ error: "Transaction not found" });
     if (tx.type !== "withdraw") return res.status(400).json({ error: "Not a withdrawal" });
     if (tx.status !== "pending") return res.status(400).json({ error: `Already ${tx.status}` });
     tx.status = "completed";
+    if (txId) tx.txHash = String(txId);
     await tx.save();
+
+    // Notify user (DM)
+    try {
+      const amt = Math.abs(tx.amount);
+      const sym = tx.currency === "dollar" ? "$" : tx.currency === "rupee" ? "₹" : "⭐";
+      await bot.sendMessage(
+        tx.telegramId,
+        `✅ *Withdrawal Approved!*\n\n💰 Amount: ${sym}${amt}\n📍 Address: \`${tx.cryptoAddress || "-"}\`\n🔗 Network: ${tx.withdrawalNetwork || "N/A"}\n${txId ? `🔗 TxID: \`${txId}\`\n` : ""}\nYour funds have been sent!`,
+        { parse_mode: "Markdown" }
+      );
+    } catch (e) {
+      console.error("user withdraw DM failed:", e.message);
+    }
+
+    // Public channel post — reference style, no username
+    try {
+      const amt = Math.abs(tx.amount);
+      const network =
+        tx.withdrawalNetwork ||
+        (tx.currency === "dollar" ? "USD" : tx.currency === "rupee" ? "INR" : "STAR");
+      const shortTx = txId
+        ? `${String(txId).slice(0, 6)}...${String(txId).slice(-5)}`
+        : "";
+      const usdLine =
+        usdValue !== undefined && usdValue !== null && usdValue !== ""
+          ? `\n💵 USD Value: $${Number(usdValue).toFixed(4)}`
+          : "";
+      const txLine = txId ? `\n\n🔗 TxID: \`${shortTx}\`` : "";
+      const text =
+        `✅ *${network} Withdrawal Successful!*\n\n` +
+        `🚀 Amount: ${amt} ${network}` +
+        usdLine +
+        txLine;
+      await bot.sendMessage(WITHDRAWAL_CHANNEL, text, {
+        parse_mode: "Markdown",
+        disable_web_page_preview: true,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "🎮 PLAY GAME 🕹️", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
+            [{ text: "📢 News Channel 📢", url: "https://t.me/royalkinggamedata" }],
+          ],
+        },
+      });
+    } catch (channelErr) {
+      const desc = channelErr?.response?.body?.description || channelErr.message;
+      console.error("Failed to post withdrawal approval to channel:", desc);
+      try {
+        await bot.sendMessage(
+          OWNER_TELEGRAM_ID,
+          `⚠️ Withdrawal channel post failed (${WITHDRAWAL_CHANNEL}): ${desc}\nBot ko channel me ADMIN banao aur "Post messages" permission do.`
+        );
+      } catch (_) {}
+    }
+
     res.json({ success: true, transaction: tx });
   } catch (e) {
     console.error("admin/withdraw approve error:", e);
