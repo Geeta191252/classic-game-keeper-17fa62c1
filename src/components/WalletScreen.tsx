@@ -909,7 +909,7 @@ const WalletScreen = () => {
                           Copy Address
                         </button>
                         <p className="text-[8px] text-[#8e97a4] text-center">
-                          Balance updates automatically after confirmation • Send exact amount only
+                          Send any amount ≥ ${cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
                         </p>
                         {paymentStatus && paymentStatus !== "completed" && (
                           <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
