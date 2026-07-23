@@ -142,6 +142,7 @@ const WalletScreen = () => {
   } | null>(null);
   const [cryptoReadyToGenerate, setCryptoReadyToGenerate] = useState(false);
   const [cryptoConfirmChecked, setCryptoConfirmChecked] = useState(false);
+  const [cryptoUsdAmount, setCryptoUsdAmount] = useState("");
 
   const [upiConfig, setUpiConfig] = useState<{
     upiId: string;
@@ -511,9 +512,14 @@ const WalletScreen = () => {
     }
   };
 
-  const handleCryptoDeposit = async (coinIdOverride?: string) => {
+  const handleCryptoDeposit = async (coinIdOverride?: string, amountOverride?: number) => {
     const coin = coinIdOverride || cryptoCurrency;
     const minReq = cryptoMins[coin] || 1;
+    const requested = Number(amountOverride ?? cryptoUsdAmount);
+    if (!requested || requested < minReq) {
+      toast({ title: `Minimum $${minReq}`, description: `Enter at least $${minReq} for ${coin.toUpperCase()}.`, variant: "destructive" });
+      return;
+    }
 
     setCryptoProcessing(true);
     try {
@@ -521,14 +527,10 @@ const WalletScreen = () => {
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
 
       const apiCurrency = cryptoApiTicker[coin] || coin;
-      // Invoice is created at the coin's minimum just to reserve a deposit
-      // address. NOWPayments IPN scales credited USD by actually_paid /
-      // pay_amount, so the user can send ANY amount ≥ min and still get
-      // credited proportionally.
       const res = await fetch(`${apiBase}/crypto/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: minReq, currency: apiCurrency }),
+        body: JSON.stringify({ userId, amount: requested, currency: apiCurrency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment");
@@ -933,37 +935,25 @@ const WalletScreen = () => {
                   </div>
 
                   {!cryptoPayment && (
-                    <div className="space-y-2">
-                      {!cryptoReadyToGenerate && (
-                        <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2">
-                          <p className="text-[9px] leading-relaxed text-amber-100">
-                            Address generate karte hi NOWPayments me payment waiting ban jata hai. Agar abhi payment nahi karni hai to address generate mat karo.
-                          </p>
-                        </div>
-                      )}
-                      {cryptoReadyToGenerate && (
-                        <label className="flex items-start gap-2 rounded-xl border border-[#00a2e8]/20 bg-[#00a2e8]/10 px-3 py-2">
-                          <input
-                            type="checkbox"
-                            checked={cryptoConfirmChecked}
-                            onChange={(e) => setCryptoConfirmChecked(e.target.checked)}
-                            className="mt-0.5 h-3.5 w-3.5 accent-[#00a2e8]"
-                          />
-                          <span className="text-[9px] leading-relaxed text-slate-200">
-                            Main abhi payment karunga. Address banne ke baad NOWPayments dashboard me waiting payment dikh sakta hai.
-                          </span>
-                        </label>
-                      )}
+                    <div className="flex items-stretch gap-2">
+                      <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#0d121f] border border-white/[0.04] px-4">
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={cryptoMins[cryptoCurrency] || 1}
+                          value={cryptoUsdAmount}
+                          onChange={(e) => setCryptoUsdAmount(e.target.value)}
+                          placeholder={`USD amount (min $${cryptoMins[cryptoCurrency] || 1})`}
+                          className="flex-1 bg-transparent outline-none text-sm font-black text-white placeholder:text-[#5a6373] py-3"
+                        />
+                        <span className="text-[#8e97a4] text-sm font-black">$</span>
+                      </div>
                       <button
-                        disabled={cryptoProcessing || (cryptoReadyToGenerate && !cryptoConfirmChecked)}
-                        onClick={() => cryptoReadyToGenerate ? handleCryptoDeposit(cryptoCurrency) : setCryptoReadyToGenerate(true)}
-                        className={`w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider disabled:opacity-50 text-white transition-colors ${cryptoReadyToGenerate ? "bg-[#00a2e8] hover:bg-[#0091d0]" : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.04]"}`}
+                        disabled={cryptoProcessing}
+                        onClick={() => handleCryptoDeposit(cryptoCurrency)}
+                        className="rounded-2xl px-5 text-sm font-black uppercase tracking-wider text-white bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 flex items-center gap-1.5"
                       >
-                        {cryptoProcessing
-                          ? "Generating…"
-                          : cryptoReadyToGenerate
-                            ? `Pay Now • Generate ${cryptoCurrency.toUpperCase()} Address`
-                            : "I Will Pay Now"}
+                        {cryptoProcessing ? "…" : (<>PAY <ExternalLink className="h-3.5 w-3.5" /></>)}
                       </button>
                     </div>
                   )}
