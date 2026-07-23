@@ -884,7 +884,7 @@ const WalletScreen = () => {
                         className="bg-[#0d121f] border border-white/[0.02] rounded-xl p-4 space-y-3"
                       >
                         <p className="text-[11px] font-semibold text-white">
-                          Send exactly <span className="text-[#00a2e8] font-bold">{cryptoPayment.payAmount} {cryptoPayment.payCurrency.toUpperCase()}</span>
+                          Scan QR or copy the <span className="text-[#00a2e8] font-bold">{cryptoPayment.payCurrency.toUpperCase()}</span> address below
                         </p>
                         <div className="flex justify-center py-2">
                           <div className="bg-white p-2.5 rounded-2xl shadow-inner">
