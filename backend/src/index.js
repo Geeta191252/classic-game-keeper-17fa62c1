@@ -1863,14 +1863,17 @@ app.post("/api/crypto/create-payment", async (req, res) => {
     // confirms the user actually paid (see /api/crypto/ipn below).
 
 
-    return res.json({
+    const responseData = {
       payAddress: npData.pay_address,
       payAmount: npData.pay_amount,
       payCurrency: npData.pay_currency,
       paymentId: npData.payment_id,
       orderId,
       expirationEstimate: npData.expiration_estimate_date,
-    });
+    };
+    cryptoInvoiceCache.set(cacheKey, { data: responseData, ts: Date.now() });
+    return res.json(responseData);
+
   } catch (error) {
     console.error("Crypto create-payment error:", error);
     return res.status(500).json({ error: error.message || "Failed to create crypto payment" });
