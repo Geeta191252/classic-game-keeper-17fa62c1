@@ -1787,7 +1787,10 @@ app.post("/api/winnings", async (req, res) => {
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
-const NOWPAYMENTS_PAYOUT_CURRENCY = String(process.env.NOWPAYMENTS_PAYOUT_CURRENCY || "usdttrc20").trim().toLowerCase();
+const NOWPAYMENTS_PAYOUT_CURRENCY = String(process.env.NOWPAYMENTS_PAYOUT_CURRENCY || "").trim().toLowerCase();
+const NOWPAYMENTS_MINIMUM_SETTLEMENT_CURRENCY = String(
+  process.env.NOWPAYMENTS_MINIMUM_CURRENCY || process.env.NOWPAYMENTS_PAYOUT_CURRENCY || "usdttrc20"
+).trim().toLowerCase();
 const CRYPTO_MIN_BUFFER_MULTIPLIER = 1;
 const CRYPTO_MIN_FALLBACK_USD = {
   btc: 22,
@@ -1815,7 +1818,7 @@ function getFallbackCryptoMinUsd(payCurrency) {
   return CRYPTO_MIN_FALLBACK_USD[currency] || 10;
 }
 
-async function fetchNowPaymentsMinimum(currencyFrom, currencyTo = NOWPAYMENTS_PAYOUT_CURRENCY) {
+async function fetchNowPaymentsMinimum(currencyFrom, currencyTo) {
   const params = new URLSearchParams({ currency_from: currencyFrom });
   if (currencyTo) params.set("currency_to", currencyTo);
   params.set("fiat_equivalent", "usd");
@@ -1867,11 +1870,14 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
   }
 
   // NOWPayments validates direct USD-priced payments by converting USD -> pay_currency,
-  // then comparing that crypto amount with /min-amount for pay_currency -> payout_currency.
+  // then comparing that crypto amount with /min-amount for pay_currency -> settlement pair.
   // Using pay_currency -> pay_currency returns tiny network-only values (e.g. $0.03 LTC)
   // that are rejected by real /payment requests, so always use the settlement pair.
   const attempts = [
-    { from: currency, to: NOWPAYMENTS_PAYOUT_CURRENCY, source: "nowpayments_settlement_pair" },
+    ...(NOWPAYMENTS_PAYOUT_CURRENCY
+      ? [{ from: currency, to: NOWPAYMENTS_PAYOUT_CURRENCY, source: "nowpayments_configured_payout_pair" }]
+      : [{ from: currency, to: undefined, source: "nowpayments_account_default_pair" }]),
+    { from: currency, to: NOWPAYMENTS_MINIMUM_SETTLEMENT_CURRENCY, source: "nowpayments_settlement_pair" },
     { from: currency, to: undefined, source: "nowpayments_pay_currency_default" },
   ];
 
@@ -1956,7 +1962,7 @@ app.post("/api/crypto/create-payment", async (req, res) => {
         price_amount: requestedAmount,
         price_currency: "usd",
         pay_currency: currency,
-        payout_currency: NOWPAYMENTS_PAYOUT_CURRENCY,
+        ...(NOWPAYMENTS_PAYOUT_CURRENCY ? { payout_currency: NOWPAYMENTS_PAYOUT_CURRENCY } : {}),
         order_id: orderId,
         order_description: `Deposit $${requestedAmount} for user ${userId}`,
         ipn_callback_url: `${getBackendUrl()}/api/crypto/ipn`,
