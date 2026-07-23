@@ -622,29 +622,14 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
       console.error("Failed to send approval notification:", botErr.message);
     }
 
-    // Channel post styled like reference (Amount / USD Value / TxID + PLAY GAME + extras)
+    // Channel post styled exactly like the requested reference.
     try {
       const amount = Math.abs(tx.amount);
       const network = tx.withdrawalNetwork || (tx.currency === "dollar" ? "USD" : tx.currency === "rupee" ? "INR" : "STAR");
-      const usdLine = usdValue !== undefined && usdValue !== null && usdValue !== ""
-        ? `💵 USD Value: $${Number(usdValue).toFixed(4)}\n\n\n`
-        : "";
-      const shortTx = txId ? `${String(txId).slice(0, 5)}…${String(txId).slice(-5)}` : "";
-      const txLine = txId ? `🔗 TxID: ${shortTx}` : "";
-      const text =
-        `✅ Bucks Withdrawal Successful!\n\n\n` +
-        `🚀 Amount: ${amount} ${network}\n\n\n` +
-        usdLine +
-        txLine;
+      const text = formatWithdrawalChannelMessage({ amount, network, usdValue, txId });
       await bot.sendMessage(WITHDRAWAL_CHANNEL, text, {
-        parse_mode: "Markdown",
         disable_web_page_preview: true,
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
-            [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
-          ],
-        },
+        reply_markup: withdrawalChannelButtons(),
       });
     } catch (channelErr) {
       const desc = channelErr?.response?.body?.description || channelErr.message;
@@ -4478,34 +4463,16 @@ app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
       console.error("user withdraw DM failed:", e.message);
     }
 
-    // Public channel post — reference style, no username
+    // Public channel post — requested reference style, no username.
     try {
       const amt = Math.abs(tx.amount);
       const network =
         tx.withdrawalNetwork ||
         (tx.currency === "dollar" ? "USD" : tx.currency === "rupee" ? "INR" : "STAR");
-      const shortTx = txId
-        ? `${String(txId).slice(0, 6)}...${String(txId).slice(-5)}`
-        : "";
-      const usdLine =
-        usdValue !== undefined && usdValue !== null && usdValue !== ""
-          ? `\n💵 USD Value: $${Number(usdValue).toFixed(4)}`
-          : "";
-      const txLine = txId ? `\n\n🔗 TxID: \`${shortTx}\`` : "";
-      const text =
-        `✅ *${network} Withdrawal Successful!*\n\n` +
-        `🚀 Amount: ${amt} ${network}` +
-        usdLine +
-        txLine;
+      const text = formatWithdrawalChannelMessage({ amount: amt, network, usdValue, txId });
       await bot.sendMessage(WITHDRAWAL_CHANNEL, text, {
-        parse_mode: "Markdown",
         disable_web_page_preview: true,
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
-            [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
-          ],
-        },
+        reply_markup: withdrawalChannelButtons(),
       });
     } catch (channelErr) {
       const desc = channelErr?.response?.body?.description || channelErr.message;
