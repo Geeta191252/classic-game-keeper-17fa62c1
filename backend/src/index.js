@@ -4152,7 +4152,12 @@ app.get("/api/admin/summary", requireAdmin, async (req, res) => {
     ]);
     const bal = balances[0] || {};
 
-    const recent = await Transaction.find().sort({ createdAt: -1 }).limit(15).lean();
+    // Show only real money movements: deposits, withdrawals and game wins.
+    // Internal game "bet" debits are excluded to keep the feed meaningful.
+    const recent = await Transaction.find({ type: { $in: ["deposit", "withdraw", "win"] } })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
     res.json({
       totals: {
