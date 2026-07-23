@@ -895,12 +895,23 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address below — credited automatically.
+                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address — credited automatically.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
                     )}
                   </div>
+
+                  {!cryptoPayment && (
+                    <button
+                      disabled={cryptoProcessing}
+                      onClick={() => handleCryptoDeposit(cryptoCurrency)}
+                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 text-white transition-colors"
+                    >
+                      {cryptoProcessing ? "Generating…" : `Generate ${cryptoCurrency.toUpperCase()} Address`}
+                    </button>
+                  )}
+
 
                   <AnimatePresence>
                     {cryptoPayment && (
