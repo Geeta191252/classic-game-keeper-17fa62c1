@@ -1818,6 +1818,10 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       return res.json({ ...cached.data, reused: true });
     }
 
+    const orderId = `dep_${userId}_${Date.now()}`;
+
+
+
     // Compute a safe minimum USD (same logic as /api/crypto/min-amount) and
     // auto-bump the invoice amount up to it — never error out for the user.
     let safeAmount = Number(amount) || 0;
