@@ -159,7 +159,7 @@ const MAIN_CHANNEL_URL = "https://t.me/Royal_King_Game_Main";
 // Fake withdrawal broadcaster (owner-controlled)
 // ============================================
 let fakeWithdrawalTimer = null;
-const FAKE_WITHDRAWAL_INTERVAL_MS = 20000;
+let fakeWithdrawalActive = false;
 
 function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function randFloat(min, max, decimals) {
@@ -271,15 +271,40 @@ async function sendFakeWithdrawal() {
   }
 }
 
+// Irregular scheduler: within a "burst window" send 1-3 messages spread across ~1 minute,
+// then occasionally take a 2-3 minute pause before the next burst.
+async function runFakeWithdrawalBurst() {
+  if (!fakeWithdrawalActive) return;
+  // 1-3 messages in this ~1 minute burst
+  const count = 1 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < count; i++) {
+    if (!fakeWithdrawalActive) return;
+    await sendFakeWithdrawal();
+    if (i < count - 1) {
+      // spread remaining messages across the rest of ~60s
+      const gap = 15000 + Math.floor(Math.random() * 25000); // 15-40s between msgs
+      await new Promise((r) => setTimeout(r, gap));
+    }
+  }
+  if (!fakeWithdrawalActive) return;
+  // 40% chance of a long 2-3 min pause, else short 30-70s pause
+  const longPause = Math.random() < 0.4;
+  const pause = longPause
+    ? 120000 + Math.floor(Math.random() * 60000) // 2-3 min
+    : 30000 + Math.floor(Math.random() * 40000); // 30-70s
+  fakeWithdrawalTimer = setTimeout(runFakeWithdrawalBurst, pause);
+}
+
 function startFakeWithdrawals() {
-  if (fakeWithdrawalTimer) return false;
-  fakeWithdrawalTimer = setInterval(sendFakeWithdrawal, FAKE_WITHDRAWAL_INTERVAL_MS);
-  sendFakeWithdrawal();
+  if (fakeWithdrawalActive) return false;
+  fakeWithdrawalActive = true;
+  runFakeWithdrawalBurst();
   return true;
 }
 function stopFakeWithdrawals() {
-  if (!fakeWithdrawalTimer) return false;
-  clearInterval(fakeWithdrawalTimer);
+  if (!fakeWithdrawalActive) return false;
+  fakeWithdrawalActive = false;
+  if (fakeWithdrawalTimer) clearTimeout(fakeWithdrawalTimer);
   fakeWithdrawalTimer = null;
   return true;
 }
