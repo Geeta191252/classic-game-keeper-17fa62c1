@@ -512,9 +512,14 @@ const WalletScreen = () => {
     }
   };
 
-  const handleCryptoDeposit = async (coinIdOverride?: string) => {
+  const handleCryptoDeposit = async (coinIdOverride?: string, amountOverride?: number) => {
     const coin = coinIdOverride || cryptoCurrency;
     const minReq = cryptoMins[coin] || 1;
+    const requested = Number(amountOverride ?? cryptoUsdAmount);
+    if (!requested || requested < minReq) {
+      toast({ title: `Minimum $${minReq}`, description: `Enter at least $${minReq} for ${coin.toUpperCase()}.`, variant: "destructive" });
+      return;
+    }
 
     setCryptoProcessing(true);
     try {
@@ -522,14 +527,10 @@ const WalletScreen = () => {
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
 
       const apiCurrency = cryptoApiTicker[coin] || coin;
-      // Invoice is created at the coin's minimum just to reserve a deposit
-      // address. NOWPayments IPN scales credited USD by actually_paid /
-      // pay_amount, so the user can send ANY amount ≥ min and still get
-      // credited proportionally.
       const res = await fetch(`${apiBase}/crypto/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: minReq, currency: apiCurrency }),
+        body: JSON.stringify({ userId, amount: requested, currency: apiCurrency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment");
