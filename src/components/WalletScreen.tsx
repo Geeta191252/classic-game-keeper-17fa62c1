@@ -874,7 +874,7 @@ const WalletScreen = () => {
                   Choose Deposit Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: `Min $${Math.min(...Object.values(cryptoMins))}+`, icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: cryptoMinsReady ? `Min ${formatUsdMin(Math.min(...Object.values(cryptoMins)))}+` : "Min Loading…", icon: DollarSign, color: "#00a2e8" },
                   { id: "inr", label: "INR", desc: "UPI / QR Code", min: `Min ₹${inrDepositMin}`, icon: IndianRupee, color: "#10b981" },
                   { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${starDepositMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -948,7 +948,7 @@ const WalletScreen = () => {
                             <span className="text-[13px] font-black text-white tracking-tight">{coin.label}</span>
                           </div>
                           <span className="text-[10px] text-[#8e97a4] font-medium leading-none">{coin.name}</span>
-                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min ${cryptoMins[coin.id] || defaultCryptoMins[coin.id] || 1}</span>
+                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min {cryptoMinLabel(coin.id)}</span>
                         </button>
                       );
                     })}
@@ -956,7 +956,7 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>. Create address only when you are ready to pay.
+                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">{cryptoMinLabel(cryptoCurrency)}</span>. Create address only when you are ready to pay.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
@@ -972,13 +972,13 @@ const WalletScreen = () => {
                           min={cryptoMins[cryptoCurrency] || 1}
                           value={cryptoUsdAmount}
                           onChange={(e) => setCryptoUsdAmount(e.target.value)}
-                          placeholder={`USD amount (min $${cryptoMins[cryptoCurrency] || 1})`}
+                          placeholder={`USD amount (min ${cryptoMinLabel(cryptoCurrency)})`}
                           className="flex-1 bg-transparent outline-none text-sm font-black text-white placeholder:text-[#5a6373] py-3"
                         />
                         <span className="text-[#8e97a4] text-sm font-black">$</span>
                       </div>
                       <button
-                        disabled={cryptoProcessing}
+                        disabled={cryptoProcessing || !cryptoMinsReady}
                         onClick={() => handleCryptoDeposit(cryptoCurrency)}
                         className="rounded-2xl px-5 text-sm font-black uppercase tracking-wider text-white bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 flex items-center gap-1.5"
                       >
