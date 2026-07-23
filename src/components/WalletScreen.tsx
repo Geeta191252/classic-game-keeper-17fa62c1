@@ -759,7 +759,7 @@ const WalletScreen = () => {
   };
 
   return (
-    <div className="px-4 pt-4 pb-24 space-y-4 bg-[#0e131f] text-[#8e97a4] min-h-screen">
+    <div className="px-4 pt-4 pb-24 space-y-4 bg-[#0e131f] text-[#8e97a4] min-h-screen max-w-full overflow-x-hidden">
       
       {/* Title */}
       <motion.div
@@ -1044,28 +1044,28 @@ const WalletScreen = () => {
                 </div>
 
                 {/* TON Deposit — also on crypto page */}
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
+                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md max-w-full overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <Wallet className="h-4 w-4 text-[#00a2e8]" />
                       <h3 className="font-black text-xs text-white uppercase tracking-wider">TON Deposit</h3>
                     </div>
                     {tonPrice && (
-                      <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
+                      <span className="shrink-0 text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
                         1 TON = ${tonPrice.toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <div className="flex justify-center py-1">
+                  <div className="flex justify-center py-1 max-w-full">
                     {tonAddress ? (
-                      <div className="flex items-center gap-2 w-full">
-                        <div className="flex-1 bg-[#0d121f] border border-white/[0.04] rounded-xl px-3 py-2">
+                      <div className="grid grid-cols-1 gap-2 w-full min-w-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                        <div className="min-w-0 bg-[#0d121f] border border-white/[0.04] rounded-xl px-3 py-2 overflow-hidden">
                           <p className="text-[8px] font-extrabold text-emerald-400 uppercase tracking-wider">Connected</p>
-                          <p className="text-[10px] font-mono text-white truncate">{tonAddress}</p>
+                          <p className="text-[10px] font-mono text-white break-all leading-snug">{tonAddress}</p>
                         </div>
                         <button
                           onClick={() => tonConnectUI.disconnect()}
-                          className="rounded-xl h-10 px-3 text-[10px] font-black uppercase bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 tracking-wider transition-all"
+                          className="w-full sm:w-auto rounded-xl h-10 px-3 text-[10px] font-black uppercase bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 tracking-wider transition-all"
                         >
                           Disconnect
                         </button>
@@ -1082,8 +1082,8 @@ const WalletScreen = () => {
                   {tonAddress ? (
                     <div className="space-y-1.5">
                       <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Instant TON Deposit</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <div className="relative min-w-0">
                           <Input
                             type="number"
                             placeholder="Amount of TON"
@@ -1096,7 +1096,7 @@ const WalletScreen = () => {
                         <button
                           onClick={handleTonDeposit}
                           disabled={tonProcessing || !tonDepositAmount}
-                          className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                          className="w-full sm:w-auto rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                         >
                           {tonProcessing ? "..." : "Deposit"}
                         </button>
