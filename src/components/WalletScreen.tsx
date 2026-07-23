@@ -1533,7 +1533,13 @@ const WalletScreen = () => {
           Transaction History
         </h3>
         <div className="space-y-2">
-          {transactions.slice(0, 10).map((tx, i) => {
+          {transactions
+            .filter((tx) => {
+              const t = safeText(tx?.type, "").toLowerCase();
+              return t === "deposit" || t === "withdraw" || t === "withdrawal" || t === "ton_deposit" || t === "ton_withdraw";
+            })
+            .slice(0, 10)
+            .map((tx, i) => {
             const txType = safeText(tx?.type, "transaction").toLowerCase();
             const title = safeText(tx?.game || tx?.description || tx?.type, "Transaction");
             const isPositive = txType === "win" || txType === "deposit" || txType === "bonus" || txType === "refund";
