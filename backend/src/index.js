@@ -1792,7 +1792,7 @@ app.post("/api/winnings", async (req, res) => {
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
-const CRYPTO_MIN_BUFFER_MULTIPLIER = 1.05;
+const CRYPTO_MIN_BUFFER_MULTIPLIER = 1;
 const CRYPTO_MIN_FALLBACK_USD = {
   btc: 22,
   ltc: 5,
@@ -1811,7 +1811,7 @@ function parseNowAmount(value) {
 function roundSafeUsdMin(value) {
   const raw = parseNowAmount(value);
   if (raw <= 0) return 0;
-  return Math.ceil(raw * CRYPTO_MIN_BUFFER_MULTIPLIER);
+  return Math.ceil(raw * CRYPTO_MIN_BUFFER_MULTIPLIER * 100) / 100;
 }
 
 function getFallbackCryptoMinUsd(payCurrency) {
@@ -1877,7 +1877,7 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
       }
       const rawMinUsd = attempt.from === "usd" ? (fiatEquivalent || minAmount) : fiatEquivalent;
       if (rawMinUsd > 0) {
-        const safeMinUsd = Math.max(fallbackUsd, roundSafeUsdMin(rawMinUsd));
+        const safeMinUsd = roundSafeUsdMin(rawMinUsd);
         return {
           currency,
           source: attempt.source,
@@ -1897,10 +1897,10 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
 }
 
 // In-memory cache: reuse the same NOWPayments invoice for a user+currency
-// within a ~55min window so repeated "Generate Address" clicks do NOT
+// within a short payment window so repeated final-confirm clicks do NOT
 // create new "waiting" entries in the NOWPayments dashboard / owner email.
 const cryptoInvoiceCache = new Map(); // key: `${userId}:${currency}` -> { data, ts }
-const INVOICE_TTL_MS = 55 * 60 * 1000;
+const INVOICE_TTL_MS = 10 * 60 * 1000;
 
 // POST /api/crypto/create-payment - Create NOWPayments direct payment
 app.post("/api/crypto/create-payment", async (req, res) => {
@@ -2077,7 +2077,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
       // soon as the address is generated (before any payment) and would create
       // a ghost pending record — skip it. Also ignore expired/failed if no tx
       // exists, since it means the user never paid.
-      const realPaymentStatuses = ["confirming", "confirmed", "sending", "finished", "partially_paid"];
+      const realPaymentStatuses = ["confirmed", "finished", "partially_paid"];
       if (!realPaymentStatuses.includes(payment_status)) {
         return res.sendStatus(200);
       }
@@ -2139,7 +2139,8 @@ app.post("/api/crypto/ipn", async (req, res) => {
       await tx.save();
       console.log(`❌ Crypto deposit failed: ${order_id} - ${payment_status}`);
     }
-    // For other statuses (waiting, confirming, sending) - do nothing, keep pending
+    // For other statuses (waiting, confirming, sending) - do nothing; the app
+    // only creates/shows the deposit after payment confirmation.
 
     return res.sendStatus(200);
   } catch (error) {
@@ -2186,7 +2187,7 @@ app.post("/api/crypto/check-status", async (req, res) => {
     if (!orderId) return res.status(400).json({ error: "Missing orderId" });
 
     const tx = await Transaction.findOne({ depositComment: orderId });
-    if (!tx) return res.status(404).json({ error: "Transaction not found" });
+    if (!tx) return res.json({ status: "waiting", amount: 0 });
 
     return res.json({ status: tx.status, amount: tx.amount });
   } catch (error) {

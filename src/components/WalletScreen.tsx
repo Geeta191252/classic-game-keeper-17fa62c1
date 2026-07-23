@@ -130,7 +130,6 @@ const WalletScreen = () => {
   const [tonProcessing, setTonProcessing] = useState(false);
   const [tonPrice, setTonPrice] = useState<number | null>(null);
 
-  const [cryptoAmount, setCryptoAmount] = useState("");
   const [cryptoCurrency, setCryptoCurrency] = useState("btc");
   const [cryptoProcessing, setCryptoProcessing] = useState(false);
   const [cryptoPayment, setCryptoPayment] = useState<{
@@ -242,7 +241,8 @@ const WalletScreen = () => {
             const apiCur = cryptoApiTicker[c.id] || c.id;
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
-            return [c.id, Math.max(defaultCryptoMins[c.id] || 1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
+            const liveMin = Number(d.min_usd);
+            return [c.id, Number.isFinite(liveMin) && liveMin > 0 ? liveMin : defaultCryptoMins[c.id] || 1] as const;
           } catch {
             return [c.id, defaultCryptoMins[c.id] || 1] as const;
           }
@@ -257,6 +257,13 @@ const WalletScreen = () => {
       }));
     })();
   }, []);
+
+  useEffect(() => {
+    setCryptoPayment(null);
+    setCryptoReadyToGenerate(false);
+    setCryptoConfirmChecked(false);
+    setPaymentStatus(null);
+  }, [cryptoCurrency]);
 
 
   useEffect(() => {
@@ -910,7 +917,7 @@ const WalletScreen = () => {
                             <span className="text-[13px] font-black text-white tracking-tight">{coin.label}</span>
                           </div>
                           <span className="text-[10px] text-[#8e97a4] font-medium leading-none">{coin.name}</span>
-                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min ${cryptoMins[coin.id]}</span>
+                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min ${cryptoMins[coin.id] || defaultCryptoMins[coin.id] || 1}</span>
                         </button>
                       );
                     })}
@@ -996,7 +1003,7 @@ const WalletScreen = () => {
                           Copy Address
                         </button>
                         <p className="text-[8px] text-[#8e97a4] text-center">
-                          Send any amount ≥ ${cryptoPayment.minUsd || cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
+                          Send minimum shown for this coin • Balance/payment history shows only after blockchain confirmation
                         </p>
                         {paymentStatus && paymentStatus !== "completed" && (
                           <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
