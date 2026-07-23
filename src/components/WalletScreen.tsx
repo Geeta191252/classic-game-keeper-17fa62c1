@@ -156,6 +156,8 @@ const WalletScreen = () => {
   const [upiAmount, setUpiAmount] = useState("");
   const [upiUtr, setUpiUtr] = useState("");
   const [upiSubmitting, setUpiSubmitting] = useState(false);
+  const [upiTimerStart, setUpiTimerStart] = useState<number | null>(null);
+  const [upiSecondsLeft, setUpiSecondsLeft] = useState(600);
 
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance } = useBalanceContext();
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -220,6 +222,36 @@ const WalletScreen = () => {
     if (walletTab === "deposit") setDepositStep("menu");
     else setWithdrawStep("menu");
   }, [walletTab]);
+
+  // 10-minute UPI deposit countdown — auto-closes dialog when expired so admin
+  // panel + user history don't fill up with abandoned requests.
+  useEffect(() => {
+    if (!upiDepositDialog) {
+      setUpiTimerStart(null);
+      setUpiSecondsLeft(600);
+      return;
+    }
+    if (upiTimerStart === null) {
+      setUpiTimerStart(Date.now());
+      setUpiSecondsLeft(600);
+      return;
+    }
+    const id = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - upiTimerStart) / 1000);
+      const left = Math.max(0, 600 - elapsed);
+      setUpiSecondsLeft(left);
+      if (left <= 0) {
+        setUpiDepositDialog(false);
+        toast({
+          title: "Deposit window expired",
+          description: "10 minutes are up. Please start a new UPI deposit if you haven't paid yet.",
+          variant: "destructive",
+        });
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [upiDepositDialog, upiTimerStart]);
+
 
   const handleUpiDepositSubmit = async () => {
     const rupeeAmount = Number(upiAmount);
@@ -1577,6 +1609,14 @@ const WalletScreen = () => {
                   <button onClick={() => setUpiDepositDialog(false)} className="h-7 w-7 rounded-full bg-[#0d121f] flex items-center justify-center hover:bg-slate-800 transition-colors">
                     <X className="h-4 w-4 text-slate-400" />
                   </button>
+                </div>
+
+                {/* 10-minute countdown — request auto-cancels if not paid */}
+                <div className={`flex items-center justify-between rounded-xl px-3 py-2 border ${upiSecondsLeft <= 60 ? 'bg-red-500/10 border-red-500/30' : 'bg-amber-500/10 border-amber-500/30'}`}>
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-300">Time left to pay</span>
+                  <span className={`text-sm font-black font-mono ${upiSecondsLeft <= 60 ? 'text-red-300' : 'text-amber-200'}`}>
+                    {String(Math.floor(upiSecondsLeft / 60)).padStart(2, '0')}:{String(upiSecondsLeft % 60).padStart(2, '0')}
+                  </span>
                 </div>
 
                 <div className="space-y-1.5">
