@@ -524,14 +524,17 @@ const WalletScreen = () => {
     }
   };
 
-  // Auto-fetch a deposit address whenever the user opens the crypto page or
-  // switches coin — no amount entry required.
+  // NOTE: We intentionally do NOT auto-create a NOWPayments invoice on coin
+  // select or page open. That would spam the dashboard with "Waiting"
+  // entries even for users who never actually pay. Address is generated
+  // only when the user explicitly clicks the "Generate Address" button.
+
+  // Clear any previous address when the user switches coin, so we don't show
+  // a stale QR from a different currency.
   useEffect(() => {
-    if (depositStep !== "crypto") return;
     setCryptoPayment(null);
-    handleCryptoDeposit(cryptoCurrency);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [depositStep, cryptoCurrency]);
+  }, [cryptoCurrency, depositStep]);
+
 
   const handleCurrencySelect = (action: ActionType, currency: CurrencyType) => {
     setAmountDialog({ open: true, action, currency });
@@ -892,12 +895,23 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address below — credited automatically.
+                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address — credited automatically.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
                     )}
                   </div>
+
+                  {!cryptoPayment && (
+                    <button
+                      disabled={cryptoProcessing}
+                      onClick={() => handleCryptoDeposit(cryptoCurrency)}
+                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 text-white transition-colors"
+                    >
+                      {cryptoProcessing ? "Generating…" : `Generate ${cryptoCurrency.toUpperCase()} Address`}
+                    </button>
+                  )}
+
 
                   <AnimatePresence>
                     {cryptoPayment && (
