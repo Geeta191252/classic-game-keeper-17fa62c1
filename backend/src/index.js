@@ -2004,10 +2004,16 @@ app.post("/api/crypto/ipn", async (req, res) => {
     }
 
 
-    if (payment_status === "finished" || payment_status === "confirmed") {
-      // Always credit the actually-paid amount, not the invoice price
+    if (payment_status === "finished" || payment_status === "confirmed" || payment_status === "partially_paid") {
+      // Always credit the actually-paid amount, not the invoice price.
+      // For "partially_paid" (user sent less than minimum/invoice), still credit
+      // the exact fraction they sent so the owner receives the funds and the
+      // user sees their real deposit inside the mini app.
       tx.amount = creditedUsd;
       tx.status = "completed";
+      if (payment_status === "partially_paid") {
+        tx.description = `Crypto Deposit (Partial): $${creditedUsd} via ${String(pay_currency || "").toUpperCase()} (paid ${paidCrypto} vs ${expectedPay} expected)`;
+      }
       await tx.save();
 
       // Credit user balance
@@ -2015,7 +2021,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
       user.dollarBalance += creditedUsd;
       await user.save();
 
-      console.log(`✅ Crypto deposit completed: $${creditedUsd} for user ${tx.telegramId} (invoice $${priceUsd}, paid ${paidCrypto} ${pay_currency})`);
+      console.log(`✅ Crypto deposit ${payment_status}: $${creditedUsd} for user ${tx.telegramId} (invoice $${priceUsd}, paid ${paidCrypto} ${pay_currency})`);
 
       // Unlock pending referral reward (if any) on first successful deposit
       await creditReferralOnDeposit(tx.telegramId);
@@ -2023,7 +2029,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
       // Notify user via Telegram bot
       try {
         await sendWebAppMessage(tx.telegramId,
-          `✅ Payment Received!\n\n💰 $${creditedUsd} has been added to your wallet.\n\nOpen the game to start playing! 🎮`,
+          `✅ Payment Received!\n\n💰 $${creditedUsd} has been added to your wallet.${payment_status === "partially_paid" ? "\n\n(Partial payment auto-credited)" : ""}\n\nOpen the game to start playing! 🎮`,
           "🎮 Open Game",
           getWebAppBaseUrl()
         );
@@ -2035,6 +2041,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
           `💰 Crypto Deposit!\n\nUser: ${tx.telegramId}\nInvoice: $${priceUsd}\nCredited: $${creditedUsd}\nPaid: ${paidCrypto} ${String(pay_currency || "").toUpperCase()}\nOrder: ${order_id}\nStatus: ${payment_status}`
         );
       } catch (e) { /* ignore */ }
+
     } else if (payment_status === "failed" || payment_status === "expired") {
       tx.status = "failed";
       await tx.save();
