@@ -152,6 +152,8 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
 const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
 const NEW_USER_CHANNEL = process.env.NEW_USER_CHANNEL || "@royalkinggamedata";
 const WITHDRAWAL_CHANNEL = process.env.WITHDRAWAL_CHANNEL || "@royal_king_game_Withdrawal";
+const PLAY_NOW_URL = "https://t.me/RoyalKingGameBot/RoyalKingGame";
+const MAIN_CHANNEL_URL = "https://t.me/Royal_King_Game_Main";
 
 const ownerNotifyQueue = [];
 let ownerNotifyTimer = null;
@@ -510,8 +512,8 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
         disable_web_page_preview: true,
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🎮 Play Now", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
-            [{ text: "Royal King Game Main", url: "https://t.me/Royal_King_Game_Main" }],
+            [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
+            [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
           ],
         },
       });
@@ -4352,9 +4354,8 @@ app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
         disable_web_page_preview: true,
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🎮 Play Now 🕹️", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
-            [{ text: "Royal King Game Main", url: "https://t.me/royalkinggamedata" }],
-            [{ text: "Royal King Game Withrowal", url: "https://t.me/royal_king_game_Withdrawal" }],
+            [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
+            [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
           ],
         },
       });
