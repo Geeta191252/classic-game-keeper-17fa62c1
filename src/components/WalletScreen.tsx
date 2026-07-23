@@ -463,24 +463,24 @@ const WalletScreen = () => {
     }
   };
 
-  const handleCryptoDeposit = async () => {
-    const usdAmt = Number(cryptoAmount);
-    const minReq = cryptoMins[cryptoCurrency] || 1;
-    if (!usdAmt || usdAmt < minReq) {
-      toast({ title: "Amount too low", description: `Minimum deposit for ${cryptoCurrency.toUpperCase()} is $${minReq}.`, variant: "destructive" });
-      return;
-    }
+  const handleCryptoDeposit = async (coinIdOverride?: string) => {
+    const coin = coinIdOverride || cryptoCurrency;
+    const minReq = cryptoMins[coin] || 1;
 
     setCryptoProcessing(true);
     try {
       const tg = getTelegram();
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
 
-      const apiCurrency = cryptoApiTicker[cryptoCurrency] || cryptoCurrency;
+      const apiCurrency = cryptoApiTicker[coin] || coin;
+      // Invoice is created at the coin's minimum just to reserve a deposit
+      // address. NOWPayments IPN scales credited USD by actually_paid /
+      // pay_amount, so the user can send ANY amount ≥ min and still get
+      // credited proportionally.
       const res = await fetch(`${apiBase}/crypto/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: usdAmt, currency: apiCurrency }),
+        body: JSON.stringify({ userId, amount: minReq, currency: apiCurrency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment");
@@ -492,18 +492,22 @@ const WalletScreen = () => {
           payCurrency: data.payCurrency,
           orderId: data.orderId,
         });
-        toast({
-          title: "Payment Created! 🪙",
-          description: `Send exactly ${data.payAmount} ${data.payCurrency.toUpperCase()} to the address shown below.`,
-        });
-        setCryptoAmount("");
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Crypto deposit failed.", variant: "destructive" });
+      toast({ title: "Error", description: err?.message || "Could not fetch deposit address.", variant: "destructive" });
     } finally {
       setCryptoProcessing(false);
     }
   };
+
+  // Auto-fetch a deposit address whenever the user opens the crypto page or
+  // switches coin — no amount entry required.
+  useEffect(() => {
+    if (depositStep !== "crypto") return;
+    setCryptoPayment(null);
+    handleCryptoDeposit(cryptoCurrency);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depositStep, cryptoCurrency]);
 
   const handleCurrencySelect = (action: ActionType, currency: CurrencyType) => {
     setAmountDialog({ open: true, action, currency });
