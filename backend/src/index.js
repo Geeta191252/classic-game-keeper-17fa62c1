@@ -207,25 +207,64 @@ function buildFakeWithdrawal() {
     usdValue = Number((stars * 0.013).toFixed(4));
     txId = randDigits(16);
   }
-  const shortTx = `${String(txId).slice(0, 5)}…${String(txId).slice(-5)}`;
-  const text =
-    `✅ Bucks Withdrawal Successful!\n\n\n` +
-    `🚀 Amount: ${amount} ${network}\n\n\n` +
-    `💵 USD Value: $${usdValue.toFixed(4)}\n\n\n` +
-    `🔗 TxID: ${shortTx}`;
-  return text;
+  return formatWithdrawalChannelMessage({
+    amount,
+    network,
+    usdValue,
+    txId,
+  });
+}
+
+function shortWithdrawalTx(txId) {
+  if (!txId) return "";
+  const raw = String(txId).trim();
+  if (!raw) return "";
+  if (raw.length <= 12) return raw;
+  return `${raw.slice(0, 5)}…${raw.slice(-5)}`;
+}
+
+function formatWithdrawalAmount(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return String(amount || 0);
+  return Number.isInteger(n) ? String(n) : String(n);
+}
+
+function formatWithdrawalUsd(usdValue) {
+  const n = Number(usdValue);
+  if (!Number.isFinite(n)) return "";
+  return n.toFixed(7);
+}
+
+function formatWithdrawalChannelMessage({ amount, network, usdValue, txId }) {
+  const safeNetwork = network || "TON";
+  const lines = [
+    "✅ Bucks Withdrawal Successful!",
+    `🚀 Amount: ${formatWithdrawalAmount(amount)} ${safeNetwork}`,
+  ];
+
+  const usd = formatWithdrawalUsd(usdValue);
+  if (usd) lines.push(`💵 USD Value: $${usd}`);
+
+  const shortTx = shortWithdrawalTx(txId);
+  if (shortTx) lines.push(`🔗 TxID: ${shortTx}`);
+
+  return lines.join("\n\n");
+}
+
+function withdrawalChannelButtons() {
+  return {
+    inline_keyboard: [
+      [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
+      [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
+    ],
+  };
 }
 
 async function sendFakeWithdrawal() {
   try {
     await bot.sendMessage(WITHDRAWAL_CHANNEL, buildFakeWithdrawal(), {
       disable_web_page_preview: true,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
-          [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
-        ],
-      },
+      reply_markup: withdrawalChannelButtons(),
     });
   } catch (err) {
     console.error("fake withdrawal post failed:", err?.response?.body?.description || err.message);
