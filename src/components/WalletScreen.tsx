@@ -142,6 +142,7 @@ const WalletScreen = () => {
   } | null>(null);
   const [cryptoReadyToGenerate, setCryptoReadyToGenerate] = useState(false);
   const [cryptoConfirmChecked, setCryptoConfirmChecked] = useState(false);
+  const [cryptoUsdAmount, setCryptoUsdAmount] = useState("");
 
   const [upiConfig, setUpiConfig] = useState<{
     upiId: string;
