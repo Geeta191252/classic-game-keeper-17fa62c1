@@ -1363,7 +1363,7 @@ app.post("/api/telegram-webhook", async (req, res) => {
       const fromId = update.message.from.id;
       const isOwner = String(fromId) === "6965488457";
       const base = "🎮 *Royal King Game*\n\n/start - Open the game\n/help - Show commands";
-      const admin = "\n\n👑 *Admin Commands*\n/admin - Open admin panel\n/stats - Show live stats\n/users [n] - Recent users list\n/broadcast <msg> - Send message to all users\n/broadcastgame <msg> - Broadcast with Play button\n/cancelbroadcast - Stop running broadcast\n/post <chat_id> <caption> - Post photo to channel";
+      const admin = "\n\n👑 *Admin Commands*\n/admin - Open admin panel\n/stats - Show live stats\n/users [n] - Recent users list\n/broadcast <msg> - Send message to all users\n/broadcastgame <msg> - Broadcast with Play button\n/cancelbroadcast - Stop running broadcast\n/post <chat_id> <caption> - Post photo to channel\n/fake_withdrawal_on - Start auto fake withdrawal posts\n/fake_withdrawal_off - Stop auto fake withdrawal posts";
       await bot.sendMessage(chatId, isOwner ? base + admin : base, { parse_mode: "Markdown" });
       return res.sendStatus(200);
     }
