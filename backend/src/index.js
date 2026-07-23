@@ -516,7 +516,7 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
       const usdLine = usdValue !== undefined && usdValue !== null && usdValue !== ""
         ? `💵 USD Value: $${Number(usdValue).toFixed(4)}\n\n`
         : "";
-      const txLine = txId ? `🔗 TxID: [${shortTx}](https://t.me/${String(WITHDRAWAL_CHANNEL).replace("@", "")})` : "";
+      const txLine = txId ? `🔗 TxID: \`${shortTx}\`` : "";
       const text =
         `✅ *${network} Withdrawal Successful!*\n\n` +
         `🚀 Amount: ${amount} ${network}\n\n` +
@@ -524,7 +524,13 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
         txLine;
       await sendChannelWithButtons(WITHDRAWAL_CHANNEL, text, getWebAppUrl());
     } catch (channelErr) {
-      console.error("Failed to post withdrawal approval to channel:", channelErr?.response?.body?.description || channelErr.message);
+      const desc = channelErr?.response?.body?.description || channelErr.message;
+      console.error("Failed to post withdrawal approval to channel:", desc);
+      try {
+        await bot.sendMessage(OWNER_TELEGRAM_ID,
+          `⚠️ Withdrawal approval channel post failed (${WITHDRAWAL_CHANNEL}): ${desc}\nBot ko channel me ADMIN banao aur "Post messages" permission do.`
+        );
+      } catch (_) {}
     }
 
     return res.json({ success: true, message: "Withdrawal approved and user notified" });
