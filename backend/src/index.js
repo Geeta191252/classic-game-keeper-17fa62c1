@@ -155,6 +155,96 @@ const WITHDRAWAL_CHANNEL = process.env.WITHDRAWAL_CHANNEL || "@royal_king_game_W
 const PLAY_NOW_URL = "https://t.me/RoyalKingGameBot/RoyalKingGame";
 const MAIN_CHANNEL_URL = "https://t.me/Royal_King_Game_Main";
 
+// ============================================
+// Fake withdrawal broadcaster (owner-controlled)
+// ============================================
+let fakeWithdrawalTimer = null;
+const FAKE_WITHDRAWAL_INTERVAL_MS = 20000;
+
+function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randFloat(min, max, decimals) {
+  const v = Math.random() * (max - min) + min;
+  return Number(v.toFixed(decimals));
+}
+function randHex(len) {
+  const chars = "0123456789abcdef";
+  let s = "";
+  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+function randDigits(len) {
+  let s = "";
+  for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
+  return s;
+}
+
+function buildFakeWithdrawal() {
+  const kind = randChoice(["crypto", "crypto", "crypto", "upi", "star"]);
+  let amount, network, usdValue, txId;
+  if (kind === "crypto") {
+    const coin = randChoice([
+      { n: "TON", price: 5.2, dec: 7, min: 0.002, max: 2.5 },
+      { n: "BTC", price: 68000, dec: 8, min: 0.00005, max: 0.002 },
+      { n: "LTC", price: 85, dec: 6, min: 0.02, max: 1.2 },
+      { n: "SOL", price: 160, dec: 5, min: 0.01, max: 0.8 },
+      { n: "TRX", price: 0.13, dec: 4, min: 5, max: 200 },
+      { n: "DOGE", price: 0.16, dec: 4, min: 5, max: 300 },
+    ]);
+    amount = randFloat(coin.min, coin.max, coin.dec);
+    network = coin.n;
+    usdValue = Number((amount * coin.price).toFixed(4));
+    txId = randHex(64);
+  } else if (kind === "upi") {
+    const inr = randFloat(50, 4500, 2);
+    amount = inr;
+    network = "INR";
+    usdValue = Number((inr / 83).toFixed(4));
+    txId = randDigits(12);
+  } else {
+    const stars = Math.floor(randFloat(25, 1500, 0));
+    amount = stars;
+    network = "STAR";
+    usdValue = Number((stars * 0.013).toFixed(4));
+    txId = randDigits(16);
+  }
+  const shortTx = `${String(txId).slice(0, 5)}…${String(txId).slice(-5)}`;
+  const text =
+    `✅ Bucks Withdrawal Successful!\n\n\n` +
+    `🚀 Amount: ${amount} ${network}\n\n\n` +
+    `💵 USD Value: $${usdValue.toFixed(4)}\n\n\n` +
+    `🔗 TxID: ${shortTx}`;
+  return text;
+}
+
+async function sendFakeWithdrawal() {
+  try {
+    await bot.sendMessage(WITHDRAWAL_CHANNEL, buildFakeWithdrawal(), {
+      disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "🎮 Play Now 🕹️", url: PLAY_NOW_URL }],
+          [{ text: "Royal King Game Main", url: MAIN_CHANNEL_URL }],
+        ],
+      },
+    });
+  } catch (err) {
+    console.error("fake withdrawal post failed:", err?.response?.body?.description || err.message);
+  }
+}
+
+function startFakeWithdrawals() {
+  if (fakeWithdrawalTimer) return false;
+  fakeWithdrawalTimer = setInterval(sendFakeWithdrawal, FAKE_WITHDRAWAL_INTERVAL_MS);
+  sendFakeWithdrawal();
+  return true;
+}
+function stopFakeWithdrawals() {
+  if (!fakeWithdrawalTimer) return false;
+  clearInterval(fakeWithdrawalTimer);
+  fakeWithdrawalTimer = null;
+  return true;
+}
+
 const ownerNotifyQueue = [];
 let ownerNotifyTimer = null;
 let ownerNotifyPausedUntil = 0;
