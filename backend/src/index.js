@@ -1787,6 +1787,10 @@ app.post("/api/winnings", async (req, res) => {
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
+const NOWPAYMENTS_PAYOUT_CURRENCY = String(process.env.NOWPAYMENTS_PAYOUT_CURRENCY || "").trim().toLowerCase();
+const NOWPAYMENTS_MINIMUM_SETTLEMENT_CURRENCY = String(
+  process.env.NOWPAYMENTS_MINIMUM_CURRENCY || process.env.NOWPAYMENTS_PAYOUT_CURRENCY || "usdttrc20"
+).trim().toLowerCase();
 const CRYPTO_MIN_BUFFER_MULTIPLIER = 1;
 const CRYPTO_MIN_FALLBACK_USD = {
   btc: 22,
@@ -1815,11 +1819,9 @@ function getFallbackCryptoMinUsd(payCurrency) {
 }
 
 async function fetchNowPaymentsMinimum(currencyFrom, currencyTo) {
-  const params = new URLSearchParams({
-    currency_from: currencyFrom,
-    currency_to: currencyTo,
-    fiat_equivalent: "usd",
-  });
+  const params = new URLSearchParams({ currency_from: currencyFrom });
+  if (currencyTo) params.set("currency_to", currencyTo);
+  params.set("fiat_equivalent", "usd");
   const npRes = await fetch(`${NOWPAYMENTS_API}/min-amount?${params.toString()}`, {
     headers: { "x-api-key": NOWPAYMENTS_API_KEY },
   });
@@ -1845,6 +1847,21 @@ async function estimateCryptoToUsd(currency, amount) {
   return parseNowAmount(data.estimated_amount);
 }
 
+async function estimateUsdToCrypto(currency, usdAmount) {
+  if (!usdAmount || usdAmount <= 0) return 0;
+  const params = new URLSearchParams({
+    amount: String(usdAmount),
+    currency_from: "usd",
+    currency_to: currency,
+  });
+  const npRes = await fetch(`${NOWPAYMENTS_API}/estimate?${params.toString()}`, {
+    headers: { "x-api-key": NOWPAYMENTS_API_KEY },
+  });
+  const data = await npRes.json().catch(() => ({}));
+  if (!npRes.ok) return 0;
+  return parseNowAmount(data.estimated_amount);
+}
+
 async function getNowPaymentsMinimumUsd(payCurrency) {
   const currency = String(payCurrency || "").trim().toLowerCase();
   const fallbackUsd = getFallbackCryptoMinUsd(currency);
@@ -1852,10 +1869,16 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
     return { min_amount: 0, fiat_equivalent: fallbackUsd, raw_min_usd: fallbackUsd, min_usd: fallbackUsd, fallback: true };
   }
 
-  // Official NOWPayments /v1/min-amount docs: currency_to is the selected crypto
-  // and fiat_equivalent=usd returns the minimum in USD. Do not use app guesses.
+  // NOWPayments validates direct USD-priced payments by converting USD -> pay_currency,
+  // then comparing that crypto amount with /min-amount for pay_currency -> settlement pair.
+  // Using pay_currency -> pay_currency returns tiny network-only values (e.g. $0.03 LTC)
+  // that are rejected by real /payment requests, so always use the settlement pair.
   const attempts = [
-    { from: currency, to: currency, source: "nowpayments_currency_to" },
+    ...(NOWPAYMENTS_PAYOUT_CURRENCY
+      ? [{ from: currency, to: NOWPAYMENTS_PAYOUT_CURRENCY, source: "nowpayments_configured_payout_pair" }]
+      : [{ from: currency, to: undefined, source: "nowpayments_account_default_pair" }]),
+    { from: currency, to: NOWPAYMENTS_MINIMUM_SETTLEMENT_CURRENCY, source: "nowpayments_settlement_pair" },
+    { from: currency, to: undefined, source: "nowpayments_pay_currency_default" },
   ];
 
   let lastError = null;
@@ -1870,10 +1893,13 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
       const rawMinUsd = fiatEquivalent;
       if (rawMinUsd > 0) {
         const nowPaymentsMinUsd = roundNowPaymentsUsdMin(rawMinUsd);
+        const estimatedPayAmount = await estimateUsdToCrypto(currency, nowPaymentsMinUsd);
         return {
           currency,
+          payout_currency: attempt.to || null,
           source: attempt.source,
           min_amount: minAmount,
+          estimated_pay_amount: estimatedPayAmount,
           fiat_equivalent: fiatEquivalent || rawMinUsd,
           raw_min_usd: rawMinUsd,
           min_usd: nowPaymentsMinUsd,
@@ -1936,6 +1962,7 @@ app.post("/api/crypto/create-payment", async (req, res) => {
         price_amount: requestedAmount,
         price_currency: "usd",
         pay_currency: currency,
+        ...(NOWPAYMENTS_PAYOUT_CURRENCY ? { payout_currency: NOWPAYMENTS_PAYOUT_CURRENCY } : {}),
         order_id: orderId,
         order_description: `Deposit $${requestedAmount} for user ${userId}`,
         ipn_callback_url: `${getBackendUrl()}/api/crypto/ipn`,
