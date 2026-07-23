@@ -17,14 +17,15 @@ const cryptoApiTicker: Record<string, string> = {
   usdt: "usdttrc20",
 };
 
-// Per-coin minimum deposit in USD (defaults, overridable via admin limits config)
+// Conservative fallback minimums. Live values are loaded from NOWPayments via
+// backend so the UI matches the gateway instead of hardcoded guesses.
 const defaultCryptoMins: Record<string, number> = {
-  btc: 20,
+  btc: 25,
   ltc: 5,
-  ton: 3,
+  ton: 5,
   sol: 5,
-  trx: 2,
-  doge: 8,
+  trx: 5,
+  doge: 10,
 };
 
 const defaultLimits = {
@@ -213,7 +214,19 @@ const WalletScreen = () => {
       .catch(() => {});
     fetch(`${apiBase}/limits-config`)
       .then(res => res.ok ? res.json() : null)
-      .then(data => { if (data && data.inr) setLimits(data); })
+      .then(data => {
+        if (data && data.inr) {
+          setLimits((prev) => ({
+            ...prev,
+            inr: data.inr || prev.inr,
+            star: data.star || prev.star,
+            crypto: {
+              ...prev.crypto,
+              withdrawMin: Number(data.crypto?.withdrawMin) || prev.crypto.withdrawMin,
+            },
+          }));
+        }
+      })
       .catch(() => {});
 
     // Fetch REAL per-coin minimums from NOWPayments so the UI matches what the
@@ -225,7 +238,7 @@ const WalletScreen = () => {
             const apiCur = cryptoApiTicker[c.id] || c.id;
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
-            return [c.id, Math.max(1, Number(d.min_usd) || 1)] as const;
+            return [c.id, Math.max(1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
           } catch {
             return [c.id, defaultCryptoMins[c.id] || 1] as const;
           }
