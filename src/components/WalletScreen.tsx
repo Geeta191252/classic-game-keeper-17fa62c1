@@ -934,8 +934,21 @@ const WalletScreen = () => {
                           </p>
                         </div>
                       )}
+                      {cryptoReadyToGenerate && (
+                        <label className="flex items-start gap-2 rounded-xl border border-[#00a2e8]/20 bg-[#00a2e8]/10 px-3 py-2">
+                          <input
+                            type="checkbox"
+                            checked={cryptoConfirmChecked}
+                            onChange={(e) => setCryptoConfirmChecked(e.target.checked)}
+                            className="mt-0.5 h-3.5 w-3.5 accent-[#00a2e8]"
+                          />
+                          <span className="text-[9px] leading-relaxed text-slate-200">
+                            Main abhi payment karunga. Address banne ke baad NOWPayments dashboard me waiting payment dikh sakta hai.
+                          </span>
+                        </label>
+                      )}
                       <button
-                        disabled={cryptoProcessing}
+                        disabled={cryptoProcessing || (cryptoReadyToGenerate && !cryptoConfirmChecked)}
                         onClick={() => cryptoReadyToGenerate ? handleCryptoDeposit(cryptoCurrency) : setCryptoReadyToGenerate(true)}
                         className={`w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider disabled:opacity-50 text-white transition-colors ${cryptoReadyToGenerate ? "bg-[#00a2e8] hover:bg-[#0091d0]" : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.04]"}`}
                       >
