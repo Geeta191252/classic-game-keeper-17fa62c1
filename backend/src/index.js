@@ -2091,8 +2091,9 @@ app.get("/api/crypto/min-amount", async (req, res) => {
         );
         const est = await estRes.json();
         const rawUsd = Number(est.estimated_amount) || 0;
-        // 15% safety buffer + ceil, floor at $1
-        minUsd = Math.max(1, Math.ceil(rawUsd * 1.15));
+        // 25% safety buffer + ceil, floor at $1
+        minUsd = Math.max(1, Math.ceil(rawUsd * 1.25));
+
       } catch { /* keep default */ }
     }
     return res.json({ min_amount: nativeMin, min_usd: minUsd });
