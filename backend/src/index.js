@@ -4461,6 +4461,36 @@ app.listen(PORT, () => {
     console.warn("[keep-alive] KOYEB_URL/WEBAPP_URL not set — external uptime monitor recommended");
   }
 
+  // ---- Auto-expire stale pending deposits after 10 minutes ----
+  // Prevents fake/abandoned UPI + crypto requests from cluttering the admin
+  // panel and user history. Runs every 60 seconds.
+  const DEPOSIT_EXPIRY_MS = 10 * 60 * 1000;
+  const expirePendingDeposits = async () => {
+    try {
+      const cutoff = new Date(Date.now() - DEPOSIT_EXPIRY_MS);
+      const result = await Transaction.updateMany(
+        {
+          type: { $in: ["deposit", "ton_deposit"] },
+          status: "pending",
+          createdAt: { $lt: cutoff },
+        },
+        {
+          $set: {
+            status: "failed",
+            description: "Auto-cancelled — payment not verified within 10 minutes",
+          },
+        }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`[deposit-expiry] auto-cancelled ${result.modifiedCount} stale pending deposit(s)`);
+      }
+    } catch (e) {
+      console.warn("[deposit-expiry] error:", e.message);
+    }
+  };
+  setInterval(expirePendingDeposits, 60 * 1000);
+  setTimeout(expirePendingDeposits, 15 * 1000);
+
 
   // Set Telegram webhook automatically
   const webhookUrl = `${getBackendUrl()}/api/telegram-webhook`;
