@@ -159,7 +159,7 @@ const MAIN_CHANNEL_URL = "https://t.me/Royal_King_Game_Main";
 // Fake withdrawal broadcaster (owner-controlled)
 // ============================================
 let fakeWithdrawalTimer = null;
-const FAKE_WITHDRAWAL_INTERVAL_MS = 20000;
+let fakeWithdrawalActive = false;
 
 function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function randFloat(min, max, decimals) {
