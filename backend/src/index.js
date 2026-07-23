@@ -4353,8 +4353,9 @@ app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
         disable_web_page_preview: true,
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🎮 PLAY GAME 🕹️", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
-            [{ text: "📢 News Channel 📢", url: "https://t.me/royalkinggamedata" }],
+            [{ text: "🎮 Play Now 🕹️", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
+            [{ text: "Royal King Game Main", url: "https://t.me/royalkinggamedata" }],
+            [{ text: "Royal King Game Withrowal", url: "https://t.me/royal_king_game_Withdrawal" }],
           ],
         },
       });
