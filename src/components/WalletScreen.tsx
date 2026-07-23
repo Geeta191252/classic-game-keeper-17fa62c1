@@ -524,7 +524,11 @@ const WalletScreen = () => {
     }
   };
 
-  // Auto-fetch a deposit address whenever the user opens the crypto page or
+  // NOTE: We intentionally do NOT auto-create a NOWPayments invoice on coin
+  // select or page open. That would spam the dashboard with "Waiting"
+  // entries even for users who never actually pay. Address is generated
+  // only when the user explicitly clicks the "Generate Address" button.
+
   // switches coin — no amount entry required.
   useEffect(() => {
     if (depositStep !== "crypto") return;
