@@ -2037,20 +2037,38 @@ app.get("/api/crypto/currencies", async (req, res) => {
   }
 });
 
-// GET /api/crypto/min-amount - Get minimum payment amount
+// GET /api/crypto/min-amount - Get minimum payment amount (native + USD)
 app.get("/api/crypto/min-amount", async (req, res) => {
   try {
     const { currency } = req.query;
     if (!currency || !NOWPAYMENTS_API_KEY) {
-      return res.json({ min_amount: 1 });
+      return res.json({ min_amount: 1, min_usd: 1 });
     }
     const npRes = await fetch(`${NOWPAYMENTS_API}/min-amount?currency_from=${currency}&currency_to=usd`, {
       headers: { "x-api-key": NOWPAYMENTS_API_KEY },
     });
     const data = await npRes.json();
-    return res.json({ min_amount: data.min_amount || 1 });
+    const nativeMin = Number(data.min_amount) || 0;
+
+    // Ask NOWPayments how much USD that native minimum equals right now, then
+    // round UP to a safe integer so tiny price swings don't push the user
+    // below the invoice minimum at creation time.
+    let minUsd = 1;
+    if (nativeMin > 0) {
+      try {
+        const estRes = await fetch(
+          `${NOWPAYMENTS_API}/estimate?amount=${nativeMin}&currency_from=${currency}&currency_to=usd`,
+          { headers: { "x-api-key": NOWPAYMENTS_API_KEY } }
+        );
+        const est = await estRes.json();
+        const rawUsd = Number(est.estimated_amount) || 0;
+        // 15% safety buffer + ceil, floor at $1
+        minUsd = Math.max(1, Math.ceil(rawUsd * 1.15));
+      } catch { /* keep default */ }
+    }
+    return res.json({ min_amount: nativeMin, min_usd: minUsd });
   } catch (error) {
-    return res.json({ min_amount: 1 });
+    return res.json({ min_amount: 1, min_usd: 1 });
   }
 });
 
