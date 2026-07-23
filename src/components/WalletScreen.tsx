@@ -215,6 +215,30 @@ const WalletScreen = () => {
       .then(res => res.ok ? res.json() : null)
       .then(data => { if (data && data.inr) setLimits(data); })
       .catch(() => {});
+
+    // Fetch REAL per-coin minimums from NOWPayments so the UI matches what the
+    // gateway will actually accept — no more guessed defaults.
+    (async () => {
+      const entries = await Promise.all(
+        cryptoOptions.map(async (c) => {
+          try {
+            const apiCur = cryptoApiTicker[c.id] || c.id;
+            const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
+            const d = await r.json();
+            return [c.id, Math.max(1, Number(d.min_usd) || 1)] as const;
+          } catch {
+            return [c.id, defaultCryptoMins[c.id] || 1] as const;
+          }
+        })
+      );
+      setLimits((prev) => ({
+        ...prev,
+        crypto: {
+          ...prev.crypto,
+          depositMin: Object.fromEntries(entries),
+        },
+      }));
+    })();
   }, []);
 
 
