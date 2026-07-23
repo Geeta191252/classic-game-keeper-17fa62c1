@@ -866,25 +866,13 @@ const WalletScreen = () => {
                     })}
                   </div>
 
-                  <div className="flex gap-2 pt-1">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        placeholder={`USD amount (min $${cryptoMins[cryptoCurrency] || 1})`}
-                        value={cryptoAmount}
-                        onChange={(e) => setCryptoAmount(e.target.value)}
-                        className="pr-7 rounded-xl bg-[#0d121f] h-10 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min={cryptoMins[cryptoCurrency] || 1}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#8e97a4] font-black">$</span>
-                    </div>
-                    <button
-                      className="rounded-xl h-10 px-4 bg-[#00a2e8] hover:bg-[#0091d0] text-white text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-                      disabled={cryptoProcessing || !cryptoAmount}
-                      onClick={handleCryptoDeposit}
-                    >
-                      {cryptoProcessing ? "..." : <>Pay <ExternalLink className="h-3 w-3" /></>}
-                    </button>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <p className="text-[10px] text-[#8e97a4]">
+                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address below — credited automatically.
+                    </p>
+                    {cryptoProcessing && (
+                      <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
+                    )}
                   </div>
 
                   <AnimatePresence>
