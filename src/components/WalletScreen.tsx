@@ -198,6 +198,7 @@ const WalletScreen = () => {
 
   const [limits, setLimits] = useState(defaultLimits);
   const cryptoMins = limits.crypto.depositMin;
+  const formatUsdMin = (value: number | undefined) => `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const inrDepositMin = limits.inr.depositMin;
   const inrWithdrawMin = limits.inr.withdrawMin;
   const starDepositMin = limits.star.depositMin;
@@ -264,6 +265,7 @@ const WalletScreen = () => {
     setCryptoReadyToGenerate(false);
     setCryptoConfirmChecked(false);
     setPaymentStatus(null);
+    setCryptoUsdAmount("");
   }, [cryptoCurrency]);
 
 
@@ -517,7 +519,7 @@ const WalletScreen = () => {
     const minReq = cryptoMins[coin] || 1;
     const requested = Number(amountOverride ?? cryptoUsdAmount);
     if (!requested || requested < minReq) {
-      toast({ title: `Minimum $${minReq}`, description: `Enter at least $${minReq} for ${coin.toUpperCase()}.`, variant: "destructive" });
+      toast({ title: `Minimum ${formatUsdMin(minReq)}`, description: `Enter at least ${formatUsdMin(minReq)} for ${coin.toUpperCase()}.`, variant: "destructive" });
       return;
     }
 
@@ -533,7 +535,21 @@ const WalletScreen = () => {
         body: JSON.stringify({ userId, amount: requested, currency: apiCurrency }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create payment");
+      if (!res.ok) {
+        if (data.minUsd) {
+          setLimits((prev) => ({
+            ...prev,
+            crypto: {
+              ...prev.crypto,
+              depositMin: {
+                ...prev.crypto.depositMin,
+                [coin]: Number(data.minUsd),
+              },
+            },
+          }));
+        }
+        throw new Error(data.error || "Failed to create payment");
+      }
 
       if (data.payAddress) {
         setCryptoPayment({
