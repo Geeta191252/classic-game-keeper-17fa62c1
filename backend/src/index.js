@@ -1877,13 +1877,14 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
       }
       const rawMinUsd = attempt.from === "usd" ? (fiatEquivalent || minAmount) : fiatEquivalent;
       if (rawMinUsd > 0) {
+        const safeMinUsd = Math.max(fallbackUsd, roundSafeUsdMin(rawMinUsd));
         return {
           currency,
           source: attempt.source,
           min_amount: minAmount,
           fiat_equivalent: fiatEquivalent || rawMinUsd,
           raw_min_usd: rawMinUsd,
-          min_usd: Math.max(1, roundSafeUsdMin(rawMinUsd)),
+          min_usd: safeMinUsd,
         };
       }
     } catch (error) {
