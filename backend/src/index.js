@@ -1818,20 +1818,32 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       return res.json({ ...cached.data, reused: true });
     }
 
-    // Check minimum amount for this currency
-    const minRes = await fetch(`${NOWPAYMENTS_API}/min-amount?currency_from=${currency}&currency_to=usd&fiat_equivalent=usd`, {
-      headers: { "x-api-key": NOWPAYMENTS_API_KEY },
-    });
-    if (minRes.ok) {
-      const minData = await minRes.json();
-      const minUsd = minData.fiat_equivalent || null;
-      if (minUsd && amount < minUsd) {
-        return res.status(400).json({ 
-          error: `Minimum deposit for ${currency.toUpperCase()} is $${Math.ceil(minUsd)}. Please increase your amount.` 
-        });
+    // Compute a safe minimum USD (same logic as /api/crypto/min-amount) and
+    // auto-bump the invoice amount up to it — never error out for the user.
+    let safeAmount = Number(amount) || 0;
+    try {
+      const minRes = await fetch(`${NOWPAYMENTS_API}/min-amount?currency_from=${currency}&currency_to=usd`, {
+        headers: { "x-api-key": NOWPAYMENTS_API_KEY },
+      });
+      if (minRes.ok) {
+        const minData = await minRes.json();
+        const nativeMin = Number(minData.min_amount) || 0;
+        if (nativeMin > 0) {
+          const estRes = await fetch(
+            `${NOWPAYMENTS_API}/estimate?amount=${nativeMin}&currency_from=${currency}&currency_to=usd`,
+            { headers: { "x-api-key": NOWPAYMENTS_API_KEY } }
+          );
+          if (estRes.ok) {
+            const est = await estRes.json();
+            const rawUsd = Number(est.estimated_amount) || 0;
+            const safeMinUsd = Math.max(1, Math.ceil(rawUsd * 1.25));
+            if (safeAmount < safeMinUsd) safeAmount = safeMinUsd;
+          }
+        }
       }
+    } catch (e) {
+      console.warn("min-amount pre-check failed:", e.message);
     }
-
 
     // Use /payment endpoint for direct address (no hosted page)
     const npRes = await fetch(`${NOWPAYMENTS_API}/payment`, {
@@ -1841,14 +1853,15 @@ app.post("/api/crypto/create-payment", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        price_amount: amount,
+        price_amount: safeAmount,
         price_currency: "usd",
         pay_currency: currency,
         order_id: orderId,
-        order_description: `Deposit $${amount} for user ${userId}`,
+        order_description: `Deposit $${safeAmount} for user ${userId}`,
         ipn_callback_url: `${getBackendUrl()}/api/crypto/ipn`,
       }),
     });
+
 
     const npData = await npRes.json();
     console.log("NOWPayments /payment response:", JSON.stringify(npData));
