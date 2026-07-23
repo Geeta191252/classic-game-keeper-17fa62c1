@@ -142,6 +142,7 @@ const WalletScreen = () => {
     priceAmount?: number;
   } | null>(null);
   const [cryptoReadyToGenerate, setCryptoReadyToGenerate] = useState(false);
+  const [cryptoConfirmChecked, setCryptoConfirmChecked] = useState(false);
 
   const [upiConfig, setUpiConfig] = useState<{
     upiId: string;
@@ -535,6 +536,7 @@ const WalletScreen = () => {
           priceAmount: data.priceAmount,
         });
         setCryptoReadyToGenerate(false);
+        setCryptoConfirmChecked(false);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Could not fetch deposit address.", variant: "destructive" });
@@ -553,6 +555,7 @@ const WalletScreen = () => {
   useEffect(() => {
     setCryptoPayment(null);
     setCryptoReadyToGenerate(false);
+    setCryptoConfirmChecked(false);
   }, [cryptoCurrency, depositStep]);
 
 
