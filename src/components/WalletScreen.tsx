@@ -463,24 +463,24 @@ const WalletScreen = () => {
     }
   };
 
-  const handleCryptoDeposit = async () => {
-    const usdAmt = Number(cryptoAmount);
-    const minReq = cryptoMins[cryptoCurrency] || 1;
-    if (!usdAmt || usdAmt < minReq) {
-      toast({ title: "Amount too low", description: `Minimum deposit for ${cryptoCurrency.toUpperCase()} is $${minReq}.`, variant: "destructive" });
-      return;
-    }
+  const handleCryptoDeposit = async (coinIdOverride?: string) => {
+    const coin = coinIdOverride || cryptoCurrency;
+    const minReq = cryptoMins[coin] || 1;
 
     setCryptoProcessing(true);
     try {
       const tg = getTelegram();
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
 
-      const apiCurrency = cryptoApiTicker[cryptoCurrency] || cryptoCurrency;
+      const apiCurrency = cryptoApiTicker[coin] || coin;
+      // Invoice is created at the coin's minimum just to reserve a deposit
+      // address. NOWPayments IPN scales credited USD by actually_paid /
+      // pay_amount, so the user can send ANY amount ≥ min and still get
+      // credited proportionally.
       const res = await fetch(`${apiBase}/crypto/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: usdAmt, currency: apiCurrency }),
+        body: JSON.stringify({ userId, amount: minReq, currency: apiCurrency }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create payment");
@@ -492,18 +492,22 @@ const WalletScreen = () => {
           payCurrency: data.payCurrency,
           orderId: data.orderId,
         });
-        toast({
-          title: "Payment Created! 🪙",
-          description: `Send exactly ${data.payAmount} ${data.payCurrency.toUpperCase()} to the address shown below.`,
-        });
-        setCryptoAmount("");
       }
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Crypto deposit failed.", variant: "destructive" });
+      toast({ title: "Error", description: err?.message || "Could not fetch deposit address.", variant: "destructive" });
     } finally {
       setCryptoProcessing(false);
     }
   };
+
+  // Auto-fetch a deposit address whenever the user opens the crypto page or
+  // switches coin — no amount entry required.
+  useEffect(() => {
+    if (depositStep !== "crypto") return;
+    setCryptoPayment(null);
+    handleCryptoDeposit(cryptoCurrency);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depositStep, cryptoCurrency]);
 
   const handleCurrencySelect = (action: ActionType, currency: CurrencyType) => {
     setAmountDialog({ open: true, action, currency });
@@ -862,25 +866,13 @@ const WalletScreen = () => {
                     })}
                   </div>
 
-                  <div className="flex gap-2 pt-1">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        placeholder={`USD amount (min $${cryptoMins[cryptoCurrency] || 1})`}
-                        value={cryptoAmount}
-                        onChange={(e) => setCryptoAmount(e.target.value)}
-                        className="pr-7 rounded-xl bg-[#0d121f] h-10 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min={cryptoMins[cryptoCurrency] || 1}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#8e97a4] font-black">$</span>
-                    </div>
-                    <button
-                      className="rounded-xl h-10 px-4 bg-[#00a2e8] hover:bg-[#0091d0] text-white text-[11px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
-                      disabled={cryptoProcessing || !cryptoAmount}
-                      onClick={handleCryptoDeposit}
-                    >
-                      {cryptoProcessing ? "..." : <>Pay <ExternalLink className="h-3 w-3" /></>}
-                    </button>
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <p className="text-[10px] text-[#8e97a4]">
+                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address below — credited automatically.
+                    </p>
+                    {cryptoProcessing && (
+                      <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
+                    )}
                   </div>
 
                   <AnimatePresence>
@@ -892,7 +884,7 @@ const WalletScreen = () => {
                         className="bg-[#0d121f] border border-white/[0.02] rounded-xl p-4 space-y-3"
                       >
                         <p className="text-[11px] font-semibold text-white">
-                          Send exactly <span className="text-[#00a2e8] font-bold">{cryptoPayment.payAmount} {cryptoPayment.payCurrency.toUpperCase()}</span>
+                          Scan QR or copy the <span className="text-[#00a2e8] font-bold">{cryptoPayment.payCurrency.toUpperCase()}</span> address below
                         </p>
                         <div className="flex justify-center py-2">
                           <div className="bg-white p-2.5 rounded-2xl shadow-inner">
@@ -917,7 +909,7 @@ const WalletScreen = () => {
                           Copy Address
                         </button>
                         <p className="text-[8px] text-[#8e97a4] text-center">
-                          Balance updates automatically after confirmation • Send exact amount only
+                          Send any amount ≥ ${cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
                         </p>
                         {paymentStatus && paymentStatus !== "completed" && (
                           <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
