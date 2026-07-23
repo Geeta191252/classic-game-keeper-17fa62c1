@@ -1906,11 +1906,39 @@ app.post("/api/crypto/ipn", async (req, res) => {
       console.log("✅ IPN signature verified");
     }
 
-    const { order_id, payment_status, price_amount, pay_currency } = data;
+    const {
+      order_id,
+      payment_status,
+      price_amount,
+      pay_amount,
+      actually_paid,
+      pay_currency,
+      outcome_amount,
+      outcome_currency,
+    } = data;
 
     if (!order_id) {
       return res.status(400).json({ error: "Missing order_id" });
     }
+
+    // Compute the ACTUAL USD value the user paid. NOWPayments does not send
+    // "actually_paid" in USD, so derive it from the crypto amount ratio.
+    // If the user overpays (e.g. sends 4.7 USDT for a $3 invoice), credit the
+    // full overpaid value instead of the invoice price.
+    // If the user underpays (partially_paid), credit only the fraction received.
+    const priceUsd = Number(price_amount) || 0;
+    const expectedPay = Number(pay_amount) || 0;
+    const paidCrypto = Number(actually_paid) || 0;
+    let creditedUsd = priceUsd;
+    if (paidCrypto > 0 && expectedPay > 0) {
+      creditedUsd = (paidCrypto / expectedPay) * priceUsd;
+    } else if (Number(outcome_amount) > 0 && String(outcome_currency || "").toLowerCase() === "usd") {
+      creditedUsd = Number(outcome_amount);
+    }
+    // Guard against negative / NaN
+    if (!isFinite(creditedUsd) || creditedUsd <= 0) creditedUsd = priceUsd;
+    // Round to 2 decimals
+    creditedUsd = Math.round(creditedUsd * 100) / 100;
 
     // Parse userId from order_id format: dep_<userId>_<timestamp>
     const orderMatch = String(order_id).match(/^dep_(\d+)_/);
@@ -1936,9 +1964,9 @@ app.post("/api/crypto/ipn", async (req, res) => {
         telegramId: parsedUserId,
         type: "deposit",
         currency: "dollar",
-        amount: Number(price_amount) || 0,
+        amount: creditedUsd,
         status: "pending",
-        description: `Crypto Deposit: $${price_amount || 0} via ${String(pay_currency || "").toUpperCase()}`,
+        description: `Crypto Deposit: $${creditedUsd} via ${String(pay_currency || "").toUpperCase()}${paidCrypto && expectedPay && paidCrypto !== expectedPay ? ` (paid ${paidCrypto} vs ${expectedPay} expected)` : ""}`,
         depositComment: order_id,
       });
     }
@@ -1948,15 +1976,17 @@ app.post("/api/crypto/ipn", async (req, res) => {
 
 
     if (payment_status === "finished" || payment_status === "confirmed") {
+      // Always credit the actually-paid amount, not the invoice price
+      tx.amount = creditedUsd;
       tx.status = "completed";
       await tx.save();
 
       // Credit user balance
       const user = await getOrCreateUser(tx.telegramId);
-      user.dollarBalance += Number(price_amount || tx.amount);
+      user.dollarBalance += creditedUsd;
       await user.save();
 
-      console.log(`✅ Crypto deposit completed: $${tx.amount} for user ${tx.telegramId}`);
+      console.log(`✅ Crypto deposit completed: $${creditedUsd} for user ${tx.telegramId} (invoice $${priceUsd}, paid ${paidCrypto} ${pay_currency})`);
 
       // Unlock pending referral reward (if any) on first successful deposit
       await creditReferralOnDeposit(tx.telegramId);
@@ -1964,7 +1994,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
       // Notify user via Telegram bot
       try {
         await sendWebAppMessage(tx.telegramId,
-          `✅ Payment Received!\n\n💰 $${tx.amount} has been added to your wallet.\n\nOpen the game to start playing! 🎮`,
+          `✅ Payment Received!\n\n💰 $${creditedUsd} has been added to your wallet.\n\nOpen the game to start playing! 🎮`,
           "🎮 Open Game",
           getWebAppBaseUrl()
         );
@@ -1973,7 +2003,7 @@ app.post("/api/crypto/ipn", async (req, res) => {
       // Notify owner
       try {
         await bot.sendMessage(6965488457,
-          `💰 Crypto Deposit!\n\nUser: ${tx.telegramId}\nAmount: $${tx.amount}\nOrder: ${order_id}\nStatus: ${payment_status}`
+          `💰 Crypto Deposit!\n\nUser: ${tx.telegramId}\nInvoice: $${priceUsd}\nCredited: $${creditedUsd}\nPaid: ${paidCrypto} ${String(pay_currency || "").toUpperCase()}\nOrder: ${order_id}\nStatus: ${payment_status}`
         );
       } catch (e) { /* ignore */ }
     } else if (payment_status === "failed" || payment_status === "expired") {
