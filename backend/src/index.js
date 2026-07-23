@@ -1857,12 +1857,10 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
     return { min_amount: 0, fiat_equivalent: fallbackUsd, raw_min_usd: fallbackUsd, min_usd: fallbackUsd, fallback: true };
   }
 
-  // The app creates invoices with price_currency="usd" and pay_currency=<coin>.
-  // So the ONLY authoritative minimum is the same NOWPayments pair: USD -> coin.
-  // Do not replace it with our own guessed/fallback floor when the API responds.
+  // Official NOWPayments /v1/min-amount docs: currency_to is the selected crypto
+  // and fiat_equivalent=usd returns the minimum in USD. Do not use app guesses.
   const attempts = [
-    { from: "usd", to: currency, source: "nowpayments_usd_pair" },
-    { from: currency, to: currency, source: "nowpayments_coin_pair" },
+    { from: currency, to: currency, source: "nowpayments_currency_to" },
   ];
 
   let lastError = null;
@@ -1871,10 +1869,10 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
       const data = await fetchNowPaymentsMinimum(attempt.from, attempt.to);
       const minAmount = parseNowAmount(data.min_amount);
       let fiatEquivalent = parseNowAmount(data.fiat_equivalent);
-      if (fiatEquivalent <= 0 && attempt.from !== "usd") {
+      if (fiatEquivalent <= 0) {
         fiatEquivalent = await estimateCryptoToUsd(currency, minAmount);
       }
-      const rawMinUsd = attempt.from === "usd" ? (fiatEquivalent || minAmount) : fiatEquivalent;
+      const rawMinUsd = fiatEquivalent;
       if (rawMinUsd > 0) {
         const nowPaymentsMinUsd = roundNowPaymentsUsdMin(rawMinUsd);
         return {
