@@ -1792,6 +1792,53 @@ app.post("/api/winnings", async (req, res) => {
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "";
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET || "";
 const NOWPAYMENTS_API = "https://api.nowpayments.io/v1";
+const CRYPTO_MIN_BUFFER_MULTIPLIER = 1.15;
+
+function parseNowAmount(value) {
+  const num = Number(String(value ?? "").replace(",", "."));
+  return Number.isFinite(num) ? num : 0;
+}
+
+function roundSafeUsdMin(value) {
+  const raw = parseNowAmount(value);
+  if (raw <= 0) return 1;
+  return Math.max(1, Math.ceil(raw * CRYPTO_MIN_BUFFER_MULTIPLIER));
+}
+
+async function getNowPaymentsMinimumUsd(payCurrency) {
+  const currency = String(payCurrency || "").trim().toLowerCase();
+  if (!currency || !NOWPAYMENTS_API_KEY) {
+    return { min_amount: 1, min_usd: 1, raw_min_usd: 1 };
+  }
+
+  // Correct direction for our invoices:
+  // payment is created as price_currency=usd and pay_currency=<coin>, so the
+  // minimum check must also be USD -> selected coin. The old coin -> USD check
+  // could show wrong values like $1 and then NOWPayments rejected invoices.
+  const params = new URLSearchParams({
+    currency_from: "usd",
+    currency_to: currency,
+    fiat_equivalent: "usd",
+  });
+  const npRes = await fetch(`${NOWPAYMENTS_API}/min-amount?${params.toString()}`, {
+    headers: { "x-api-key": NOWPAYMENTS_API_KEY },
+  });
+  const data = await npRes.json().catch(() => ({}));
+  if (!npRes.ok) {
+    throw new Error(data.message || data.error || "Failed to fetch NOWPayments minimum");
+  }
+
+  const minAmount = parseNowAmount(data.min_amount);
+  const fiatEquivalent = parseNowAmount(data.fiat_equivalent);
+  const rawMinUsd = fiatEquivalent > 0 ? fiatEquivalent : minAmount;
+
+  return {
+    min_amount: minAmount,
+    fiat_equivalent: fiatEquivalent || rawMinUsd,
+    raw_min_usd: rawMinUsd,
+    min_usd: roundSafeUsdMin(rawMinUsd),
+  };
+}
 
 // In-memory cache: reuse the same NOWPayments invoice for a user+currency
 // within a ~55min window so repeated "Generate Address" clicks do NOT
@@ -1822,29 +1869,12 @@ app.post("/api/crypto/create-payment", async (req, res) => {
 
 
 
-    // Compute a safe minimum USD (same logic as /api/crypto/min-amount) and
-    // auto-bump the invoice amount up to it — never error out for the user.
+    // Compute the safe USD minimum using the same NOWPayments direction as the
+    // real invoice (USD -> selected coin) and auto-bump to it.
     let safeAmount = Number(amount) || 0;
     try {
-      const minRes = await fetch(`${NOWPAYMENTS_API}/min-amount?currency_from=${currency}&currency_to=usd`, {
-        headers: { "x-api-key": NOWPAYMENTS_API_KEY },
-      });
-      if (minRes.ok) {
-        const minData = await minRes.json();
-        const nativeMin = Number(minData.min_amount) || 0;
-        if (nativeMin > 0) {
-          const estRes = await fetch(
-            `${NOWPAYMENTS_API}/estimate?amount=${nativeMin}&currency_from=${currency}&currency_to=usd`,
-            { headers: { "x-api-key": NOWPAYMENTS_API_KEY } }
-          );
-          if (estRes.ok) {
-            const est = await estRes.json();
-            const rawUsd = Number(est.estimated_amount) || 0;
-            const safeMinUsd = Math.max(1, Math.ceil(rawUsd * 1.25));
-            if (safeAmount < safeMinUsd) safeAmount = safeMinUsd;
-          }
-        }
-      }
+      const minData = await getNowPaymentsMinimumUsd(currency);
+      if (safeAmount < minData.min_usd) safeAmount = minData.min_usd;
     } catch (e) {
       console.warn("min-amount pre-check failed:", e.message);
     }
@@ -2084,30 +2114,7 @@ app.get("/api/crypto/min-amount", async (req, res) => {
     if (!currency || !NOWPAYMENTS_API_KEY) {
       return res.json({ min_amount: 1, min_usd: 1 });
     }
-    const npRes = await fetch(`${NOWPAYMENTS_API}/min-amount?currency_from=${currency}&currency_to=usd`, {
-      headers: { "x-api-key": NOWPAYMENTS_API_KEY },
-    });
-    const data = await npRes.json();
-    const nativeMin = Number(data.min_amount) || 0;
-
-    // Ask NOWPayments how much USD that native minimum equals right now, then
-    // round UP to a safe integer so tiny price swings don't push the user
-    // below the invoice minimum at creation time.
-    let minUsd = 1;
-    if (nativeMin > 0) {
-      try {
-        const estRes = await fetch(
-          `${NOWPAYMENTS_API}/estimate?amount=${nativeMin}&currency_from=${currency}&currency_to=usd`,
-          { headers: { "x-api-key": NOWPAYMENTS_API_KEY } }
-        );
-        const est = await estRes.json();
-        const rawUsd = Number(est.estimated_amount) || 0;
-        // 25% safety buffer + ceil, floor at $1
-        minUsd = Math.max(1, Math.ceil(rawUsd * 1.25));
-
-      } catch { /* keep default */ }
-    }
-    return res.json({ min_amount: nativeMin, min_usd: minUsd });
+    return res.json(await getNowPaymentsMinimumUsd(currency));
   } catch (error) {
     return res.json({ min_amount: 1, min_usd: 1 });
   }
