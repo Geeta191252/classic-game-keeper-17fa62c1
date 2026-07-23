@@ -1808,7 +1808,7 @@ function parseNowAmount(value) {
   return Number.isFinite(num) ? num : 0;
 }
 
-function roundSafeUsdMin(value) {
+function roundNowPaymentsUsdMin(value) {
   const raw = parseNowAmount(value);
   if (raw <= 0) return 0;
   return Math.ceil(raw * CRYPTO_MIN_BUFFER_MULTIPLIER * 100) / 100;
@@ -1857,13 +1857,12 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
     return { min_amount: 0, fiat_equivalent: fallbackUsd, raw_min_usd: fallbackUsd, min_usd: fallbackUsd, fallback: true };
   }
 
-  // NOWPayments keeps different minimums per pay coin. For direct crypto
-  // deposits, check the native coin pair first (<coin> -> <coin>) and convert
-  // that minimum to USD. The USD -> coin check is only a fallback because it can
-  // return the same generic fiat floor for every coin.
+  // The app creates invoices with price_currency="usd" and pay_currency=<coin>.
+  // So the ONLY authoritative minimum is the same NOWPayments pair: USD -> coin.
+  // Do not replace it with our own guessed/fallback floor when the API responds.
   const attempts = [
-    { from: currency, to: currency, source: "coin_pair" },
-    { from: "usd", to: currency, source: "usd_pair" },
+    { from: "usd", to: currency, source: "nowpayments_usd_pair" },
+    { from: currency, to: currency, source: "nowpayments_coin_pair" },
   ];
 
   let lastError = null;
@@ -1877,14 +1876,15 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
       }
       const rawMinUsd = attempt.from === "usd" ? (fiatEquivalent || minAmount) : fiatEquivalent;
       if (rawMinUsd > 0) {
-        const safeMinUsd = roundSafeUsdMin(rawMinUsd);
+        const nowPaymentsMinUsd = roundNowPaymentsUsdMin(rawMinUsd);
         return {
           currency,
           source: attempt.source,
           min_amount: minAmount,
           fiat_equivalent: fiatEquivalent || rawMinUsd,
           raw_min_usd: rawMinUsd,
-          min_usd: safeMinUsd,
+          min_usd: nowPaymentsMinUsd,
+          fallback: false,
         };
       }
     } catch (error) {
@@ -1896,10 +1896,10 @@ async function getNowPaymentsMinimumUsd(payCurrency) {
   return { currency, min_amount: 0, fiat_equivalent: fallbackUsd, raw_min_usd: fallbackUsd, min_usd: fallbackUsd, fallback: true };
 }
 
-// In-memory cache: reuse the same NOWPayments invoice for a user+currency
+// In-memory cache: reuse the same NOWPayments invoice for a user+currency+amount
 // within a short payment window so repeated final-confirm clicks do NOT
 // create new "waiting" entries in the NOWPayments dashboard / owner email.
-const cryptoInvoiceCache = new Map(); // key: `${userId}:${currency}` -> { data, ts }
+const cryptoInvoiceCache = new Map(); // key: `${userId}:${currency}:${amount}` -> { data, ts }
 const INVOICE_TTL_MS = 10 * 60 * 1000;
 
 // POST /api/crypto/create-payment - Create NOWPayments direct payment
@@ -1913,8 +1913,17 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       return res.status(500).json({ error: "NOWPayments not configured" });
     }
 
-    // Reuse existing invoice if still fresh
-    const cacheKey = `${userId}:${String(currency).toLowerCase()}`;
+    const minData = await getNowPaymentsMinimumUsd(currency);
+    const requestedAmount = Math.ceil((Number(amount) || 0) * 100) / 100;
+    if (!requestedAmount || requestedAmount < minData.min_usd) {
+      return res.status(400).json({
+        error: `NOWPayments minimum for ${String(currency).toUpperCase()} is $${minData.min_usd}`,
+        minUsd: minData.min_usd,
+      });
+    }
+
+    // Reuse existing invoice only for the exact same amount.
+    const cacheKey = `${userId}:${String(currency).toLowerCase()}:${requestedAmount}`;
     const cached = cryptoInvoiceCache.get(cacheKey);
     if (cached && Date.now() - cached.ts < INVOICE_TTL_MS) {
       console.log(`♻️  Reusing cached invoice for ${cacheKey} (age ${Math.round((Date.now()-cached.ts)/1000)}s)`);
@@ -1922,18 +1931,6 @@ app.post("/api/crypto/create-payment", async (req, res) => {
     }
 
     const orderId = `dep_${userId}_${Date.now()}`;
-
-
-
-    // Compute the safe USD minimum using the same NOWPayments direction as the
-    // real invoice (USD -> selected coin) and auto-bump to it.
-    let safeAmount = Number(amount) || 0;
-    try {
-      const minData = await getNowPaymentsMinimumUsd(currency);
-      if (safeAmount < minData.min_usd) safeAmount = minData.min_usd;
-    } catch (e) {
-      console.warn("min-amount pre-check failed:", e.message);
-    }
 
     // Use /payment endpoint for direct address (no hosted page)
     const npRes = await fetch(`${NOWPAYMENTS_API}/payment`, {
@@ -1943,11 +1940,11 @@ app.post("/api/crypto/create-payment", async (req, res) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        price_amount: safeAmount,
+        price_amount: requestedAmount,
         price_currency: "usd",
         pay_currency: currency,
         order_id: orderId,
-        order_description: `Deposit $${safeAmount} for user ${userId}`,
+        order_description: `Deposit $${requestedAmount} for user ${userId}`,
         ipn_callback_url: `${getBackendUrl()}/api/crypto/ipn`,
       }),
     });
@@ -1972,8 +1969,8 @@ app.post("/api/crypto/create-payment", async (req, res) => {
       payCurrency: npData.pay_currency,
       paymentId: npData.payment_id,
       orderId,
-      priceAmount: safeAmount,
-      minUsd: safeAmount,
+      priceAmount: requestedAmount,
+      minUsd: minData.min_usd,
       expirationEstimate: npData.expiration_estimate_date,
     };
     cryptoInvoiceCache.set(cacheKey, { data: responseData, ts: Date.now() });
