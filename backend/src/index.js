@@ -1924,9 +1924,12 @@ app.post("/api/crypto/ipn", async (req, res) => {
         console.log("IPN: cannot parse userId from order_id:", order_id);
         return res.sendStatus(200);
       }
-      // Only create on real payment activity (skip stale/unknown)
-      const activeStatuses = ["waiting", "confirming", "confirmed", "sending", "finished", "partially_paid", "failed", "expired"];
-      if (!activeStatuses.includes(payment_status)) {
+      // Only create when the user has ACTUALLY sent crypto. "waiting" fires as
+      // soon as the address is generated (before any payment) and would create
+      // a ghost pending record — skip it. Also ignore expired/failed if no tx
+      // exists, since it means the user never paid.
+      const realPaymentStatuses = ["confirming", "confirmed", "sending", "finished", "partially_paid"];
+      if (!realPaymentStatuses.includes(payment_status)) {
         return res.sendStatus(200);
       }
       tx = await Transaction.create({
