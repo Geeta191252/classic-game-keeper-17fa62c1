@@ -497,14 +497,14 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
     try {
       const amount = Math.abs(tx.amount);
       const network = tx.withdrawalNetwork || (tx.currency === "dollar" ? "USD" : tx.currency === "rupee" ? "INR" : "STAR");
-      const shortTx = txId ? `${String(txId).slice(0, 6)}...${String(txId).slice(-5)}` : "";
       const usdLine = usdValue !== undefined && usdValue !== null && usdValue !== ""
-        ? `💵 USD Value: $${Number(usdValue).toFixed(4)}\n\n`
+        ? `💵 USD Value: $${Number(usdValue).toFixed(4)}\n\n\n`
         : "";
-      const txLine = txId ? `🔗 TxID: \`${shortTx}\`` : "";
+      const shortTx = txId ? `${String(txId).slice(0, 5)}…${String(txId).slice(-5)}` : "";
+      const txLine = txId ? `🔗 TxID: ${shortTx}` : "";
       const text =
-        `✅ *${network} Withdrawal Successful!*\n\n` +
-        `🚀 Amount: ${amount} ${network}\n\n` +
+        `✅ Bucks Withdrawal Successful!\n\n\n` +
+        `🚀 Amount: ${amount} ${network}\n\n\n` +
         usdLine +
         txLine;
       await bot.sendMessage(WITHDRAWAL_CHANNEL, text, {
