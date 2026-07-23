@@ -20,7 +20,7 @@ const cryptoApiTicker: Record<string, string> = {
 // Conservative fallback minimums. Live values are loaded from NOWPayments via
 // backend so the UI matches the gateway instead of hardcoded guesses.
 const defaultCryptoMins: Record<string, number> = {
-  btc: 25,
+  btc: 22,
   ltc: 5,
   ton: 5,
   sol: 5,
@@ -138,7 +138,10 @@ const WalletScreen = () => {
     payAmount: number;
     payCurrency: string;
     orderId: string;
+    minUsd?: number;
+    priceAmount?: number;
   } | null>(null);
+  const [cryptoReadyToGenerate, setCryptoReadyToGenerate] = useState(false);
 
   const [upiConfig, setUpiConfig] = useState<{
     upiId: string;
@@ -238,7 +241,7 @@ const WalletScreen = () => {
             const apiCur = cryptoApiTicker[c.id] || c.id;
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
-            return [c.id, Math.max(1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
+            return [c.id, Math.max(defaultCryptoMins[c.id] || 1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
           } catch {
             return [c.id, defaultCryptoMins[c.id] || 1] as const;
           }
@@ -528,7 +531,10 @@ const WalletScreen = () => {
           payAmount: data.payAmount,
           payCurrency: data.payCurrency,
           orderId: data.orderId,
+          minUsd: data.minUsd,
+          priceAmount: data.priceAmount,
         });
+        setCryptoReadyToGenerate(false);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Could not fetch deposit address.", variant: "destructive" });
@@ -546,6 +552,7 @@ const WalletScreen = () => {
   // a stale QR from a different currency.
   useEffect(() => {
     setCryptoPayment(null);
+    setCryptoReadyToGenerate(false);
   }, [cryptoCurrency, depositStep]);
 
 
