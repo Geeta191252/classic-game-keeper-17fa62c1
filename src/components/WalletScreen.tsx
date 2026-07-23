@@ -529,13 +529,12 @@ const WalletScreen = () => {
   // entries even for users who never actually pay. Address is generated
   // only when the user explicitly clicks the "Generate Address" button.
 
-  // switches coin — no amount entry required.
+  // Clear any previous address when the user switches coin, so we don't show
+  // a stale QR from a different currency.
   useEffect(() => {
-    if (depositStep !== "crypto") return;
     setCryptoPayment(null);
-    handleCryptoDeposit(cryptoCurrency);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [depositStep, cryptoCurrency]);
+  }, [cryptoCurrency, depositStep]);
+
 
   const handleCurrencySelect = (action: ActionType, currency: CurrencyType) => {
     setAmountDialog({ open: true, action, currency });
