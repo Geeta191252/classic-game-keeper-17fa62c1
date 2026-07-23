@@ -20,7 +20,7 @@ const cryptoApiTicker: Record<string, string> = {
 // Conservative fallback minimums. Live values are loaded from NOWPayments via
 // backend so the UI matches the gateway instead of hardcoded guesses.
 const defaultCryptoMins: Record<string, number> = {
-  btc: 25,
+  btc: 22,
   ltc: 5,
   ton: 5,
   sol: 5,
@@ -138,7 +138,11 @@ const WalletScreen = () => {
     payAmount: number;
     payCurrency: string;
     orderId: string;
+    minUsd?: number;
+    priceAmount?: number;
   } | null>(null);
+  const [cryptoReadyToGenerate, setCryptoReadyToGenerate] = useState(false);
+  const [cryptoConfirmChecked, setCryptoConfirmChecked] = useState(false);
 
   const [upiConfig, setUpiConfig] = useState<{
     upiId: string;
@@ -238,7 +242,7 @@ const WalletScreen = () => {
             const apiCur = cryptoApiTicker[c.id] || c.id;
             const r = await fetch(`${apiBase}/crypto/min-amount?currency=${apiCur}`);
             const d = await r.json();
-            return [c.id, Math.max(1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
+            return [c.id, Math.max(defaultCryptoMins[c.id] || 1, Math.ceil(Number(d.min_usd) || defaultCryptoMins[c.id] || 1))] as const;
           } catch {
             return [c.id, defaultCryptoMins[c.id] || 1] as const;
           }
@@ -528,7 +532,11 @@ const WalletScreen = () => {
           payAmount: data.payAmount,
           payCurrency: data.payCurrency,
           orderId: data.orderId,
+          minUsd: data.minUsd,
+          priceAmount: data.priceAmount,
         });
+        setCryptoReadyToGenerate(false);
+        setCryptoConfirmChecked(false);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Could not fetch deposit address.", variant: "destructive" });
@@ -546,6 +554,8 @@ const WalletScreen = () => {
   // a stale QR from a different currency.
   useEffect(() => {
     setCryptoPayment(null);
+    setCryptoReadyToGenerate(false);
+    setCryptoConfirmChecked(false);
   }, [cryptoCurrency, depositStep]);
 
 
@@ -908,7 +918,7 @@ const WalletScreen = () => {
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <p className="text-[10px] text-[#8e97a4]">
-                      Send any amount (min <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>) to the address — credited automatically.
+                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">${cryptoMins[cryptoCurrency] || 1}</span>. Create address only when you are ready to pay.
                     </p>
                     {cryptoProcessing && (
                       <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
@@ -916,13 +926,39 @@ const WalletScreen = () => {
                   </div>
 
                   {!cryptoPayment && (
-                    <button
-                      disabled={cryptoProcessing}
-                      onClick={() => handleCryptoDeposit(cryptoCurrency)}
-                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 text-white transition-colors"
-                    >
-                      {cryptoProcessing ? "Generating…" : `Generate ${cryptoCurrency.toUpperCase()} Address`}
-                    </button>
+                    <div className="space-y-2">
+                      {!cryptoReadyToGenerate && (
+                        <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2">
+                          <p className="text-[9px] leading-relaxed text-amber-100">
+                            Address generate karte hi NOWPayments me payment waiting ban jata hai. Agar abhi payment nahi karni hai to address generate mat karo.
+                          </p>
+                        </div>
+                      )}
+                      {cryptoReadyToGenerate && (
+                        <label className="flex items-start gap-2 rounded-xl border border-[#00a2e8]/20 bg-[#00a2e8]/10 px-3 py-2">
+                          <input
+                            type="checkbox"
+                            checked={cryptoConfirmChecked}
+                            onChange={(e) => setCryptoConfirmChecked(e.target.checked)}
+                            className="mt-0.5 h-3.5 w-3.5 accent-[#00a2e8]"
+                          />
+                          <span className="text-[9px] leading-relaxed text-slate-200">
+                            Main abhi payment karunga. Address banne ke baad NOWPayments dashboard me waiting payment dikh sakta hai.
+                          </span>
+                        </label>
+                      )}
+                      <button
+                        disabled={cryptoProcessing || (cryptoReadyToGenerate && !cryptoConfirmChecked)}
+                        onClick={() => cryptoReadyToGenerate ? handleCryptoDeposit(cryptoCurrency) : setCryptoReadyToGenerate(true)}
+                        className={`w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider disabled:opacity-50 text-white transition-colors ${cryptoReadyToGenerate ? "bg-[#00a2e8] hover:bg-[#0091d0]" : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.04]"}`}
+                      >
+                        {cryptoProcessing
+                          ? "Generating…"
+                          : cryptoReadyToGenerate
+                            ? `Pay Now • Generate ${cryptoCurrency.toUpperCase()} Address`
+                            : "I Will Pay Now"}
+                      </button>
+                    </div>
                   )}
 
 
@@ -960,7 +996,7 @@ const WalletScreen = () => {
                           Copy Address
                         </button>
                         <p className="text-[8px] text-[#8e97a4] text-center">
-                          Send any amount ≥ ${cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
+                          Send any amount ≥ ${cryptoPayment.minUsd || cryptoMins[cryptoCurrency] || 1} • Balance credited automatically after blockchain confirmation
                         </p>
                         {paymentStatus && paymentStatus !== "completed" && (
                           <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
