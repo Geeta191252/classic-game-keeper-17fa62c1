@@ -505,7 +505,17 @@ app.post("/api/admin/approve-withdrawal", async (req, res) => {
         `🚀 Amount: ${amount} ${network}\n\n` +
         usdLine +
         txLine;
-      await sendChannelWithButtons(WITHDRAWAL_CHANNEL, text, getWebAppUrl());
+      await bot.sendMessage(WITHDRAWAL_CHANNEL, text, {
+        parse_mode: "Markdown",
+        disable_web_page_preview: true,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "🎮 Play Now", url: "https://t.me/RoyalKingGameBot/RoyalKingGame" }],
+            [{ text: "Royal King Game Main", url: "https://t.me/royalkinggamedata" }],
+            [{ text: "Royal King Game Withrowal", url: "https://t.me/royal_king_game_Withdrawal" }],
+          ],
+        },
+      });
     } catch (channelErr) {
       const desc = channelErr?.response?.body?.description || channelErr.message;
       console.error("Failed to post withdrawal approval to channel:", desc);
