@@ -74,11 +74,12 @@ export interface AdminUser {
   lastActive?: string;
   referralCount?: number;
 }
-export const listUsers = (params: { search?: string; limit?: number; skip?: number } = {}) => {
+export const listUsers = (params: { search?: string; limit?: number; skip?: number; sort?: "recent" | "topfund" } = {}) => {
   const qs = new URLSearchParams();
   if (params.search) qs.set("search", params.search);
   if (params.limit) qs.set("limit", String(params.limit));
   if (params.skip) qs.set("skip", String(params.skip));
+  if (params.sort) qs.set("sort", params.sort);
   return adminFetch<{ users: AdminUser[]; total: number; limit: number; skip: number }>(
     `/admin/users-list?${qs.toString()}`
   );
