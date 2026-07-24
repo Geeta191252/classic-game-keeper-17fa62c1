@@ -4343,9 +4343,13 @@ app.get("/api/admin/summary", requireAdmin, async (req, res) => {
     ]);
     const bal = balances[0] || {};
 
-    // Show only real money movements: deposits, withdrawals and game wins.
-    // Internal game "bet" debits are excluded to keep the feed meaningful.
-    const recent = await Transaction.find({ type: { $in: ["deposit", "withdraw", "win"] } })
+    // Show only real money movements: completed deposits and withdrawals.
+    // Game bets/wins are internal ledger entries (including demo/fun games) and
+    // are excluded so the admin feed reflects real cash flow only.
+    const recent = await Transaction.find({
+      type: { $in: ["deposit", "withdraw", "ton_deposit", "ton_withdraw"] },
+      status: { $in: ["completed", "pending"] },
+    })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
