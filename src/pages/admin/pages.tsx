@@ -319,6 +319,70 @@ export function UsersPage() {
   );
 }
 
+/* ============= Top Users (User 11 — ranked by total funds) ============= */
+
+export function TopUsersPage() {
+  const [data, setData] = useState<{ users: AdminUser[]; total: number } | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true); setErr(null);
+    listUsers({ sort: "topfund", limit: 2000 })
+      .then(setData).catch((e) => setErr(e.message)).finally(() => setLoading(false));
+  };
+  useEffect(load, []);
+
+  const fundScore = (u: AdminUser) =>
+    Number(u.dollarBalance || 0) + Number(u.dollarWinning || 0)
+    + (Number(u.rupeeBalance || 0) + Number(u.rupeeWinning || 0)) * 0.012
+    + (Number(u.starBalance || 0) + Number(u.starWinning || 0)) * 0.013;
+
+  return (
+    <Section
+      eyebrow="USER 11"
+      title={`Top funded users${data ? ` (${data.users.length})` : ""}`}
+      right={<button className="a-btn a-btn-sm" onClick={load}><RefreshCw size={12} /> Refresh</button>}
+    >
+      {loading ? <LoadingBlock /> : err ? <ErrorBlock message={err} onRetry={load} /> : (
+        <div className="a-card overflow-x-auto">
+          <table className="a-table w-full">
+            <thead>
+              <tr>
+                <th>#</th><th>User</th><th>Telegram ID</th>
+                <th>$ balance</th><th>₹ balance</th><th>★ balance</th>
+                <th>Winnings</th><th>Total (≈ USD)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data?.users || []).map((u, i) => (
+                <tr key={u._id}>
+                  <td style={{ color: "var(--a-text-dim)" }}>{i + 1}</td>
+                  <td>
+                    <div className="text-white font-semibold">{userName(u)}</div>
+                    {u.username && <div className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>@{u.username}</div>}
+                  </td>
+                  <td>#{u.telegramId}</td>
+                  <td>${Number(u.dollarBalance || 0).toFixed(2)}</td>
+                  <td>₹{Number(u.rupeeBalance || 0).toFixed(2)}</td>
+                  <td>★{Number(u.starBalance || 0).toFixed(0)}</td>
+                  <td style={{ color: "var(--a-text-dim)" }}>
+                    ${Number(u.dollarWinning || 0).toFixed(2)} · ₹{Number(u.rupeeWinning || 0).toFixed(2)} · ★{Number(u.starWinning || 0).toFixed(0)}
+                  </td>
+                  <td className="text-white font-semibold">${fundScore(u).toFixed(2)}</td>
+                </tr>
+              ))}
+              {data?.users.length === 0 && (
+                <tr><td colSpan={8} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No users found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 /* ============= Deposits / Withdrawals shared ============= */
 
 function TxFilterPage({
