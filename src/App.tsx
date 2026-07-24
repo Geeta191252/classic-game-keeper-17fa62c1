@@ -41,6 +41,7 @@ const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminPages = {
   Dashboard: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.Dashboard }))),
   Users: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.UsersPage }))),
+  TopUsers: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.TopUsersPage }))),
   Games: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.GamesPage }))),
   AviatorFun: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AviatorFunControlPage }))),
   JetX: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.JetXControlPage }))),
