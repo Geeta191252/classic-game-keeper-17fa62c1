@@ -17,6 +17,7 @@ const GROUPS: Group[] = [
     items: [
       { to: "/admin/dashboard", label: "Dashboard", icon: Activity },
       { to: "/admin/users", label: "Users", icon: Users },
+      { to: "/admin/top-users", label: "User 11 (Top funds)", icon: Crown },
       { to: "/admin/games", label: "Games", icon: Gamepad2 },
       { to: "/admin/aviator-fun", label: "Aviator Fun", icon: Plane },
       { to: "/admin/jetx", label: "JetX Control", icon: Plane },
