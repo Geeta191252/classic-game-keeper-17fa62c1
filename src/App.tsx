@@ -166,6 +166,7 @@ const App = () => {
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route path="dashboard" element={<AdminPages.Dashboard />} />
                     <Route path="users" element={<AdminPages.Users />} />
+                    <Route path="top-users" element={<AdminPages.TopUsers />} />
                     <Route path="games" element={<AdminPages.Games />} />
                     <Route path="aviator-fun" element={<AdminPages.AviatorFun />} />
                     <Route path="jetx" element={<AdminPages.JetX />} />
