@@ -260,7 +260,7 @@ export function UsersPage() {
 
   const load = () => {
     setLoading(true); setErr(null);
-    listUsers({ search: q, limit: 100 }).then(setData).catch((e) => setErr(e.message)).finally(() => setLoading(false));
+    listUsers({ search: q, limit: 2000 }).then(setData).catch((e) => setErr(e.message)).finally(() => setLoading(false));
   };
   useEffect(load, [q]);
 
