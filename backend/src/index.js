@@ -4382,8 +4382,9 @@ app.get("/api/admin/summary", requireAdmin, async (req, res) => {
 app.get("/api/admin/users-list", requireAdmin, async (req, res) => {
   try {
     const search = String(req.query.search || "").trim();
-    const limit = Math.min(200, Number(req.query.limit) || 50);
+    const limit = Math.min(2000, Number(req.query.limit) || 50);
     const skip = Number(req.query.skip) || 0;
+    const sortParam = String(req.query.sort || "recent");
     const q = {};
     if (search) {
       const asNum = Number(search);
@@ -4394,10 +4395,37 @@ app.get("/api/admin/users-list", requireAdmin, async (req, res) => {
         { lastName: { $regex: search, $options: "i" } },
       ];
     }
-    const [users, total] = await Promise.all([
-      User.find(q).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      User.countDocuments(q),
-    ]);
+    let sortSpec = { createdAt: -1 };
+    let useAggregate = false;
+    if (sortParam === "topfund") useAggregate = true;
+    let users;
+    if (useAggregate) {
+      // Rank by total USD-equivalent value across all currencies + winnings.
+      // Rough conversion: 1 INR = 0.012 USD, 1 Star = 0.013 USD.
+      users = await User.aggregate([
+        { $match: q },
+        {
+          $addFields: {
+            _fundScore: {
+              $add: [
+                { $ifNull: ["$dollarBalance", 0] },
+                { $ifNull: ["$dollarWinning", 0] },
+                { $multiply: [{ $ifNull: ["$rupeeBalance", 0] }, 0.012] },
+                { $multiply: [{ $ifNull: ["$rupeeWinning", 0] }, 0.012] },
+                { $multiply: [{ $ifNull: ["$starBalance", 0] }, 0.013] },
+                { $multiply: [{ $ifNull: ["$starWinning", 0] }, 0.013] },
+              ],
+            },
+          },
+        },
+        { $sort: { _fundScore: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+    } else {
+      users = await User.find(q).sort(sortSpec).skip(skip).limit(limit).lean();
+    }
+    const total = await User.countDocuments(q);
     res.json({ users, total, limit, skip });
   } catch (e) {
     console.error("admin/users-list error:", e);
