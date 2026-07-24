@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
   BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight,
-  Bell, Search, Sparkles, LogOut, Plane, type LucideIcon,
+  Bell, Search, Sparkles, LogOut, Plane, Crown, type LucideIcon,
 } from "lucide-react";
 import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
