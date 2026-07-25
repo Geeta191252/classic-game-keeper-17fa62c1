@@ -1737,6 +1737,13 @@ app.post("/api/telegram-webhook", async (req, res) => {
       let failed = 0;
       let cancelled = false;
 
+      const target = allUsers.length;
+      let success = 0;
+      let blocked = 0;
+      let deleted = 0;
+      let failed = 0;
+      let cancelled = false;
+
       if (global.__broadcastRunning) {
         await bot.sendMessage(chatId, "⚠️ A broadcast is already running. Use /cancelbroadcast first.");
         return res.sendStatus(200);
@@ -1744,7 +1751,36 @@ app.post("/api/telegram-webhook", async (req, res) => {
       global.__broadcastRunning = true;
       global.__broadcastCancel = false;
 
-      await bot.sendMessage(chatId, `📡 Broadcasting ${game.title} to ${allUsers.length} users...\n\nSend /cancelbroadcast to stop.`);
+      const startedAt = Date.now();
+      const fmtElapsed = () => {
+        const s = Math.floor((Date.now() - startedAt) / 1000);
+        const m = Math.floor(s / 60);
+        return `${m}m ${s % 60}s`;
+      };
+      const buildStatus = (done) => (
+        `📦 ${game.title}\n` +
+        `🕒 Time: ${fmtElapsed()}\n` +
+        `👥 Target: ${target}\n` +
+        `📬 Success: ${success}\n` +
+        `⛔ Blocked: ${blocked}\n` +
+        `🗑 Deleted: ${deleted}\n` +
+        `❌ Failed: ${failed}` +
+        (done ? `\n\n${cancelled ? "🛑 Cancelled" : "✅ Complete"}` : "")
+      );
+
+      let statusMsg;
+      try { statusMsg = await bot.sendMessage(chatId, buildStatus(false)); } catch (_) {}
+
+      let lastEdit = 0;
+      const editStatus = async () => {
+        const now = Date.now();
+        if (now - lastEdit < 2500) return;
+        lastEdit = now;
+        if (!statusMsg) return;
+        try {
+          await bot.editMessageText(buildStatus(false), { chat_id: chatId, message_id: statusMsg.message_id });
+        } catch (_) {}
+      };
 
       const replyMarkup = {
         inline_keyboard: [
@@ -1752,32 +1788,47 @@ app.post("/api/telegram-webhook", async (req, res) => {
         ],
       };
 
+      let i = 0;
       for (const user of allUsers) {
         if (global.__broadcastCancel) { cancelled = true; break; }
         try {
-          await bot.sendMessage(user.telegramId, text, {
-            parse_mode: "HTML",
-            reply_markup: replyMarkup,
-          });
-          sent++;
+          await bot.sendMessage(user.telegramId, text, { parse_mode: "HTML", reply_markup: replyMarkup });
+          success++;
         } catch (err) {
-          // Retry without parse_mode so the Play button still gets delivered
-          try {
-            await bot.sendMessage(user.telegramId, customMsg ? `${game.emoji} ${game.title}\n\n${customMsg}` : `${game.emoji} ${game.title} is live!\n\nTap below to play now and win big! 🏆`, {
-              reply_markup: replyMarkup,
-            });
-            sent++;
-          } catch (e2) {
-            failed++;
+          const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
+          if (desc.includes("blocked") || desc.includes("bot was blocked")) {
+            blocked++;
+          } else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) {
+            deleted++;
+          } else {
+            // Retry without parse_mode so the Play button still gets delivered
+            try {
+              await bot.sendMessage(user.telegramId, customMsg ? `${game.emoji} ${game.title}\n\n${customMsg}` : `${game.emoji} ${game.title} is live!\n\nTap below to play now and win big! 🏆`, {
+                reply_markup: replyMarkup,
+              });
+              success++;
+            } catch (e2) {
+              failed++;
+            }
           }
         }
-        if (sent % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        i++;
+        if (i % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        await editStatus();
       }
 
       global.__broadcastRunning = false;
       global.__broadcastCancel = false;
 
-      await bot.sendMessage(chatId, `${cancelled ? "🛑 Game broadcast cancelled." : "✅ Game broadcast complete!"}\n\n🎮 Game: ${game.title}\n📨 Sent: ${sent}\n❌ Failed: ${failed}\n👥 Total: ${allUsers.length}`);
+      if (statusMsg) {
+        try {
+          await bot.editMessageText(buildStatus(true), { chat_id: chatId, message_id: statusMsg.message_id });
+        } catch (_) {
+          await bot.sendMessage(chatId, buildStatus(true));
+        }
+      } else {
+        await bot.sendMessage(chatId, buildStatus(true));
+      }
 
       return res.sendStatus(200);
     }
