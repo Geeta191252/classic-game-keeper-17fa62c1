@@ -1648,21 +1648,28 @@ app.post("/api/telegram-webhook", async (req, res) => {
         } catch (_) {}
       };
 
-      let i = 0;
-      for (const user of allUsers) {
+      // Parallel batches — 25 concurrent sends per second (Telegram global limit ~30/s)
+      const BATCH = 25;
+      for (let b = 0; b < allUsers.length; b += BATCH) {
         if (global.__broadcastCancel) { cancelled = true; break; }
-        try {
-          await bot.sendMessage(user.telegramId, broadcastText, { parse_mode: "Markdown" });
-          success++;
-        } catch (err) {
-          const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
-          if (desc.includes("blocked") || desc.includes("bot was blocked")) blocked++;
-          else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) deleted++;
-          else failed++;
-        }
-        i++;
-        if (i % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        const chunk = allUsers.slice(b, b + BATCH);
+        const batchStart = Date.now();
+        await Promise.all(chunk.map(async (user) => {
+          try {
+            await bot.sendMessage(user.telegramId, broadcastText, { parse_mode: "Markdown" });
+            success++;
+          } catch (err) {
+            const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
+            if (desc.includes("blocked") || desc.includes("bot was blocked")) blocked++;
+            else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) deleted++;
+            else failed++;
+          }
+        }));
         await editStatus(false);
+        const elapsed = Date.now() - batchStart;
+        if (elapsed < 1000 && b + BATCH < allUsers.length) {
+          await new Promise(r => setTimeout(r, 1000 - elapsed));
+        }
       }
 
       global.__broadcastRunning = false;
