@@ -174,6 +174,7 @@ const App = () => {
                     <Route path="deposits" element={<AdminPages.Deposits />} />
                     <Route path="withdrawals" element={<AdminPages.Withdrawals />} />
                     <Route path="wallet-adjust" element={<AdminPages.WalletAdjust />} />
+                    <Route path="offers" element={<AdminPages.Offers />} />
                     <Route path="analytics" element={<AdminPages.Analytics />} />
                     <Route path="settings" element={<AdminPages.Settings />} />
                     <Route path="profile" element={<AdminPages.Profile />} />
