@@ -4296,8 +4296,6 @@ app.get("/api/admin/upi-config", async (req, res) => {
           isEnabled: true,
           exchangeRate: 85,
           manualEnabled: true,
-          pay0Enabled: false,
-          pay0ApiKey: "",
         }
       });
     }
