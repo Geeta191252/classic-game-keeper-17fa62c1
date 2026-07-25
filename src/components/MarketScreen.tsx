@@ -68,7 +68,7 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
       if (!tg) {
         throw new Error("Please open this app inside Telegram to make payments.");
       }
-      const invoiceUrl = await requestInvoice("deposit", "star", offer.payAmount);
+      const invoiceUrl = await requestInvoice("deposit", "star", offer.payAmount, offer._id);
       setBusyId(null);
       tg.openInvoice(invoiceUrl, (status) => {
         if (status === "paid") {
