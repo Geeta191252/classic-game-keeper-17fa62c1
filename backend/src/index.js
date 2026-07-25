@@ -1843,6 +1843,21 @@ app.post("/api/ton/confirm-deposit", async (req, res) => {
 
     console.log(`✅ TON Deposit: ${tx.tonAmount} TON ($${tx.usdEquivalent.toFixed(2)}) for user ${userId}`);
 
+    try {
+      const displayName = user.firstName || user.username || `User ${userId}`;
+      const userTag = user.username ? `@${user.username}` : `\`${userId}\``;
+      await bot.sendMessage(OWNER_TELEGRAM_ID,
+        `💰 *New TON Deposit!*\n\n` +
+        `👤 User: ${displayName} (${userTag})\n` +
+        `🆔 ID: \`${userId}\`\n` +
+        `💎 Amount: ${tx.tonAmount} TON\n` +
+        `💵 USD Value: $${tx.usdEquivalent.toFixed(2)}`,
+        { parse_mode: "Markdown" }
+      );
+    } catch (notifyErr) {
+      console.error("Owner TON notify failed:", notifyErr.message);
+    }
+
     return res.json({
       success: true,
       credited: tx.usdEquivalent,
