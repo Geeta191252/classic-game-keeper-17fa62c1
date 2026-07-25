@@ -1697,28 +1697,30 @@ app.post("/api/telegram-webhook", async (req, res) => {
     if (update.message?.successful_payment) {
       const payment = update.message.successful_payment;
       const payload = JSON.parse(payment.invoice_payload);
-      const { userId, currency, amount } = payload;
+      const { userId, currency, amount, creditAmount, offerId } = payload;
+      const credit = Number(creditAmount) > 0 ? Number(creditAmount) : Number(amount);
 
       const user = await getOrCreateUser(userId);
 
       if (currency === "star") {
-        user.starBalance += amount;
+        user.starBalance += credit;
       } else if (currency === "dollar") {
-        user.dollarBalance += amount;
+        user.dollarBalance += credit;
       }
       await user.save();
 
+      const bonusNote = credit > Number(amount) ? ` (+${credit - Number(amount)} bonus)` : "";
       await Transaction.create({
         telegramId: userId,
         type: "deposit",
         currency,
-        amount: amount,
+        amount: credit,
         status: "completed",
         telegramPaymentId: payment.telegram_payment_charge_id,
-        description: `Deposit of ${currency === "dollar" ? "$" + amount : amount + " Stars"}`,
+        description: `Deposit of ${currency === "dollar" ? "$" + credit : credit + " Stars"}${bonusNote}${offerId ? " [offer]" : ""}`,
       });
 
-      console.log(`✅ Payment received: ${amount} ${currency} for user ${userId}`);
+      console.log(`✅ Payment received: paid ${amount} ${currency}, credited ${credit} for user ${userId}`);
 
       // Unlock pending referral reward (if any) on first successful deposit
       await creditReferralOnDeposit(userId);
