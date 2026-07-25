@@ -4196,13 +4196,10 @@ app.get("/api/upi-config", async (req, res) => {
           isEnabled: true,
           exchangeRate: 85,
           manualEnabled: true,
-          pay0Enabled: false,
-          pay0ApiKey: "",
         }
       });
     }
     const v = doc.value || {};
-    // Never expose the pay0 API key to the browser.
     return res.json({
       upiId: v.upiId || "",
       payeeName: v.payeeName || "",
@@ -4210,7 +4207,6 @@ app.get("/api/upi-config", async (req, res) => {
       isEnabled: v.isEnabled !== false,
       exchangeRate: Number(v.exchangeRate) || 85,
       manualEnabled: v.manualEnabled !== false,
-      pay0Enabled: v.pay0Enabled === true,
     });
   } catch (error) {
     console.error("Get UPI config error:", error);
