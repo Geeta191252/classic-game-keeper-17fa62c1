@@ -150,6 +150,8 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <StartParamNavigator />
+              <NotificationsBridge />
+              <StartParamNavigator />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
