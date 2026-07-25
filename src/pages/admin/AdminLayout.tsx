@@ -29,6 +29,7 @@ const GROUPS: Group[] = [
       { to: "/admin/deposits", label: "Deposits", icon: ArrowDownToLine },
       { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine },
       { to: "/admin/wallet-adjust", label: "Wallet Adjust", icon: Coins },
+      { to: "/admin/offers", label: "Offers", icon: Gift },
     ],
   },
   {
