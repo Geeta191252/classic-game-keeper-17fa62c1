@@ -2278,4 +2278,286 @@ export function JetXControlPage() {
   );
 }
 
+/* ============= Offers management ============= */
+
+interface AdminOffer {
+  _id: string;
+  title: string;
+  payAmount: number;
+  payCurrency: "star" | "dollar";
+  getAmount: number;
+  bonusLabel?: string;
+  valueLabel?: string;
+  active: boolean;
+  createdAt?: string;
+}
+
+const OFFERS_OWNER_ID = "6965488457";
+const OFFERS_API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
+
+async function offersPost<T = any>(path: string, body: Record<string, unknown>): Promise<T> {
+  const res = await fetch(`${OFFERS_API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ownerId: OFFERS_OWNER_ID, ...body }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || "Request failed");
+  return data as T;
+}
+
+const EMPTY_OFFER = {
+  title: "",
+  payAmount: 50,
+  payCurrency: "star" as "star" | "dollar",
+  getAmount: 80,
+  bonusLabel: "",
+  valueLabel: "",
+};
+
+export function OffersPage() {
+  const [offers, setOffers] = useState<AdminOffer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ ...EMPTY_OFFER });
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      setErr(null);
+      const d = await offersPost<{ offers: AdminOffer[] }>("/admin/offers/list", {});
+      setOffers(d.offers || []);
+    } catch (e: any) {
+      setErr(e.message || "Failed to load offers");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const resetForm = () => { setEditingId(null); setForm({ ...EMPTY_OFFER }); };
+
+  const startEdit = (o: AdminOffer) => {
+    setEditingId(o._id);
+    setForm({
+      title: o.title,
+      payAmount: o.payAmount,
+      payCurrency: o.payCurrency,
+      getAmount: o.getAmount,
+      bonusLabel: o.bonusLabel || "",
+      valueLabel: o.valueLabel || "",
+    });
+  };
+
+  const save = async () => {
+    if (!form.title || !form.payAmount || !form.getAmount) {
+      alert("Title, Pay amount aur Get amount required hain.");
+      return;
+    }
+    try {
+      setBusy("save");
+      if (editingId) {
+        await offersPost("/admin/offers/update", { offerId: editingId, ...form });
+      } else {
+        await offersPost("/admin/offers/create", form);
+      }
+      resetForm();
+      await load();
+    } catch (e: any) {
+      alert(e.message || "Save failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const toggle = async (o: AdminOffer) => {
+    try {
+      setBusy(o._id);
+      await offersPost("/admin/offers/update", { offerId: o._id, active: !o.active });
+      await load();
+    } catch (e: any) {
+      alert(e.message || "Update failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const remove = async (o: AdminOffer) => {
+    if (!confirm(`Delete offer "${o.title}"?`)) return;
+    try {
+      setBusy(o._id);
+      await offersPost("/admin/offers/delete", { offerId: o._id });
+      await load();
+    } catch (e: any) {
+      alert(e.message || "Delete failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const broadcast = async (o: AdminOffer) => {
+    if (!confirm(`Broadcast "${o.title}" to all users via bot?`)) return;
+    try {
+      setBusy(o._id);
+      await offersPost("/admin/offers/broadcast", { offerId: o._id });
+      alert("Broadcast started.");
+    } catch (e: any) {
+      alert(e.message || "Broadcast failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const sym = (c: string) => (c === "star" ? "⭐" : "$");
+
+  return (
+    <div>
+      <Section
+        eyebrow="Market"
+        title={editingId ? "Edit offer" : "Create new offer"}
+        right={editingId ? (
+          <button className="a-btn a-btn-sm" onClick={resetForm}>Cancel edit</button>
+        ) : undefined}
+      >
+        <div className="a-card">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Title
+              <input
+                className="a-input mt-1 w-full"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="e.g. SPECIAL OFFER"
+              />
+            </label>
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Pay currency
+              <select
+                className="a-input mt-1 w-full"
+                value={form.payCurrency}
+                onChange={(e) => setForm({ ...form, payCurrency: e.target.value as "star" | "dollar" })}
+              >
+                <option value="star">⭐ Telegram Stars</option>
+                <option value="dollar">$ Crypto (USD)</option>
+              </select>
+            </label>
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Pay amount (user pays)
+              <input
+                type="number"
+                className="a-input mt-1 w-full"
+                value={form.payAmount}
+                onChange={(e) => setForm({ ...form, payAmount: Number(e.target.value) })}
+              />
+            </label>
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Get amount (user receives, pay + bonus)
+              <input
+                type="number"
+                className="a-input mt-1 w-full"
+                value={form.getAmount}
+                onChange={(e) => setForm({ ...form, getAmount: Number(e.target.value) })}
+              />
+            </label>
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Bonus label (optional)
+              <input
+                className="a-input mt-1 w-full"
+                value={form.bonusLabel}
+                onChange={(e) => setForm({ ...form, bonusLabel: e.target.value })}
+                placeholder="+30 ⭐"
+              />
+            </label>
+            <label className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+              Value label (optional)
+              <input
+                className="a-input mt-1 w-full"
+                value={form.valueLabel}
+                onChange={(e) => setForm({ ...form, valueLabel: e.target.value })}
+                placeholder="60% OFF"
+              />
+            </label>
+          </div>
+          <div className="mt-4 text-[11px]" style={{ color: "var(--a-text-mute)" }}>
+            User pays <b>{form.payAmount} {sym(form.payCurrency)}</b> → gets <b>{form.getAmount} {sym(form.payCurrency)}</b>
+            {form.getAmount > form.payAmount ? ` (+${form.getAmount - form.payAmount} bonus)` : ""}
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button className="a-btn a-btn-primary" onClick={save} disabled={busy === "save"}>
+              {busy === "save" ? <Loader2 className="animate-spin" size={14} /> : editingId ? "Save changes" : "Create offer"}
+            </button>
+          </div>
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Market"
+        title="All offers"
+        right={
+          <button className="a-btn a-btn-sm" onClick={load} disabled={loading}>
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Refresh
+          </button>
+        }
+      >
+        {loading ? (
+          <LoadingBlock />
+        ) : err ? (
+          <ErrorBlock message={err} onRetry={load} />
+        ) : offers.length === 0 ? (
+          <NotConnected title="No offers yet" note="Upar form se pehla offer create karein." />
+        ) : (
+          <div className="a-card p-0 overflow-hidden">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr style={{ color: "var(--a-text-dim)", background: "rgba(255,255,255,0.02)" }}>
+                  <th className="text-left px-4 py-3">Title</th>
+                  <th className="text-left px-4 py-3">Pay → Get</th>
+                  <th className="text-left px-4 py-3">Labels</th>
+                  <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-right px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {offers.map((o) => (
+                  <tr key={o._id} style={{ borderTop: "1px solid var(--a-border)" }}>
+                    <td className="px-4 py-3 text-white font-semibold">{o.title}</td>
+                    <td className="px-4 py-3">
+                      {o.payAmount} {sym(o.payCurrency)} → <b>{o.getAmount} {sym(o.payCurrency)}</b>
+                      {o.getAmount > o.payAmount && (
+                        <span className="ml-2 text-[11px]" style={{ color: "var(--a-teal)" }}>
+                          +{o.getAmount - o.payAmount} bonus
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: "var(--a-text-dim)" }}>
+                      {o.bonusLabel || "—"} · {o.valueLabel || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="a-chip" style={{ color: o.active ? "var(--a-teal)" : "var(--a-text-mute)" }}>
+                        {o.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2 justify-end flex-wrap">
+                        <button className="a-btn a-btn-sm" onClick={() => startEdit(o)} disabled={busy === o._id}>Edit</button>
+                        <button className="a-btn a-btn-sm" onClick={() => toggle(o)} disabled={busy === o._id}>
+                          {o.active ? "Disable" : "Enable"}
+                        </button>
+                        <button className="a-btn a-btn-sm" onClick={() => broadcast(o)} disabled={busy === o._id}>Broadcast</button>
+                        <button className="a-btn a-btn-sm" onClick={() => remove(o)} disabled={busy === o._id} style={{ color: "#ff8080" }}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
 
