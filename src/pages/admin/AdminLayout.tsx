@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
   BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight,
-  Bell, Search, Sparkles, LogOut, Plane, Crown, type LucideIcon,
+  Bell, Search, Sparkles, LogOut, Plane, Crown, Gift, type LucideIcon,
 } from "lucide-react";
 import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
@@ -29,6 +29,7 @@ const GROUPS: Group[] = [
       { to: "/admin/deposits", label: "Deposits", icon: ArrowDownToLine },
       { to: "/admin/withdrawals", label: "Withdrawals", icon: ArrowUpFromLine },
       { to: "/admin/wallet-adjust", label: "Wallet Adjust", icon: Coins },
+      { to: "/admin/offers", label: "Offers", icon: Gift },
     ],
   },
   {
