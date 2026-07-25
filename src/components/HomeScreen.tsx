@@ -708,6 +708,8 @@ const HomeScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
   );
 };
