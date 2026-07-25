@@ -1579,7 +1579,7 @@ export function GiftCodesPage() {
 export function SettingsPage() {
   const [cfg, setCfg] = useState<UpiConfig>({
     upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85,
-    manualEnabled: true, pay0Enabled: false, pay0ApiKey: "", pay0KeySet: false,
+    manualEnabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1592,9 +1592,6 @@ export function SettingsPage() {
         upiId: c.upiId || "", payeeName: c.payeeName || "", qrImageUrl: c.qrImageUrl || "",
         isEnabled: !!c.isEnabled, exchangeRate: Number(c.exchangeRate) || 85,
         manualEnabled: c.manualEnabled !== false,
-        pay0Enabled: !!c.pay0Enabled,
-        pay0ApiKey: "",
-        pay0KeySet: !!c.pay0KeySet,
       }); })
       .catch((e) => setMsg({ tone: "err", text: e.message || "Failed to load" }))
       .finally(() => alive && setLoading(false));
@@ -1607,11 +1604,7 @@ export function SettingsPage() {
     setSaving(true);
     try {
       const r = await saveUpiConfig(cfg);
-      setCfg({
-        ...r.config,
-        pay0ApiKey: "",
-        pay0KeySet: !!(r.config as any).pay0KeySet || (!!cfg.pay0ApiKey && cfg.pay0ApiKey.length > 0) || cfg.pay0KeySet,
-      });
+      setCfg({ ...r.config });
       setMsg({ tone: "ok", text: "INR settings saved." });
     } catch (e: any) {
       setMsg({ tone: "err", text: e.message || "Save failed" });
@@ -1620,7 +1613,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="INR Payment Settings" subtitle="Manual UPI + automatic Pay0 gateway — toggle either one on/off" tone="teal"/>
+      <PageHeader title="INR Payment Settings" subtitle="Manual UPI — pay to your UPI ID and submit UTR" tone="teal"/>
 
       {loading ? (
         <div className="a-card flex items-center gap-2 text-white/70 text-[13px]">
