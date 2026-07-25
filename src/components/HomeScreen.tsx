@@ -323,9 +323,10 @@ const HomeScreen = () => {
           <button
             onClick={() => setSupportOpen(true)}
             title="Support"
-            className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#141b2b] border border-white/[0.03] hover:bg-slate-800 transition-colors"
+            className="h-8 rounded-lg flex flex-col items-center justify-center px-2 bg-[#141b2b] border border-white/[0.03] hover:bg-slate-800 transition-colors leading-none"
           >
-            <MessageSquare className="h-4 w-4 text-[#00a2e8]" />
+            <MessageSquare className="h-3.5 w-3.5 text-[#00a2e8]" />
+            <span className="text-[8px] font-bold text-[#00a2e8] mt-0.5">Support</span>
           </button>
           {/* Brand Logo Lightning */}
           <div className="flex items-center gap-1 select-none cursor-pointer" onClick={() => { setActiveTab(0); setFilter("all"); }}>
