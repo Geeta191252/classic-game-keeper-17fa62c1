@@ -1670,11 +1670,6 @@ export function SettingsPage() {
               value={cfg.exchangeRate}
               onChange={(e) => setCfg({ ...cfg, exchangeRate: Number(e.target.value) || 0 })}/>
 
-            <div className="a-label">Pay0 API Key (user_token) {cfg.pay0KeySet && !cfg.pay0ApiKey ? "— currently saved, leave blank to keep" : ""}</div>
-            <input className="a-input mb-4" type="password" placeholder={cfg.pay0KeySet ? "•••••••• (leave blank to keep)" : "Paste your pay0.shop user_token"}
-              value={cfg.pay0ApiKey || ""}
-              onChange={(e) => setCfg({ ...cfg, pay0ApiKey: e.target.value })}/>
-
             <div className="flex items-center gap-3">
               <button className="a-btn" disabled={saving}
                 onClick={save}
@@ -1693,11 +1688,6 @@ export function SettingsPage() {
             <div className="a-eyebrow a-eyebrow-dim">HOW IT WORKS</div>
             <ol className="text-[12px] mt-2 space-y-1 pl-4 list-decimal" style={{ color: "var(--a-text-dim)" }}>
               <li><b>Manual UPI:</b> user pays to your UPI ID and submits UTR. You approve in Deposits.</li>
-              <li><b>Pay0:</b> user taps "Instant UPI (auto)", pays on pay0.shop checkout — balance credits automatically via webhook.</li>
-              <li>Pay0 webhook URL (set this in your pay0 dashboard):
-                <div className="mt-1 font-mono text-[11px] break-all text-white/80">{`${window.location.origin.replace(/\/$/,"")}`}/api/pay0/webhook</div>
-                <div className="text-[10px] mt-0.5">(or your backend URL if different, e.g. https://your-backend.koyeb.app/api/pay0/webhook)</div>
-              </li>
             </ol>
           </div>
         </>
