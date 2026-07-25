@@ -1793,33 +1793,39 @@ app.post("/api/telegram-webhook", async (req, res) => {
         ],
       };
 
-      let i = 0;
-      for (const user of allUsers) {
+      // Parallel batches — 25 concurrent sends per second
+      const BATCH_G = 25;
+      for (let b = 0; b < allUsers.length; b += BATCH_G) {
         if (global.__broadcastCancel) { cancelled = true; break; }
-        try {
-          await bot.sendMessage(user.telegramId, text, { parse_mode: "HTML", reply_markup: replyMarkup });
-          success++;
-        } catch (err) {
-          const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
-          if (desc.includes("blocked") || desc.includes("bot was blocked")) {
-            blocked++;
-          } else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) {
-            deleted++;
-          } else {
-            // Retry without parse_mode so the Play button still gets delivered
-            try {
-              await bot.sendMessage(user.telegramId, customMsg ? `${game.emoji} ${game.title}\n\n${customMsg}` : `${game.emoji} ${game.title} is live!\n\nTap below to play now and win big! 🏆`, {
-                reply_markup: replyMarkup,
-              });
-              success++;
-            } catch (e2) {
-              failed++;
+        const chunk = allUsers.slice(b, b + BATCH_G);
+        const batchStart = Date.now();
+        await Promise.all(chunk.map(async (user) => {
+          try {
+            await bot.sendMessage(user.telegramId, text, { parse_mode: "HTML", reply_markup: replyMarkup });
+            success++;
+          } catch (err) {
+            const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
+            if (desc.includes("blocked") || desc.includes("bot was blocked")) {
+              blocked++;
+            } else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) {
+              deleted++;
+            } else {
+              try {
+                await bot.sendMessage(user.telegramId, customMsg ? `${game.emoji} ${game.title}\n\n${customMsg}` : `${game.emoji} ${game.title} is live!\n\nTap below to play now and win big! 🏆`, {
+                  reply_markup: replyMarkup,
+                });
+                success++;
+              } catch (e2) {
+                failed++;
+              }
             }
           }
-        }
-        i++;
-        if (i % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        }));
         await editStatus();
+        const elapsed = Date.now() - batchStart;
+        if (elapsed < 1000 && b + BATCH_G < allUsers.length) {
+          await new Promise(r => setTimeout(r, 1000 - elapsed));
+        }
       }
 
       global.__broadcastRunning = false;
