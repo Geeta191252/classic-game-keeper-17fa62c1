@@ -1328,6 +1328,39 @@ app.post("/api/telegram-webhook", async (req, res) => {
     }
 
 
+
+    // Owner replies to a "New support message" notification in Telegram → forward to that user
+    if (
+      update.message?.reply_to_message &&
+      update.message?.text &&
+      String(update.message.from.id) === "6965488457" &&
+      !update.message.text.startsWith("/")
+    ) {
+      const quoted = update.message.reply_to_message.text || update.message.reply_to_message.caption || "";
+      if (/New support message/i.test(quoted)) {
+        const m = quoted.match(/\((\d{5,})\)/);
+        if (m) {
+          const targetId = Number(m[1]);
+          const replyText = update.message.text.trim().slice(0, 2000);
+          const chatId = update.message.chat.id;
+          try {
+            await SupportMessage.create({
+              telegramId: targetId,
+              sender: "admin",
+              text: replyText,
+              adminName: "Owner",
+              read: false,
+            });
+            await bot.sendMessage(targetId, `💬 <b>Support reply</b>\n\n${replyText}`, { parse_mode: "HTML" });
+            await bot.sendMessage(chatId, `✅ Reply sent to user ${targetId}`, { reply_to_message_id: update.message.message_id });
+          } catch (e) {
+            await bot.sendMessage(chatId, `❌ Failed to deliver: ${e?.message || e}`, { reply_to_message_id: update.message.message_id });
+          }
+          return res.sendStatus(200);
+        }
+      }
+    }
+
     // Handle /admin command - only for owner
     if (update.message?.text === "/admin") {
       const chatId = update.message.chat.id;
