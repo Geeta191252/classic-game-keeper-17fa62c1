@@ -150,7 +150,6 @@ const WalletScreen = () => {
     isEnabled: boolean;
     exchangeRate: number;
     manualEnabled: boolean;
-    pay0Enabled: boolean;
   }>({
     upiId: "payee@upi",
     payeeName: "Royal King Games",
@@ -158,10 +157,7 @@ const WalletScreen = () => {
     isEnabled: true,
     exchangeRate: 85,
     manualEnabled: true,
-    pay0Enabled: false,
   });
-  const [pay0Amount, setPay0Amount] = useState("");
-  const [pay0Submitting, setPay0Submitting] = useState(false);
   const [upiDepositDialog, setUpiDepositDialog] = useState(false);
   const [upiAmount, setUpiAmount] = useState("");
   const [upiUtr, setUpiUtr] = useState("");
