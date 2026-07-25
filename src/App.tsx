@@ -53,6 +53,7 @@ const AdminPages = {
   Analytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnalyticsPage }))),
   Settings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SettingsPage }))),
   Profile: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ProfilePage }))),
+  Support: lazy(() => import("./pages/admin/SupportPage")),
 };
 
 const queryClient = new QueryClient();
