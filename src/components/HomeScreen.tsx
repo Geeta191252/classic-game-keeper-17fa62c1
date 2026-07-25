@@ -15,6 +15,7 @@ import FriendsScreen from "./FriendsScreen";
 import WalletScreen from "./WalletScreen";
 import MarketScreen from "./MarketScreen";
 import OfferPopup from "./OfferPopup";
+import SupportModal from "./SupportModal";
 import TournamentLeaderboard, { Tournament } from "./TournamentLeaderboard";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
@@ -94,6 +95,7 @@ const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState(0); // 0: Home, 1: Market, 2: Earn, 3: Friends, 4: Wallet
   const [showProfile, setShowProfile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { dollarBalance, starBalance, rupeeBalance, dollarWinning, starWinning, rupeeWinning } = useBalanceContext();
   const totalDollar = dollarBalance + dollarWinning;
@@ -278,6 +280,7 @@ const HomeScreen = () => {
                   { label: "Invite & Referrals", icon: Users, act: () => { setActiveTab(3); setIsDrawerOpen(false); } },
                   { label: "Earn Rewards", icon: Gift, act: () => { setActiveTab(2); setIsDrawerOpen(false); } },
                   { label: "Market Shop", icon: ShoppingCart, act: () => { setActiveTab(1); setIsDrawerOpen(false); } },
+                  { label: "Support / Help", icon: MessageSquare, act: () => { setSupportOpen(true); setIsDrawerOpen(false); } },
                 ].map((item, i) => (
                   <button
                     key={i}
@@ -315,6 +318,14 @@ const HomeScreen = () => {
             className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#141b2b] border border-white/[0.03] hover:bg-slate-800 transition-colors"
           >
             <Menu className="h-4 w-4 text-white" />
+          </button>
+          {/* Support button */}
+          <button
+            onClick={() => setSupportOpen(true)}
+            title="Support"
+            className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#141b2b] border border-white/[0.03] hover:bg-slate-800 transition-colors"
+          >
+            <MessageSquare className="h-4 w-4 text-[#00a2e8]" />
           </button>
           {/* Brand Logo Lightning */}
           <div className="flex items-center gap-1 select-none cursor-pointer" onClick={() => { setActiveTab(0); setFilter("all"); }}>
@@ -697,6 +708,8 @@ const HomeScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SupportModal open={supportOpen} onClose={() => setSupportOpen(false)} />
     </div>
   );
 };

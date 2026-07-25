@@ -53,6 +53,7 @@ const AdminPages = {
   Analytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnalyticsPage }))),
   Settings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SettingsPage }))),
   Profile: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ProfilePage }))),
+  Support: lazy(() => import("./pages/admin/SupportPage")),
 };
 
 const queryClient = new QueryClient();
@@ -182,6 +183,7 @@ const App = () => {
                     <Route path="withdrawals" element={<AdminPages.Withdrawals />} />
                     <Route path="wallet-adjust" element={<AdminPages.WalletAdjust />} />
                     <Route path="offers" element={<AdminPages.Offers />} />
+                    <Route path="support" element={<AdminPages.Support />} />
                     <Route path="analytics" element={<AdminPages.Analytics />} />
                     <Route path="settings" element={<AdminPages.Settings />} />
                     <Route path="profile" element={<AdminPages.Profile />} />
