@@ -67,7 +67,7 @@ const OfferPopup = () => {
       try {
         const tg = getTelegram();
         if (!tg) throw new Error("Please open this app inside Telegram to make payments.");
-        const invoiceUrl = await requestInvoice("deposit", "star", offer.payAmount);
+        const invoiceUrl = await requestInvoice("deposit", "star", offer.payAmount, (offer as any)._id);
         setBusy(false);
         tg.openInvoice(invoiceUrl, (status) => {
           if (status === "paid") {
