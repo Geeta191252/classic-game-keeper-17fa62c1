@@ -356,47 +356,6 @@ const WalletScreen = () => {
     }
   };
 
-  const handlePay0Start = async () => {
-    const rupeeAmount = Number(pay0Amount);
-    if (!rupeeAmount || rupeeAmount < inrDepositMin) {
-      toast({ title: `Minimum ₹${inrDepositMin}`, description: `Minimum deposit is ₹${inrDepositMin}.`, variant: "destructive" });
-      return;
-    }
-    setPay0Submitting(true);
-    try {
-      const tg = getTelegram();
-      const userId = tg?.initDataUnsafe?.user?.id || "demo";
-      const name = tg?.initDataUnsafe?.user?.first_name || "";
-      const res = await fetch(`${apiBase}/pay0/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: rupeeAmount, name }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.paymentUrl) throw new Error(data.error || "Failed to start payment");
-      const tg2: any = getTelegram();
-      if (tg2 && typeof tg2.openLink === "function") {
-        tg2.openLink(data.paymentUrl, { try_instant_view: false });
-      } else {
-        window.open(data.paymentUrl, "_blank");
-      }
-      toast({
-        title: "Opening UPI checkout…",
-        description: "Complete payment — your ₹ balance will update automatically.",
-      });
-      setPay0Amount("");
-      // Refresh balance a few times over the next 90s
-      let n = 0;
-      const id = setInterval(() => {
-        refreshBalance();
-        if (++n > 30) clearInterval(id);
-      }, 3000);
-    } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Could not start payment.", variant: "destructive" });
-    } finally {
-      setPay0Submitting(false);
-    }
-  };
 
   useEffect(() => {
     if (!cryptoPayment?.orderId) {
