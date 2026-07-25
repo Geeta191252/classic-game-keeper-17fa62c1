@@ -95,7 +95,8 @@ interface InvoiceResponse {
 export const requestInvoice = async (
   action: ActionType,
   currency: CurrencyType,
-  amount: number
+  amount: number,
+  offerId?: string
 ): Promise<string> => {
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id || "demo";
@@ -107,6 +108,7 @@ export const requestInvoice = async (
       userId,
       currency,
       amount,
+      offerId,
       initData: tg?.initData, // for server-side validation
     }),
   });

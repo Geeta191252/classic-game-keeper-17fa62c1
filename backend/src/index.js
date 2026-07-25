@@ -473,21 +473,37 @@ async function creditReferralOnDeposit(_depositorTelegramId) { /* deprecated */ 
 // ============================================
 app.post("/api/deposit", async (req, res) => {
   try {
-    const { userId, currency, amount } = req.body;
+    const { userId, currency, amount, offerId } = req.body;
 
     if (!userId || !currency || !amount) {
       return res.status(400).json({ error: "Missing userId, currency, or amount" });
     }
 
     if (currency === "star") {
-      // Telegram Stars payment via invoice
+      // If this is an offer purchase, credit offer.getAmount (pay + bonus)
+      let creditAmount = Number(amount);
+      let title = `Deposit ${amount} Stars`;
+      let description = `Add ${amount} Stars to your wallet`;
+      if (offerId) {
+        try {
+          const offer = await Offer.findById(offerId).lean();
+          if (offer && offer.payCurrency === "star" && offer.active) {
+            creditAmount = Number(offer.getAmount) || creditAmount;
+            title = offer.title || title;
+            description = `Pay ${offer.payAmount}⭐ → Get ${offer.getAmount}⭐`;
+          }
+        } catch (e) {
+          console.error("Offer lookup failed:", e.message);
+        }
+      }
+
       const invoice = await bot.createInvoiceLink(
-        `Deposit ${amount} Stars`,           // title
-        `Add ${amount} Stars to your wallet`, // description
-        JSON.stringify({ action: "deposit", currency: "star", userId, amount }), // payload
-        "",                                   // provider_token (empty for Stars)
-        "XTR",                                // currency
-        [{ label: `${amount} Stars`, amount: amount }] // prices
+        title,
+        description,
+        JSON.stringify({ action: "deposit", currency: "star", userId, amount, creditAmount, offerId: offerId || null }),
+        "",
+        "XTR",
+        [{ label: `${amount} Stars`, amount: amount }]
       );
 
       return res.json({ invoiceUrl: invoice });
@@ -1681,28 +1697,30 @@ app.post("/api/telegram-webhook", async (req, res) => {
     if (update.message?.successful_payment) {
       const payment = update.message.successful_payment;
       const payload = JSON.parse(payment.invoice_payload);
-      const { userId, currency, amount } = payload;
+      const { userId, currency, amount, creditAmount, offerId } = payload;
+      const credit = Number(creditAmount) > 0 ? Number(creditAmount) : Number(amount);
 
       const user = await getOrCreateUser(userId);
 
       if (currency === "star") {
-        user.starBalance += amount;
+        user.starBalance += credit;
       } else if (currency === "dollar") {
-        user.dollarBalance += amount;
+        user.dollarBalance += credit;
       }
       await user.save();
 
+      const bonusNote = credit > Number(amount) ? ` (+${credit - Number(amount)} bonus)` : "";
       await Transaction.create({
         telegramId: userId,
         type: "deposit",
         currency,
-        amount: amount,
+        amount: credit,
         status: "completed",
         telegramPaymentId: payment.telegram_payment_charge_id,
-        description: `Deposit of ${currency === "dollar" ? "$" + amount : amount + " Stars"}`,
+        description: `Deposit of ${currency === "dollar" ? "$" + credit : credit + " Stars"}${bonusNote}${offerId ? " [offer]" : ""}`,
       });
 
-      console.log(`✅ Payment received: ${amount} ${currency} for user ${userId}`);
+      console.log(`✅ Payment received: paid ${amount} ${currency}, credited ${credit} for user ${userId}`);
 
       // Unlock pending referral reward (if any) on first successful deposit
       await creditReferralOnDeposit(userId);
