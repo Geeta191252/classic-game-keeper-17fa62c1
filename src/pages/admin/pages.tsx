@@ -1579,7 +1579,7 @@ export function GiftCodesPage() {
 export function SettingsPage() {
   const [cfg, setCfg] = useState<UpiConfig>({
     upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85,
-    manualEnabled: true, pay0Enabled: false, pay0ApiKey: "", pay0KeySet: false,
+    manualEnabled: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1592,9 +1592,6 @@ export function SettingsPage() {
         upiId: c.upiId || "", payeeName: c.payeeName || "", qrImageUrl: c.qrImageUrl || "",
         isEnabled: !!c.isEnabled, exchangeRate: Number(c.exchangeRate) || 85,
         manualEnabled: c.manualEnabled !== false,
-        pay0Enabled: !!c.pay0Enabled,
-        pay0ApiKey: "",
-        pay0KeySet: !!c.pay0KeySet,
       }); })
       .catch((e) => setMsg({ tone: "err", text: e.message || "Failed to load" }))
       .finally(() => alive && setLoading(false));
@@ -1607,11 +1604,7 @@ export function SettingsPage() {
     setSaving(true);
     try {
       const r = await saveUpiConfig(cfg);
-      setCfg({
-        ...r.config,
-        pay0ApiKey: "",
-        pay0KeySet: !!(r.config as any).pay0KeySet || (!!cfg.pay0ApiKey && cfg.pay0ApiKey.length > 0) || cfg.pay0KeySet,
-      });
+      setCfg({ ...r.config });
       setMsg({ tone: "ok", text: "INR settings saved." });
     } catch (e: any) {
       setMsg({ tone: "err", text: e.message || "Save failed" });
@@ -1620,7 +1613,7 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="INR Payment Settings" subtitle="Manual UPI + automatic Pay0 gateway — toggle either one on/off" tone="teal"/>
+      <PageHeader title="INR Payment Settings" subtitle="Manual UPI — pay to your UPI ID and submit UTR" tone="teal"/>
 
       {loading ? (
         <div className="a-card flex items-center gap-2 text-white/70 text-[13px]">
@@ -1656,21 +1649,6 @@ export function SettingsPage() {
               </label>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl p-3 mb-4"
-                 style={{background:"rgba(51,214,159,0.05)",border:"1px solid rgba(51,214,159,0.15)"}}>
-              <div>
-                <div className="text-white font-bold text-[14px]">Pay0 Gateway (auto)</div>
-                <div className="text-[11px]" style={{color:"var(--a-text-dim)"}}>
-                  Show / hide "Instant UPI (auto)" — uses pay0.shop API
-                  {cfg.pay0KeySet ? " • key saved" : " • add API key below"}
-                </div>
-              </div>
-              <label className="inline-flex items-center gap-2 cursor-pointer text-[13px] text-white">
-                <input type="checkbox" checked={!!cfg.pay0Enabled}
-                  onChange={(e) => setCfg({ ...cfg, pay0Enabled: e.target.checked })}/>
-                {cfg.pay0Enabled ? "On" : "Off"}
-              </label>
-            </div>
 
             <div className="a-label">UPI ID (VPA) — used by Manual UPI</div>
             <input className="a-input mb-3" placeholder="yourname@okhdfcbank"
@@ -1692,11 +1670,6 @@ export function SettingsPage() {
               value={cfg.exchangeRate}
               onChange={(e) => setCfg({ ...cfg, exchangeRate: Number(e.target.value) || 0 })}/>
 
-            <div className="a-label">Pay0 API Key (user_token) {cfg.pay0KeySet && !cfg.pay0ApiKey ? "— currently saved, leave blank to keep" : ""}</div>
-            <input className="a-input mb-4" type="password" placeholder={cfg.pay0KeySet ? "•••••••• (leave blank to keep)" : "Paste your pay0.shop user_token"}
-              value={cfg.pay0ApiKey || ""}
-              onChange={(e) => setCfg({ ...cfg, pay0ApiKey: e.target.value })}/>
-
             <div className="flex items-center gap-3">
               <button className="a-btn" disabled={saving}
                 onClick={save}
@@ -1715,11 +1688,6 @@ export function SettingsPage() {
             <div className="a-eyebrow a-eyebrow-dim">HOW IT WORKS</div>
             <ol className="text-[12px] mt-2 space-y-1 pl-4 list-decimal" style={{ color: "var(--a-text-dim)" }}>
               <li><b>Manual UPI:</b> user pays to your UPI ID and submits UTR. You approve in Deposits.</li>
-              <li><b>Pay0:</b> user taps "Instant UPI (auto)", pays on pay0.shop checkout — balance credits automatically via webhook.</li>
-              <li>Pay0 webhook URL (set this in your pay0 dashboard):
-                <div className="mt-1 font-mono text-[11px] break-all text-white/80">{`${window.location.origin.replace(/\/$/,"")}`}/api/pay0/webhook</div>
-                <div className="text-[10px] mt-0.5">(or your backend URL if different, e.g. https://your-backend.koyeb.app/api/pay0/webhook)</div>
-              </li>
             </ol>
           </div>
         </>

@@ -150,7 +150,6 @@ const WalletScreen = () => {
     isEnabled: boolean;
     exchangeRate: number;
     manualEnabled: boolean;
-    pay0Enabled: boolean;
   }>({
     upiId: "payee@upi",
     payeeName: "Royal King Games",
@@ -158,10 +157,7 @@ const WalletScreen = () => {
     isEnabled: true,
     exchangeRate: 85,
     manualEnabled: true,
-    pay0Enabled: false,
   });
-  const [pay0Amount, setPay0Amount] = useState("");
-  const [pay0Submitting, setPay0Submitting] = useState(false);
   const [upiDepositDialog, setUpiDepositDialog] = useState(false);
   const [upiAmount, setUpiAmount] = useState("");
   const [upiUtr, setUpiUtr] = useState("");
@@ -360,47 +356,6 @@ const WalletScreen = () => {
     }
   };
 
-  const handlePay0Start = async () => {
-    const rupeeAmount = Number(pay0Amount);
-    if (!rupeeAmount || rupeeAmount < inrDepositMin) {
-      toast({ title: `Minimum ₹${inrDepositMin}`, description: `Minimum deposit is ₹${inrDepositMin}.`, variant: "destructive" });
-      return;
-    }
-    setPay0Submitting(true);
-    try {
-      const tg = getTelegram();
-      const userId = tg?.initDataUnsafe?.user?.id || "demo";
-      const name = tg?.initDataUnsafe?.user?.first_name || "";
-      const res = await fetch(`${apiBase}/pay0/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, amount: rupeeAmount, name }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.paymentUrl) throw new Error(data.error || "Failed to start payment");
-      const tg2: any = getTelegram();
-      if (tg2 && typeof tg2.openLink === "function") {
-        tg2.openLink(data.paymentUrl, { try_instant_view: false });
-      } else {
-        window.open(data.paymentUrl, "_blank");
-      }
-      toast({
-        title: "Opening UPI checkout…",
-        description: "Complete payment — your ₹ balance will update automatically.",
-      });
-      setPay0Amount("");
-      // Refresh balance a few times over the next 90s
-      let n = 0;
-      const id = setInterval(() => {
-        refreshBalance();
-        if (++n > 30) clearInterval(id);
-      }, 3000);
-    } catch (err: any) {
-      toast({ title: "Error", description: err?.message || "Could not start payment.", variant: "destructive" });
-    } finally {
-      setPay0Submitting(false);
-    }
-  };
 
   useEffect(() => {
     if (!cryptoPayment?.orderId) {
@@ -1177,40 +1132,6 @@ const WalletScreen = () => {
                   <span className="font-black text-xs text-white uppercase tracking-wider">INR Deposit</span>
                 </div>
 
-                {upiConfig.isEnabled && upiConfig.pay0Enabled && (
-                  <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3 shadow-md">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Smartphone className="h-4 w-4 text-emerald-400" />
-                        <h3 className="font-black text-xs text-white uppercase tracking-wider">Instant UPI (auto)</h3>
-                      </div>
-                      <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                        Auto Credit
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-[#8e97a4]">Pay via UPI checkout — ₹ balance credits automatically, no UTR needed.</p>
-                    <div className="flex gap-2">
-                      <div className="flex-1 relative">
-                        <Input
-                          type="number"
-                          placeholder={`Min ₹${inrDepositMin}`}
-                          value={pay0Amount}
-                          onChange={(e) => setPay0Amount(e.target.value)}
-                          className="pr-6 rounded-xl bg-[#0d121f] h-10 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                          min={inrDepositMin}
-                        />
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-extrabold text-[#8e97a4]">₹</span>
-                      </div>
-                      <button
-                        onClick={handlePay0Start}
-                        disabled={pay0Submitting}
-                        className="rounded-xl h-10 px-4 text-[10px] font-black uppercase bg-emerald-500 hover:bg-emerald-600 text-black tracking-wider shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50"
-                      >
-                        {pay0Submitting ? "..." : "Pay Now"}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {upiConfig.isEnabled && upiConfig.manualEnabled && upiConfig.upiId ? (
                   <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
@@ -1233,7 +1154,7 @@ const WalletScreen = () => {
                   </div>
                 ) : null}
 
-                {(!upiConfig.isEnabled || (!upiConfig.manualEnabled && !upiConfig.pay0Enabled)) && (
+                {(!upiConfig.isEnabled || !upiConfig.manualEnabled) && (
                   <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 text-center text-[10px] text-[#8e97a4]">
                     INR deposit currently unavailable.
                   </div>

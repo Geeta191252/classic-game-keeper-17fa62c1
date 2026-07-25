@@ -4196,13 +4196,10 @@ app.get("/api/upi-config", async (req, res) => {
           isEnabled: true,
           exchangeRate: 85,
           manualEnabled: true,
-          pay0Enabled: false,
-          pay0ApiKey: "",
         }
       });
     }
     const v = doc.value || {};
-    // Never expose the pay0 API key to the browser.
     return res.json({
       upiId: v.upiId || "",
       payeeName: v.payeeName || "",
@@ -4210,7 +4207,6 @@ app.get("/api/upi-config", async (req, res) => {
       isEnabled: v.isEnabled !== false,
       exchangeRate: Number(v.exchangeRate) || 85,
       manualEnabled: v.manualEnabled !== false,
-      pay0Enabled: v.pay0Enabled === true,
     });
   } catch (error) {
     console.error("Get UPI config error:", error);
@@ -4279,154 +4275,6 @@ app.post("/api/upi/deposit-request", async (req, res) => {
   }
 });
 
-// ============================================
-// Pay0 (pay0.shop) — Automatic INR Payment Gateway
-// ============================================
-async function getPay0Config() {
-  const doc = await Setting.findOne({ key: "upiConfig" });
-  const v = doc?.value || {};
-  return {
-    enabled: v.pay0Enabled === true,
-    apiKey: (v.pay0ApiKey || "").trim(),
-  };
-}
-
-// POST /api/pay0/create-order  { userId, amount, name?, mobile? }
-app.post("/api/pay0/create-order", async (req, res) => {
-  try {
-    const { userId, amount, name, mobile } = req.body || {};
-    const rupees = Number(amount);
-    if (!userId || !rupees || rupees < 1) {
-      return res.status(400).json({ error: "Invalid amount" });
-    }
-    const cfg = await getPay0Config();
-    if (!cfg.enabled || !cfg.apiKey) {
-      return res.status(400).json({ error: "Pay0 gateway not configured" });
-    }
-    const numericUserId = Number(userId);
-    const user = await getOrCreateUser(numericUserId);
-    if (!user || user.telegramId === 0) return res.status(404).json({ error: "User not found" });
-
-    const orderId = `p0_${numericUserId}_${Date.now()}`;
-    const customerName = String(name || user.firstName || `User${numericUserId}`).slice(0, 40) || "User";
-    // pay0 requires 10-digit Indian mobile. Use provided or a placeholder from userId.
-    const rawMobile = String(mobile || "").replace(/\D/g, "");
-    const customerMobile = /^\d{10}$/.test(rawMobile)
-      ? rawMobile
-      : ("9" + String(numericUserId).padStart(9, "0")).slice(0, 10);
-
-    const form = new URLSearchParams();
-    form.set("customer_mobile", customerMobile);
-    form.set("customer_name", customerName);
-    form.set("user_token", cfg.apiKey);
-    form.set("amount", String(rupees));
-    form.set("order_id", orderId);
-    form.set("redirect_url", `${getBackendUrl()}/api/pay0/return?orderId=${orderId}`);
-    form.set("remark1", `tg:${numericUserId}`);
-    form.set("remark2", "royalking");
-
-    let apiResp;
-    try {
-      const r = await fetch("https://pay0.shop/api/create-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: form.toString(),
-      });
-      apiResp = await r.json().catch(() => ({}));
-    } catch (e) {
-      return res.status(502).json({ error: "Pay0 gateway unreachable" });
-    }
-
-    const result = apiResp?.result || apiResp?.results || apiResp;
-    const paymentUrl = result?.payment_url || apiResp?.payment_url;
-    const okFlag = apiResp?.status === true || apiResp?.status === "true" || !!paymentUrl;
-    if (!okFlag || !paymentUrl) {
-      return res.status(400).json({ error: apiResp?.message || "Failed to create order" });
-    }
-
-    await Transaction.create({
-      telegramId: numericUserId,
-      type: "deposit",
-      currency: "rupee",
-      amount: rupees,
-      status: "pending",
-      description: `Pay0 UPI (Order: ${orderId})`,
-    });
-
-    return res.json({ success: true, paymentUrl, orderId });
-  } catch (error) {
-    console.error("Pay0 create-order error:", error);
-    return res.status(500).json({ error: "Failed to start payment" });
-  }
-});
-
-// Pay0 webhook — form-encoded { status, order_id, amount, ... }
-async function handlePay0Callback(req, res) {
-  try {
-    const body = { ...(req.body || {}), ...(req.query || {}) };
-    const orderId = String(body.order_id || body.orderId || "").trim();
-    const status = String(body.status || "").toLowerCase();
-    const paidAmount = Number(body.amount);
-    if (!orderId) return res.status(400).json({ error: "order_id required" });
-
-    const tx = await Transaction.findOne({ description: { $regex: new RegExp(orderId, "i") } });
-    if (!tx) return res.status(404).json({ error: "Order not found" });
-
-    // Idempotent: only credit once on first "success".
-    if (tx.status === "completed") return res.json({ ok: true, already: true });
-
-    const isSuccess = status === "success" || status === "completed" || status === "paid";
-    if (!isSuccess) {
-      if (tx.status === "pending") {
-        tx.status = "failed";
-        tx.description = `${tx.description} • ${status || "failed"}`;
-        await tx.save();
-      }
-      return res.json({ ok: true, status });
-    }
-
-    const credit = Number.isFinite(paidAmount) && paidAmount > 0 ? paidAmount : tx.amount;
-    tx.amount = credit;
-    tx.status = "completed";
-    await tx.save();
-
-    const user = await User.findOne({ telegramId: tx.telegramId });
-    if (user) {
-      user.rupeeBalance = (user.rupeeBalance || 0) + credit;
-      await user.save();
-      try { await creditReferralOnDeposit(user.telegramId); } catch {}
-    }
-    try {
-      await bot.sendMessage(tx.telegramId,
-        `✅ UPI Deposit Successful!\nAmount: ₹${credit}\nCredited to your ₹ wallet.`);
-    } catch {}
-    return res.json({ ok: true, credited: credit });
-  } catch (error) {
-    console.error("Pay0 webhook error:", error);
-    return res.status(500).json({ error: "Webhook failed" });
-  }
-}
-app.post("/api/pay0/webhook", handlePay0Callback);
-app.get("/api/pay0/webhook", handlePay0Callback);
-
-// User comes back from pay0 checkout page.
-app.get("/api/pay0/return", async (req, res) => {
-  const orderId = String(req.query.orderId || "");
-  res.type("html").send(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Payment</title><style>body{background:#0e131f;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px}</style></head><body><div><h2>Payment Submitted</h2><p style="opacity:.7">Order: ${orderId}</p><p>You can close this tab and return to the app. Your ₹ balance will update once the payment is confirmed.</p></div></body></html>`);
-});
-
-// User poll — has this order been credited yet?
-app.get("/api/pay0/status", async (req, res) => {
-  try {
-    const orderId = String(req.query.orderId || "").trim();
-    if (!orderId) return res.status(400).json({ error: "orderId required" });
-    const tx = await Transaction.findOne({ description: { $regex: new RegExp(orderId, "i") } });
-    if (!tx) return res.json({ status: "unknown" });
-    return res.json({ status: tx.status, amount: tx.amount });
-  } catch (e) {
-    return res.status(500).json({ error: "status failed" });
-  }
-});
 
 
 // GET /api/admin/upi-config - Admin retrieves UPI config
@@ -4448,8 +4296,6 @@ app.get("/api/admin/upi-config", async (req, res) => {
           isEnabled: true,
           exchangeRate: 85,
           manualEnabled: true,
-          pay0Enabled: false,
-          pay0ApiKey: "",
         }
       });
     }
@@ -4464,12 +4310,11 @@ app.get("/api/admin/upi-config", async (req, res) => {
 app.post("/api/admin/upi-config", async (req, res) => {
   try {
     const { ownerId, upiId, payeeName, qrImageUrl, isEnabled, exchangeRate,
-            manualEnabled, pay0Enabled, pay0ApiKey } = req.body;
+            manualEnabled } = req.body;
     if (String(ownerId) !== "6965488457") {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    const existing = (await Setting.findOne({ key: "upiConfig" }))?.value || {};
     const value = {
       upiId: String(upiId || "").trim(),
       payeeName: String(payeeName || "").trim(),
@@ -4477,10 +4322,6 @@ app.post("/api/admin/upi-config", async (req, res) => {
       isEnabled: isEnabled === true,
       exchangeRate: Number(exchangeRate) || 85,
       manualEnabled: manualEnabled === true,
-      pay0Enabled: pay0Enabled === true,
-      pay0ApiKey: typeof pay0ApiKey === "string" && pay0ApiKey.trim()
-        ? pay0ApiKey.trim()
-        : (existing.pay0ApiKey || ""),
     };
 
     const doc = await Setting.findOneAndUpdate(
@@ -5106,7 +4947,7 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
       doc = await SettingModel.create({
         key: "upiConfig",
         value: { upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85,
-                 manualEnabled: true, pay0Enabled: false, pay0ApiKey: "" },
+                 manualEnabled: true },
       });
     }
     const v = doc.value || {};
@@ -5117,9 +4958,6 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
       isEnabled: v.isEnabled === true,
       exchangeRate: Number(v.exchangeRate) || 85,
       manualEnabled: v.manualEnabled !== false,
-      pay0Enabled: v.pay0Enabled === true,
-      pay0ApiKey: "", // don't leak — pay0KeySet indicates presence
-      pay0KeySet: !!(v.pay0ApiKey && String(v.pay0ApiKey).trim()),
     });
   } catch (e) {
     console.error("admin upi get error:", e);
@@ -5130,8 +4968,7 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
 app.post("/api/admin/upi/config", requireAdmin, async (req, res) => {
   try {
     const { upiId, payeeName, qrImageUrl, isEnabled, exchangeRate,
-            manualEnabled, pay0Enabled, pay0ApiKey } = req.body || {};
-    const existing = (await SettingModel.findOne({ key: "upiConfig" }))?.value || {};
+            manualEnabled } = req.body || {};
     const value = {
       upiId: String(upiId || "").trim(),
       payeeName: String(payeeName || "").trim(),
@@ -5139,10 +4976,6 @@ app.post("/api/admin/upi/config", requireAdmin, async (req, res) => {
       isEnabled: isEnabled === true || isEnabled === "true",
       exchangeRate: Number(exchangeRate) > 0 ? Number(exchangeRate) : 85,
       manualEnabled: manualEnabled === true || manualEnabled === "true",
-      pay0Enabled: pay0Enabled === true || pay0Enabled === "true",
-      pay0ApiKey: typeof pay0ApiKey === "string" && pay0ApiKey.trim()
-        ? pay0ApiKey.trim()
-        : (existing.pay0ApiKey || ""),
     };
     if (!value.upiId) return res.status(400).json({ error: "UPI ID is required" });
     const doc = await SettingModel.findOneAndUpdate(
