@@ -1649,21 +1649,6 @@ export function SettingsPage() {
               </label>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl p-3 mb-4"
-                 style={{background:"rgba(51,214,159,0.05)",border:"1px solid rgba(51,214,159,0.15)"}}>
-              <div>
-                <div className="text-white font-bold text-[14px]">Pay0 Gateway (auto)</div>
-                <div className="text-[11px]" style={{color:"var(--a-text-dim)"}}>
-                  Show / hide "Instant UPI (auto)" — uses pay0.shop API
-                  {cfg.pay0KeySet ? " • key saved" : " • add API key below"}
-                </div>
-              </div>
-              <label className="inline-flex items-center gap-2 cursor-pointer text-[13px] text-white">
-                <input type="checkbox" checked={!!cfg.pay0Enabled}
-                  onChange={(e) => setCfg({ ...cfg, pay0Enabled: e.target.checked })}/>
-                {cfg.pay0Enabled ? "On" : "Off"}
-              </label>
-            </div>
 
             <div className="a-label">UPI ID (VPA) — used by Manual UPI</div>
             <input className="a-input mb-3" placeholder="yourname@okhdfcbank"
