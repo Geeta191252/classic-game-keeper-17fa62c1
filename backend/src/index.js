@@ -130,6 +130,7 @@ app.use(express.json({
     }
   }
 }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // MongoDB connection
 mongoose
