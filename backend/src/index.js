@@ -1733,9 +1733,7 @@ app.post("/api/telegram-webhook", async (req, res) => {
         : `${game.emoji} <b>${escapeHtml(game.title)}</b> is live!\n\nTap below to play now and win big! 🏆`;
 
       const allUsers = await User.find({ telegramId: { $gt: 0 } }).select("telegramId").lean();
-      let sent = 0;
-      let failed = 0;
-      let cancelled = false;
+
 
       const target = allUsers.length;
       let success = 0;
