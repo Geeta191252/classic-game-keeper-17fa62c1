@@ -4310,12 +4310,11 @@ app.get("/api/admin/upi-config", async (req, res) => {
 app.post("/api/admin/upi-config", async (req, res) => {
   try {
     const { ownerId, upiId, payeeName, qrImageUrl, isEnabled, exchangeRate,
-            manualEnabled, pay0Enabled, pay0ApiKey } = req.body;
+            manualEnabled } = req.body;
     if (String(ownerId) !== "6965488457") {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    const existing = (await Setting.findOne({ key: "upiConfig" }))?.value || {};
     const value = {
       upiId: String(upiId || "").trim(),
       payeeName: String(payeeName || "").trim(),
@@ -4323,10 +4322,6 @@ app.post("/api/admin/upi-config", async (req, res) => {
       isEnabled: isEnabled === true,
       exchangeRate: Number(exchangeRate) || 85,
       manualEnabled: manualEnabled === true,
-      pay0Enabled: pay0Enabled === true,
-      pay0ApiKey: typeof pay0ApiKey === "string" && pay0ApiKey.trim()
-        ? pay0ApiKey.trim()
-        : (existing.pay0ApiKey || ""),
     };
 
     const doc = await Setting.findOneAndUpdate(
