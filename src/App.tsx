@@ -129,6 +129,11 @@ const RouteFallback = () => (
   </div>
 );
 
+const NotificationsBridge = () => {
+  useTxNotifications();
+  return null;
+};
+
 const App = () => {
   useGlobalClickSound();
   useEffect(() => {
