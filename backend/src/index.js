@@ -1722,6 +1722,23 @@ app.post("/api/telegram-webhook", async (req, res) => {
 
       console.log(`✅ Payment received: paid ${amount} ${currency}, credited ${credit} for user ${userId}`);
 
+      // Notify owner about successful star/dollar deposit
+      try {
+        const displayName = user.firstName || user.username || `User ${userId}`;
+        const userTag = user.username ? `@${user.username}` : `\`${userId}\``;
+        const amtStr = currency === "star" ? `${credit} ⭐` : `$${credit}`;
+        await bot.sendMessage(OWNER_TELEGRAM_ID,
+          `💰 *New Deposit Received!*\n\n` +
+          `👤 User: ${displayName} (${userTag})\n` +
+          `🆔 ID: \`${userId}\`\n` +
+          `💵 Amount: ${amtStr}${bonusNote}\n` +
+          `📦 Type: ${currency === "star" ? "Telegram Stars" : "Dollar"}${offerId ? " (Offer)" : ""}`,
+          { parse_mode: "Markdown" }
+        );
+      } catch (notifyErr) {
+        console.error("Owner deposit notify failed:", notifyErr.message);
+      }
+
       // Unlock pending referral reward (if any) on first successful deposit
       await creditReferralOnDeposit(userId);
     }
