@@ -1132,40 +1132,6 @@ const WalletScreen = () => {
                   <span className="font-black text-xs text-white uppercase tracking-wider">INR Deposit</span>
                 </div>
 
-                {upiConfig.isEnabled && upiConfig.pay0Enabled && (
-                  <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3 shadow-md">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Smartphone className="h-4 w-4 text-emerald-400" />
-                        <h3 className="font-black text-xs text-white uppercase tracking-wider">Instant UPI (auto)</h3>
-                      </div>
-                      <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                        Auto Credit
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-[#8e97a4]">Pay via UPI checkout — ₹ balance credits automatically, no UTR needed.</p>
-                    <div className="flex gap-2">
-                      <div className="flex-1 relative">
-                        <Input
-                          type="number"
-                          placeholder={`Min ₹${inrDepositMin}`}
-                          value={pay0Amount}
-                          onChange={(e) => setPay0Amount(e.target.value)}
-                          className="pr-6 rounded-xl bg-[#0d121f] h-10 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                          min={inrDepositMin}
-                        />
-                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-extrabold text-[#8e97a4]">₹</span>
-                      </div>
-                      <button
-                        onClick={handlePay0Start}
-                        disabled={pay0Submitting}
-                        className="rounded-xl h-10 px-4 text-[10px] font-black uppercase bg-emerald-500 hover:bg-emerald-600 text-black tracking-wider shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50"
-                      >
-                        {pay0Submitting ? "..." : "Pay Now"}
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {upiConfig.isEnabled && upiConfig.manualEnabled && upiConfig.upiId ? (
                   <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
