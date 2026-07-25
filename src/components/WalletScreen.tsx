@@ -149,13 +149,19 @@ const WalletScreen = () => {
     qrImageUrl: string;
     isEnabled: boolean;
     exchangeRate: number;
+    manualEnabled: boolean;
+    pay0Enabled: boolean;
   }>({
     upiId: "payee@upi",
     payeeName: "Royal King Games",
     qrImageUrl: "",
     isEnabled: true,
-    exchangeRate: 85
+    exchangeRate: 85,
+    manualEnabled: true,
+    pay0Enabled: false,
   });
+  const [pay0Amount, setPay0Amount] = useState("");
+  const [pay0Submitting, setPay0Submitting] = useState(false);
   const [upiDepositDialog, setUpiDepositDialog] = useState(false);
   const [upiAmount, setUpiAmount] = useState("");
   const [upiUtr, setUpiUtr] = useState("");
