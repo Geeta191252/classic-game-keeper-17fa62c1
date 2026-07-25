@@ -4194,11 +4194,24 @@ app.get("/api/upi-config", async (req, res) => {
           payeeName: "Royal King Games",
           qrImageUrl: "",
           isEnabled: true,
-          exchangeRate: 85
+          exchangeRate: 85,
+          manualEnabled: true,
+          pay0Enabled: false,
+          pay0ApiKey: "",
         }
       });
     }
-    return res.json(doc.value);
+    const v = doc.value || {};
+    // Never expose the pay0 API key to the browser.
+    return res.json({
+      upiId: v.upiId || "",
+      payeeName: v.payeeName || "",
+      qrImageUrl: v.qrImageUrl || "",
+      isEnabled: v.isEnabled !== false,
+      exchangeRate: Number(v.exchangeRate) || 85,
+      manualEnabled: v.manualEnabled !== false,
+      pay0Enabled: v.pay0Enabled === true,
+    });
   } catch (error) {
     console.error("Get UPI config error:", error);
     return res.status(500).json({ error: "Failed to get UPI config" });
