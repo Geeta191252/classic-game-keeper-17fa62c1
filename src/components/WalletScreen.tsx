@@ -1154,7 +1154,7 @@ const WalletScreen = () => {
                   </div>
                 ) : null}
 
-                {(!upiConfig.isEnabled || (!upiConfig.manualEnabled && !upiConfig.pay0Enabled)) && (
+                {(!upiConfig.isEnabled || !upiConfig.manualEnabled) && (
                   <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 text-center text-[10px] text-[#8e97a4]">
                     INR deposit currently unavailable.
                   </div>
