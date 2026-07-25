@@ -473,21 +473,37 @@ async function creditReferralOnDeposit(_depositorTelegramId) { /* deprecated */ 
 // ============================================
 app.post("/api/deposit", async (req, res) => {
   try {
-    const { userId, currency, amount } = req.body;
+    const { userId, currency, amount, offerId } = req.body;
 
     if (!userId || !currency || !amount) {
       return res.status(400).json({ error: "Missing userId, currency, or amount" });
     }
 
     if (currency === "star") {
-      // Telegram Stars payment via invoice
+      // If this is an offer purchase, credit offer.getAmount (pay + bonus)
+      let creditAmount = Number(amount);
+      let title = `Deposit ${amount} Stars`;
+      let description = `Add ${amount} Stars to your wallet`;
+      if (offerId) {
+        try {
+          const offer = await Offer.findById(offerId).lean();
+          if (offer && offer.payCurrency === "star" && offer.active) {
+            creditAmount = Number(offer.getAmount) || creditAmount;
+            title = offer.title || title;
+            description = `Pay ${offer.payAmount}⭐ → Get ${offer.getAmount}⭐`;
+          }
+        } catch (e) {
+          console.error("Offer lookup failed:", e.message);
+        }
+      }
+
       const invoice = await bot.createInvoiceLink(
-        `Deposit ${amount} Stars`,           // title
-        `Add ${amount} Stars to your wallet`, // description
-        JSON.stringify({ action: "deposit", currency: "star", userId, amount }), // payload
-        "",                                   // provider_token (empty for Stars)
-        "XTR",                                // currency
-        [{ label: `${amount} Stars`, amount: amount }] // prices
+        title,
+        description,
+        JSON.stringify({ action: "deposit", currency: "star", userId, amount, creditAmount, offerId: offerId || null }),
+        "",
+        "XTR",
+        [{ label: `${amount} Stars`, amount: amount }]
       );
 
       return res.json({ invoiceUrl: invoice });
