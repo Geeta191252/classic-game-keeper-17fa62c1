@@ -328,3 +328,39 @@ export const saveLimitsConfig = (cfg: LimitsConfig) =>
     method: "POST",
     body: JSON.stringify(cfg),
   });
+
+
+// ---------- Support ----------
+export interface SupportThread {
+  telegramId: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  lastText: string;
+  lastSender: "user" | "admin";
+  lastAt: string;
+  unread: number;
+  total: number;
+}
+export interface SupportMsg {
+  _id: string;
+  telegramId: number;
+  sender: "user" | "admin";
+  text: string;
+  adminName?: string;
+  createdAt: string;
+}
+export const listSupportThreads = () =>
+  adminFetch<{ threads: SupportThread[] }>("/admin/support/threads");
+export const getSupportThread = (telegramId: number) =>
+  adminFetch<{ messages: SupportMsg[] }>(`/admin/support/thread/${telegramId}`);
+export const replySupport = (telegramId: number, text: string) =>
+  adminFetch<{ ok: true; dmSent: boolean; message: SupportMsg }>("/admin/support/reply", {
+    method: "POST",
+    body: JSON.stringify({ telegramId, text }),
+  });
+export const deleteSupportThread = (telegramId: number) =>
+  adminFetch<{ ok: true }>("/admin/support/delete", {
+    method: "POST",
+    body: JSON.stringify({ telegramId }),
+  });
