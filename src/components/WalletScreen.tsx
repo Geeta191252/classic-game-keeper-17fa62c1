@@ -220,7 +220,7 @@ const WalletScreen = () => {
       })
       .then(data => {
         if (data && typeof data === "object" && "upiId" in data) {
-          setUpiConfig(data);
+          setUpiConfig((prev) => ({ ...prev, ...data }));
         }
       })
       .catch(() => {});
