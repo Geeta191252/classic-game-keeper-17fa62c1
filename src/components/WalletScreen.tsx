@@ -378,8 +378,8 @@ const WalletScreen = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.paymentUrl) throw new Error(data.error || "Failed to start payment");
-      const tg2 = getTelegram();
-      if (tg2 && tg2.openLink) {
+      const tg2: any = getTelegram();
+      if (tg2 && typeof tg2.openLink === "function") {
         tg2.openLink(data.paymentUrl, { try_instant_view: false });
       } else {
         window.open(data.paymentUrl, "_blank");
