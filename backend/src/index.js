@@ -4947,7 +4947,7 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
       doc = await SettingModel.create({
         key: "upiConfig",
         value: { upiId: "", payeeName: "", qrImageUrl: "", isEnabled: false, exchangeRate: 85,
-                 manualEnabled: true, pay0Enabled: false, pay0ApiKey: "" },
+                 manualEnabled: true },
       });
     }
     const v = doc.value || {};
@@ -4958,9 +4958,6 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
       isEnabled: v.isEnabled === true,
       exchangeRate: Number(v.exchangeRate) || 85,
       manualEnabled: v.manualEnabled !== false,
-      pay0Enabled: v.pay0Enabled === true,
-      pay0ApiKey: "", // don't leak — pay0KeySet indicates presence
-      pay0KeySet: !!(v.pay0ApiKey && String(v.pay0ApiKey).trim()),
     });
   } catch (e) {
     console.error("admin upi get error:", e);
