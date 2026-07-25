@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { useGlobalClickSound } from "@/hooks/useGlobalClickSound";
+import { useTxNotifications } from "@/hooks/useTxNotifications";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { Loader2 } from "lucide-react";
 import Index from "./pages/Index";
@@ -128,6 +129,11 @@ const RouteFallback = () => (
   </div>
 );
 
+const NotificationsBridge = () => {
+  useTxNotifications();
+  return null;
+};
+
 const App = () => {
   useGlobalClickSound();
   useEffect(() => {
@@ -144,6 +150,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <StartParamNavigator />
+              <NotificationsBridge />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   <Route path="/" element={<Index />} />
