@@ -4296,7 +4296,10 @@ app.get("/api/admin/upi-config", async (req, res) => {
           payeeName: "Royal King Games",
           qrImageUrl: "",
           isEnabled: true,
-          exchangeRate: 85
+          exchangeRate: 85,
+          manualEnabled: true,
+          pay0Enabled: false,
+          pay0ApiKey: "",
         }
       });
     }
@@ -4310,17 +4313,24 @@ app.get("/api/admin/upi-config", async (req, res) => {
 // POST /api/admin/upi-config - Admin updates UPI config
 app.post("/api/admin/upi-config", async (req, res) => {
   try {
-    const { ownerId, upiId, payeeName, qrImageUrl, isEnabled, exchangeRate } = req.body;
+    const { ownerId, upiId, payeeName, qrImageUrl, isEnabled, exchangeRate,
+            manualEnabled, pay0Enabled, pay0ApiKey } = req.body;
     if (String(ownerId) !== "6965488457") {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
+    const existing = (await Setting.findOne({ key: "upiConfig" }))?.value || {};
     const value = {
       upiId: String(upiId || "").trim(),
       payeeName: String(payeeName || "").trim(),
       qrImageUrl: String(qrImageUrl || "").trim(),
       isEnabled: isEnabled === true,
-      exchangeRate: Number(exchangeRate) || 85
+      exchangeRate: Number(exchangeRate) || 85,
+      manualEnabled: manualEnabled === true,
+      pay0Enabled: pay0Enabled === true,
+      pay0ApiKey: typeof pay0ApiKey === "string" && pay0ApiKey.trim()
+        ? pay0ApiKey.trim()
+        : (existing.pay0ApiKey || ""),
     };
 
     const doc = await Setting.findOneAndUpdate(
