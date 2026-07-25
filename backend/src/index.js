@@ -4967,13 +4967,20 @@ app.get("/api/admin/upi/config", requireAdmin, async (req, res) => {
 
 app.post("/api/admin/upi/config", requireAdmin, async (req, res) => {
   try {
-    const { upiId, payeeName, qrImageUrl, isEnabled, exchangeRate } = req.body || {};
+    const { upiId, payeeName, qrImageUrl, isEnabled, exchangeRate,
+            manualEnabled, pay0Enabled, pay0ApiKey } = req.body || {};
+    const existing = (await SettingModel.findOne({ key: "upiConfig" }))?.value || {};
     const value = {
       upiId: String(upiId || "").trim(),
       payeeName: String(payeeName || "").trim(),
       qrImageUrl: String(qrImageUrl || "").trim(),
       isEnabled: isEnabled === true || isEnabled === "true",
       exchangeRate: Number(exchangeRate) > 0 ? Number(exchangeRate) : 85,
+      manualEnabled: manualEnabled === true || manualEnabled === "true",
+      pay0Enabled: pay0Enabled === true || pay0Enabled === "true",
+      pay0ApiKey: typeof pay0ApiKey === "string" && pay0ApiKey.trim()
+        ? pay0ApiKey.trim()
+        : (existing.pay0ApiKey || ""),
     };
     if (!value.upiId) return res.status(400).json({ error: "UPI ID is required" });
     const doc = await SettingModel.findOneAndUpdate(
