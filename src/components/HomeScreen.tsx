@@ -15,6 +15,7 @@ import FriendsScreen from "./FriendsScreen";
 import WalletScreen from "./WalletScreen";
 import MarketScreen from "./MarketScreen";
 import OfferPopup from "./OfferPopup";
+import SupportModal from "./SupportModal";
 import TournamentLeaderboard, { Tournament } from "./TournamentLeaderboard";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
@@ -94,6 +95,7 @@ const HomeScreen = () => {
   const [activeTab, setActiveTab] = useState(0); // 0: Home, 1: Market, 2: Earn, 3: Friends, 4: Wallet
   const [showProfile, setShowProfile] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { dollarBalance, starBalance, rupeeBalance, dollarWinning, starWinning, rupeeWinning } = useBalanceContext();
   const totalDollar = dollarBalance + dollarWinning;
@@ -278,6 +280,7 @@ const HomeScreen = () => {
                   { label: "Invite & Referrals", icon: Users, act: () => { setActiveTab(3); setIsDrawerOpen(false); } },
                   { label: "Earn Rewards", icon: Gift, act: () => { setActiveTab(2); setIsDrawerOpen(false); } },
                   { label: "Market Shop", icon: ShoppingCart, act: () => { setActiveTab(1); setIsDrawerOpen(false); } },
+                  { label: "Support / Help", icon: MessageSquare, act: () => { setSupportOpen(true); setIsDrawerOpen(false); } },
                 ].map((item, i) => (
                   <button
                     key={i}
