@@ -319,6 +319,14 @@ const HomeScreen = () => {
           >
             <Menu className="h-4 w-4 text-white" />
           </button>
+          {/* Support button */}
+          <button
+            onClick={() => setSupportOpen(true)}
+            title="Support"
+            className="h-8 w-8 rounded-lg flex items-center justify-center bg-[#141b2b] border border-white/[0.03] hover:bg-slate-800 transition-colors"
+          >
+            <MessageSquare className="h-4 w-4 text-[#00a2e8]" />
+          </button>
           {/* Brand Logo Lightning */}
           <div className="flex items-center gap-1 select-none cursor-pointer" onClick={() => { setActiveTab(0); setFilter("all"); }}>
             <span className="text-xl leading-none text-[#00a2e8]">⚡</span>
