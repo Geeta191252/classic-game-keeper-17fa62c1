@@ -1602,31 +1602,84 @@ app.post("/api/telegram-webhook", async (req, res) => {
 
       // Get all users
       const allUsers = await User.find({ telegramId: { $gt: 0 } }).select("telegramId").lean();
-      let sent = 0;
+      const target = allUsers.length;
+      let success = 0;
+      let blocked = 0;
+      let deleted = 0;
       let failed = 0;
       let cancelled = false;
 
       global.__broadcastRunning = true;
       global.__broadcastCancel = false;
 
-      await bot.sendMessage(chatId, `📡 Broadcasting to ${allUsers.length} users...\n\nSend /cancelbroadcast to stop.`);
+      const startedAt = Date.now();
+      const fmtElapsed = () => {
+        const s = Math.floor((Date.now() - startedAt) / 1000);
+        const m = Math.floor(s / 60);
+        return `${m}m ${s % 60}s`;
+      };
+      const buildStatus = (done) => (
+        `📦 All Users\n` +
+        `🕒 Time: ${fmtElapsed()}\n` +
+        `👥 Target: ${target}\n` +
+        `📬 Success: ${success}\n` +
+        `⛔ Blocked: ${blocked}\n` +
+        `🗑 Deleted: ${deleted}\n` +
+        `❌ Failed: ${failed}` +
+        (done ? `\n\n${cancelled ? "🛑 Cancelled" : "✅ Complete"}` : "")
+      );
 
+      let statusMsg;
+      try {
+        statusMsg = await bot.sendMessage(chatId, buildStatus(false));
+      } catch (_) {}
+
+      let lastEdit = 0;
+      const editStatus = async (force = false) => {
+        const now = Date.now();
+        if (!force && now - lastEdit < 2500) return;
+        lastEdit = now;
+        if (!statusMsg) return;
+        try {
+          await bot.editMessageText(buildStatus(false), {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+          });
+        } catch (_) {}
+      };
+
+      let i = 0;
       for (const user of allUsers) {
         if (global.__broadcastCancel) { cancelled = true; break; }
         try {
           await bot.sendMessage(user.telegramId, broadcastText, { parse_mode: "Markdown" });
-          sent++;
+          success++;
         } catch (err) {
-          failed++;
+          const desc = String(err?.response?.body?.description || err?.message || "").toLowerCase();
+          if (desc.includes("blocked") || desc.includes("bot was blocked")) blocked++;
+          else if (desc.includes("user is deactivated") || desc.includes("chat not found") || desc.includes("user not found")) deleted++;
+          else failed++;
         }
-        // Small delay to avoid Telegram rate limits
-        if (sent % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        i++;
+        if (i % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+        await editStatus(false);
       }
 
       global.__broadcastRunning = false;
       global.__broadcastCancel = false;
 
-      await bot.sendMessage(chatId, `${cancelled ? "🛑 Broadcast cancelled." : "✅ Broadcast complete!"}\n\n📨 Sent: ${sent}\n❌ Failed: ${failed}\n👥 Total: ${allUsers.length}`);
+      if (statusMsg) {
+        try {
+          await bot.editMessageText(buildStatus(true), {
+            chat_id: chatId,
+            message_id: statusMsg.message_id,
+          });
+        } catch (_) {
+          await bot.sendMessage(chatId, buildStatus(true));
+        }
+      } else {
+        await bot.sendMessage(chatId, buildStatus(true));
+      }
 
       return res.sendStatus(200);
     }
