@@ -193,6 +193,10 @@ export interface UpiConfig {
   qrImageUrl: string;
   isEnabled: boolean;
   exchangeRate: number;
+  manualEnabled?: boolean;
+  pay0Enabled?: boolean;
+  pay0ApiKey?: string;
+  pay0KeySet?: boolean;
 }
 export const getUpiConfig = () => adminFetch<UpiConfig>("/admin/upi/config");
 export const saveUpiConfig = (cfg: UpiConfig) =>
