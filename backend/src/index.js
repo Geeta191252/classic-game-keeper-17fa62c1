@@ -11,6 +11,7 @@ const Transaction = require("./models/Transaction");
 const GameBet = require("./models/GameBet");
 const Offer = require("./models/Offer");
 const Tournament = require("./models/Tournament");
+const SupportMessage = require("./models/SupportMessage");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -4894,6 +4895,185 @@ try {
 } catch (err) {
   console.error("❌ Failed to mount Aviator Fun:", err);
 }
+
+// ============================================
+// Support chat — user <-> admin
+// ============================================
+
+// User sends a support message
+app.post("/api/support/send", async (req, res) => {
+  try {
+    const { telegramId, username, firstName, lastName, text } = req.body || {};
+    if (!telegramId || !text || !String(text).trim()) {
+      return res.status(400).json({ error: "telegramId and text are required" });
+    }
+    const clean = String(text).trim().slice(0, 2000);
+    const msg = await SupportMessage.create({
+      telegramId: Number(telegramId),
+      username: username || undefined,
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+      sender: "user",
+      text: clean,
+      read: false,
+    });
+
+    // Notify owner in Telegram DM (best-effort)
+    try {
+      if (OWNER_TELEGRAM_ID && bot) {
+        const who = firstName || username || `id ${telegramId}`;
+        await bot.sendMessage(
+          OWNER_TELEGRAM_ID,
+          `📩 <b>New support message</b>\n👤 ${who} (<code>${telegramId}</code>)\n💬 ${clean}`,
+          { parse_mode: "HTML" }
+        );
+      }
+    } catch (e) { /* ignore */ }
+
+    res.json({ ok: true, message: msg });
+  } catch (err) {
+    console.error("support/send error", err);
+    res.status(500).json({ error: "Failed to send message" });
+  }
+});
+
+// User fetches their own thread
+app.get("/api/support/my/:telegramId", async (req, res) => {
+  try {
+    const telegramId = Number(req.params.telegramId);
+    if (!telegramId) return res.status(400).json({ error: "Invalid telegramId" });
+    const messages = await SupportMessage.find({ telegramId }).sort({ createdAt: 1 }).limit(500).lean();
+    // Mark admin messages as read (user has seen)
+    await SupportMessage.updateMany(
+      { telegramId, sender: "admin", read: false },
+      { $set: { read: true } }
+    );
+    res.json({ messages });
+  } catch (err) {
+    console.error("support/my error", err);
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// User unread count (badge)
+app.get("/api/support/unread/:telegramId", async (req, res) => {
+  try {
+    const telegramId = Number(req.params.telegramId);
+    if (!telegramId) return res.json({ count: 0 });
+    const count = await SupportMessage.countDocuments({ telegramId, sender: "admin", read: false });
+    res.json({ count });
+  } catch { res.json({ count: 0 }); }
+});
+
+// Admin — list threads grouped by user with last message + unread count
+app.get("/api/admin/support/threads", requireAdmin, async (_req, res) => {
+  try {
+    const threads = await SupportMessage.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$telegramId",
+          lastText: { $first: "$text" },
+          lastSender: { $first: "$sender" },
+          lastAt: { $first: "$createdAt" },
+          username: { $first: "$username" },
+          firstName: { $first: "$firstName" },
+          lastName: { $first: "$lastName" },
+          unread: {
+            $sum: { $cond: [{ $and: [{ $eq: ["$sender", "user"] }, { $eq: ["$read", false] }] }, 1, 0] },
+          },
+          total: { $sum: 1 },
+        },
+      },
+      { $sort: { lastAt: -1 } },
+      { $limit: 500 },
+    ]);
+    res.json({
+      threads: threads.map((t) => ({
+        telegramId: t._id,
+        username: t.username,
+        firstName: t.firstName,
+        lastName: t.lastName,
+        lastText: t.lastText,
+        lastSender: t.lastSender,
+        lastAt: t.lastAt,
+        unread: t.unread,
+        total: t.total,
+      })),
+    });
+  } catch (err) {
+    console.error("admin/support/threads error", err);
+    res.status(500).json({ error: "Failed to load threads" });
+  }
+});
+
+// Admin — get full thread for one user
+app.get("/api/admin/support/thread/:telegramId", requireAdmin, async (req, res) => {
+  try {
+    const telegramId = Number(req.params.telegramId);
+    if (!telegramId) return res.status(400).json({ error: "Invalid telegramId" });
+    const messages = await SupportMessage.find({ telegramId }).sort({ createdAt: 1 }).limit(1000).lean();
+    // Mark user messages as read (admin has seen)
+    await SupportMessage.updateMany(
+      { telegramId, sender: "user", read: false },
+      { $set: { read: true } }
+    );
+    res.json({ messages });
+  } catch (err) {
+    console.error("admin/support/thread error", err);
+    res.status(500).json({ error: "Failed to load thread" });
+  }
+});
+
+// Admin — reply (stores + DMs the user on Telegram)
+app.post("/api/admin/support/reply", requireAdmin, async (req, res) => {
+  try {
+    const { telegramId, text } = req.body || {};
+    if (!telegramId || !text || !String(text).trim()) {
+      return res.status(400).json({ error: "telegramId and text are required" });
+    }
+    const clean = String(text).trim().slice(0, 2000);
+    const msg = await SupportMessage.create({
+      telegramId: Number(telegramId),
+      sender: "admin",
+      text: clean,
+      adminName: req.admin?.email || "Admin",
+      read: false,
+    });
+
+    // DM the user (best-effort)
+    let dmSent = false;
+    try {
+      if (bot) {
+        await bot.sendMessage(
+          Number(telegramId),
+          `💬 <b>Support reply</b>\n\n${clean}`,
+          { parse_mode: "HTML" }
+        );
+        dmSent = true;
+      }
+    } catch (e) {
+      console.warn("support reply DM failed", e?.message || e);
+    }
+
+    res.json({ ok: true, message: msg, dmSent });
+  } catch (err) {
+    console.error("admin/support/reply error", err);
+    res.status(500).json({ error: "Failed to reply" });
+  }
+});
+
+// Admin — delete thread
+app.post("/api/admin/support/delete", requireAdmin, async (req, res) => {
+  try {
+    const { telegramId } = req.body || {};
+    if (!telegramId) return res.status(400).json({ error: "telegramId required" });
+    await SupportMessage.deleteMany({ telegramId: Number(telegramId) });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete" });
+  }
+});
 
 // ============================================
 // SPA catch-all — MUST be last so /api/* routes above take priority
