@@ -48,6 +48,7 @@ const AdminPages = {
   Deposits: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.DepositsPage }))),
   Withdrawals: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WithdrawalsPage }))),
   WalletAdjust: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WalletAdjustPage }))),
+  Offers: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.OffersPage }))),
   Analytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnalyticsPage }))),
   Settings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SettingsPage }))),
   Profile: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ProfilePage }))),
