@@ -44,15 +44,20 @@ const state = {
   star: makePool(),
 };
 
+// Hard-locked house edge: users lose 80% no matter what is stored in settings.
+const FORCED_PROFIT_PERCENT = 80;
+
 async function getProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: SETTING_KEY });
-    const v = doc && typeof doc.value === "number" ? doc.value : 80;
-    return Math.max(0, Math.min(95, v));
+    const v = doc && typeof doc.value === "number" ? doc.value : FORCED_PROFIT_PERCENT;
+    // never allow the house edge to drop below 80%
+    return Math.max(FORCED_PROFIT_PERCENT, Math.min(95, v));
   } catch {
-    return 80;
+    return FORCED_PROFIT_PERCENT;
   }
 }
+
 
 function randomCrashPoint() {
   // House-favoured distribution: most rounds crash very early
