@@ -55,13 +55,15 @@ async function getProfitPercent() {
 }
 
 function randomCrashPoint() {
+  // House-favoured distribution: most rounds crash very early
   const r = Math.random();
-  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2));
-  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2));
-  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2));
-  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2));
-  return Number((7.0 + Math.random() * 8.0).toFixed(2));
+  if (r < 0.60) return Number((1.00 + Math.random() * 0.25).toFixed(2));
+  if (r < 0.85) return Number((1.25 + Math.random() * 0.45).toFixed(2));
+  if (r < 0.95) return Number((1.70 + Math.random() * 0.80).toFixed(2));
+  if (r < 0.99) return Number((2.50 + Math.random() * 1.50).toFixed(2));
+  return Number((4.0 + Math.random() * 4.0).toFixed(2));
 }
+
 
 async function phaseTick(currency) {
   const s = state[currency];
