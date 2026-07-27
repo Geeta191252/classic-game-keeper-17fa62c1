@@ -7,6 +7,7 @@ import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./GoblinTower.css";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 // Multipliers configuration
 const MULTIPLIERS = {
@@ -175,6 +176,7 @@ const GoblinTower = () => {
   const [isDiffOpen, setIsDiffOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isRiggedRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
 
   // Modal / Toast overlay
   const [overlay, setOverlay] = useState<{
@@ -242,6 +244,8 @@ const GoblinTower = () => {
       } catch (e) {
         isRiggedRef.current = false;
       }
+      // 80% house edge
+      lossPlanRef.current = createLossPlan(2);
 
       const nativeBet = toNativeAmount(bet, currencyMode);
       if (balance < nativeBet) {
@@ -308,7 +312,9 @@ const GoblinTower = () => {
 
     // 30% house rig — force goblin on 30% of clicks even if underlying cell was safe
     const forcedByRig = Math.random() < 0.3;
-    const isGoblin = isRiggedRef.current ? true : (gridLayouts[row][col] || forcedByRig);
+    const plan = lossPlanRef.current;
+    const forcedByEdge = plan.loss && row >= plan.crashAfter;
+    const isGoblin = isRiggedRef.current || forcedByEdge ? true : (gridLayouts[row][col] || forcedByRig);
 
     const newRevealed = revealedGrid.map((r, rIdx) =>
       r.map((cell, cIdx) => {

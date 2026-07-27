@@ -24,6 +24,7 @@ import { reportGameResult, getTelegram } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, WalletKind, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "@/hooks/use-toast";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 type TelegramWebApp = {
   ready?: () => void;
@@ -284,8 +285,11 @@ const ChickenRoadGame = () => {
     const mercyLanes = stats.lossStreak >= 5 ? 2 : stats.lossStreak >= 2 ? 1 : 0;
     const forceMercyStep = currentLane < mercyLanes && nextPayout <= cap;
     const randomCrash = !forceMercyStep && Math.random() < stepRisk;
+    // 80% house edge: pre-decided losing rounds crash after a few lanes
+    const plan = lossPlanRef.current;
+    const forcedByEdge = plan.loss && currentLane >= plan.crashAfter;
 
-    const mustCrash = nextPayout > cap || randomCrash;
+    const mustCrash = nextPayout > cap || randomCrash || forcedByEdge;
 
     if (mustCrash) {
       const crashLane = currentLane + 1;

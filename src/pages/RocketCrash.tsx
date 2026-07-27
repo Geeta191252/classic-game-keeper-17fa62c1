@@ -7,6 +7,7 @@ import {
   Crown, Award, Gem, Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 // ───────────────────────── TYPES ─────────────────────────
 type Screen =
@@ -239,7 +240,10 @@ const RocketCrash = () => {
           setCountdown((c) => {
             if (c <= 1) {
               // start flying
-              const target = 1 + Math.pow(Math.random(), 1.5) * 15;
+              // 80% house edge: most rounds crash almost immediately
+              const target = shouldForceLoss()
+                ? 1 + Math.random() * 0.25
+                : 1 + Math.pow(Math.random(), 1.5) * 15;
               setCrashAt(target);
               setMultiplier(1);
               setPhase("flying");

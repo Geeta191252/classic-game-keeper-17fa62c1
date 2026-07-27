@@ -16,6 +16,7 @@ import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import plinkoHeader from "@/assets/plinko-header.png";
 import plinkoPillar from "@/assets/plinko-pillar.png";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 type Risk = "low" | "medium" | "high";
 
@@ -227,7 +228,8 @@ const PlinkoGame = () => {
 
     // Rigging: 9 losses (~0.4x–0.7x) then every 10th bet a ~2x win
     betCounterRef.current += 1;
-    const isWinTurn = betCounterRef.current % 10 === 0;
+    // 80% house edge: only ~20% of drops may land on a winning bucket
+    const isWinTurn = betCounterRef.current % 10 === 0 || !shouldForceLoss();
     const target = isWinTurn
       ? pickBucketNearMultiplier(multipliers, 2)
       : pickLosingBucket(multipliers);

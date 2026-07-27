@@ -7,6 +7,7 @@ import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./ChickenClassicGame.css";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 // Web Audio API Sound Synthesizer
 class ChickenAudioEngine {
@@ -228,11 +229,15 @@ const ChickenClassicGame = () => {
   const multipliersList = useMemo(() => currentCfg.multipliers, [currentCfg]);
 
   const isRiggedRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
 
   // Controlled/Random crash odds
   const checkWillCrash = (pos: number): boolean => {
     if (isRiggedRef.current) return true; // crash immediately if rigged high crash is active!
-    // 20% crash rate per step
+    // 80% house edge: pre-decided losing rounds crash after a few safe steps
+    const plan = lossPlanRef.current;
+    if (plan.loss && pos > plan.crashAfter) return true;
+    // small residual random crash rate
     return Math.random() < 0.2;
   };
 
@@ -300,6 +305,7 @@ const ChickenClassicGame = () => {
       return;
     }
 
+    lossPlanRef.current = createLossPlan(2);
     setPhase("playing");
     setCurrentPos(1);
     setCrashedPos(null);

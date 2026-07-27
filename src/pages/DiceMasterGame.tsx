@@ -7,6 +7,7 @@ import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult, type CurrencyType } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 const DICE_FACES = [
   { value: 1, dots: "⚀", multiplier: 0 },
@@ -96,7 +97,11 @@ const DiceMasterGame = () => {
       if (rollIntervalRef.current) clearInterval(rollIntervalRef.current);
 
       // Pick ONE result multiplier using weighted odds — house always wins
-      const outcomes = [
+      const lossRound = shouldForceLoss();
+      const outcomes = lossRound ? [
+        { multiplier: 0,   weight: 70 },
+        { multiplier: 0.5, weight: 30 },
+      ] : [
         { multiplier: 0,   weight: 55 },   // 0x  — total loss ~55%
         { multiplier: 0.5, weight: 25 },   // 0.5x — lose half ~25%
         { multiplier: 1.5, weight: 12 },   // 1.5x — small win ~12%

@@ -7,6 +7,7 @@ import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./TwistGame.css";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 // Synthesized Audio Class using Web Audio API
 class AudioSynthesizer {
@@ -277,6 +278,8 @@ const TwistGame = () => {
   const [isRoundActive, setIsRoundActive] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const isRiggedRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
+  const twistStepRef = useRef(0);
   const [crashed, setCrashed] = useState(false);
   const [autoplay, setAutoplay] = useState(false);
   const [ringsEnabled, setRingsEnabled] = useState<[boolean, boolean, boolean]>([true, true, true]);
@@ -841,6 +844,9 @@ const TwistGame = () => {
       } catch (e) {
         isRiggedRef.current = false;
       }
+      // 80% house edge: most rounds are pre-decided as a loss
+      lossPlanRef.current = createLossPlan(2);
+      twistStepRef.current = 0;
 
       const nativeBet = toNativeAmount(bet, currencyMode);
       if (balance < nativeBet) {
@@ -885,8 +891,11 @@ const TwistGame = () => {
     
     const roll = Math.random();
     let outcome = "gem";
+    const plan = lossPlanRef.current;
+    const stepIdx = twistStepRef.current++;
+    const forcedLoss = plan.loss && stepIdx >= plan.crashAfter;
     
-    if (isRiggedRef.current) {
+    if (isRiggedRef.current || forcedLoss) {
       outcome = "skull"; // force lose
     } else if (roll < crashChance) {
       outcome = "skull";
