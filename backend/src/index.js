@@ -4700,6 +4700,9 @@ app.post("/api/admin/wallet-adjust", requireAdmin, async (req, res) => {
       amount: Math.abs(delta),
       status: "completed",
       description: note || `Admin adjust ${balanceType} ${delta >= 0 ? "+" : "-"}${Math.abs(delta)}`,
+      adminAdjust: true,
+      adminField: field,
+      adminDelta: delta,
     });
     res.json({ success: true, balance: balancePayload(user) });
   } catch (e) {
@@ -4707,6 +4710,93 @@ app.post("/api/admin/wallet-adjust", requireAdmin, async (req, res) => {
     res.status(500).json({ error: e.message || "Adjust failed" });
   }
 });
+
+// ---------- Fake (admin-added) funds cleanup ----------
+const FAKE_TX_QUERY = {
+  $or: [
+    { adminAdjust: true },
+    { description: { $regex: /^Admin adjust/i } },
+  ],
+};
+
+function fieldForFakeTx(tx) {
+  if (tx.adminField) return tx.adminField;
+  const { balanceField, winningField } = getCurrencyFields(tx.currency);
+  return /winning/i.test(tx.description || "") ? winningField : balanceField;
+}
+function deltaForFakeTx(tx) {
+  if (Number.isFinite(tx.adminDelta)) return Number(tx.adminDelta);
+  return tx.type === "bonus" ? Number(tx.amount || 0) : -Number(tx.amount || 0);
+}
+
+// GET /api/admin/fake-funds — preview all manually added (fake) funds
+app.get("/api/admin/fake-funds", requireAdmin, async (req, res) => {
+  try {
+    const telegramId = req.query.telegramId ? Number(req.query.telegramId) : null;
+    const q = telegramId ? { ...FAKE_TX_QUERY, telegramId } : FAKE_TX_QUERY;
+    const items = await Transaction.find(q).sort({ createdAt: -1 }).limit(1000).lean();
+    const byUser = new Map();
+    for (const t of items) {
+      const d = deltaForFakeTx(t);
+      const e = byUser.get(t.telegramId) || { telegramId: t.telegramId, count: 0, dollar: 0, rupee: 0, star: 0 };
+      e.count += 1;
+      if (t.currency === "dollar") e.dollar += d;
+      else if (t.currency === "rupee") e.rupee += d;
+      else if (t.currency === "star") e.star += d;
+      byUser.set(t.telegramId, e);
+    }
+    const ids = [...byUser.keys()];
+    const users = await User.find({ telegramId: { $in: ids } })
+      .select("telegramId username firstName lastName").lean();
+    const map = new Map(users.map((u) => [u.telegramId, u]));
+    res.json({
+      total: items.length,
+      users: [...byUser.values()].map((e) => ({ ...e, user: map.get(e.telegramId) || null })),
+    });
+  } catch (e) {
+    console.error("admin/fake-funds error:", e);
+    res.status(500).json({ error: "Failed to load fake funds" });
+  }
+});
+
+// POST /api/admin/fake-funds/purge  { telegramId? }
+app.post("/api/admin/fake-funds/purge", requireAdmin, async (req, res) => {
+  try {
+    const telegramId = req.body?.telegramId ? Number(req.body.telegramId) : null;
+    const q = telegramId ? { ...FAKE_TX_QUERY, telegramId } : FAKE_TX_QUERY;
+    const items = await Transaction.find(q).lean();
+    if (!items.length) return res.json({ success: true, removed: 0, usersUpdated: 0 });
+
+    // aggregate deltas per user per balance field
+    const perUser = new Map();
+    for (const t of items) {
+      const field = fieldForFakeTx(t);
+      const delta = deltaForFakeTx(t);
+      const m = perUser.get(t.telegramId) || {};
+      m[field] = (m[field] || 0) + delta;
+      perUser.set(t.telegramId, m);
+    }
+
+    let usersUpdated = 0;
+    for (const [tgId, fields] of perUser) {
+      const user = await User.findOne({ telegramId: tgId });
+      if (!user) continue;
+      for (const [field, delta] of Object.entries(fields)) {
+        const next = Number(user[field] || 0) - delta;
+        user[field] = next > 0 ? next : 0;
+      }
+      await user.save();
+      usersUpdated += 1;
+    }
+
+    const del = await Transaction.deleteMany({ _id: { $in: items.map((i) => i._id) } });
+    res.json({ success: true, removed: del.deletedCount || items.length, usersUpdated });
+  } catch (e) {
+    console.error("admin/fake-funds/purge error:", e);
+    res.status(500).json({ error: e.message || "Purge failed" });
+  }
+});
+
 
 // POST /api/admin/withdrawals/approve   { transactionId, txId?, usdValue? }
 app.post("/api/admin/withdrawals/approve", requireAdmin, async (req, res) => {
