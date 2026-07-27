@@ -10,8 +10,10 @@ import {
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
   getUpiConfig, saveUpiConfig, getPlayerWins,
+  getFakeFunds, purgeFakeFunds,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
   type GameStatRow, type GameAnalytics, type UpiConfig, type PlayerWinRow,
+  type FakeFundUser,
 } from "@/lib/adminApi";
 
 /* ============= Shared primitives ============= */
@@ -693,7 +695,102 @@ export function WalletAdjustPage() {
           </div>
         </form>
       </div>
+      <FakeFundsPanel />
     </Section>
+  );
+}
+
+/* ============= Fake (admin-added) funds cleanup ============= */
+
+function FakeFundsPanel() {
+  const [data, setData] = useState<{ total: number; users: FakeFundUser[] } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = () => {
+    setLoading(true); setErr(null);
+    getFakeFunds()
+      .then(setData)
+      .catch((e) => setErr(e instanceof Error ? e.message : "Failed"))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, []);
+
+  const purge = async (telegramId?: number) => {
+    const who = telegramId ? `user #${telegramId}` : "ALL users";
+    if (!window.confirm(`Remove all admin-added (fake) funds for ${who}? Real deposits stay untouched.`)) return;
+    setBusy(telegramId ? String(telegramId) : "all"); setErr(null); setMsg(null);
+    try {
+      const r = await purgeFakeFunds(telegramId);
+      setMsg(`Removed ${r.removed} fake entries across ${r.usersUpdated} user(s).`);
+      load();
+    } catch (e) { setErr(e instanceof Error ? e.message : "Failed"); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <div className="a-card mt-4">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <div>
+          <div className="text-white font-bold text-[15px]">Fake funds (admin-added)</div>
+          <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>
+            Only manual admin adjustments are listed. Real deposits/withdrawals are never touched.
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button className="a-btn" onClick={load} disabled={loading}>
+            {loading ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />} Refresh
+          </button>
+          <button className="a-btn" style={{ borderColor: "#ff6b6b", color: "#ff9b9b" }}
+            onClick={() => purge()} disabled={busy === "all" || !data?.total}>
+            {busy === "all" ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Remove all fake funds
+          </button>
+        </div>
+      </div>
+      {err && <div className="text-[13px] mb-2" style={{ color: "#ff9b9b" }}>{err}</div>}
+      {msg && <div className="text-[13px] mb-2" style={{ color: "var(--a-green)" }}>{msg}</div>}
+      {loading && !data ? (
+        <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>Loading…</div>
+      ) : !data?.users.length ? (
+        <div className="text-[12px]" style={{ color: "var(--a-text-mute)" }}>No fake funds found — database clean.</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <thead>
+              <tr style={{ color: "var(--a-text-mute)" }}>
+                <th className="text-left py-2">User</th>
+                <th className="text-right">Entries</th>
+                <th className="text-right">$</th>
+                <th className="text-right">₹</th>
+                <th className="text-right">★</th>
+                <th className="text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.users.map((u) => (
+                <tr key={u.telegramId} style={{ borderTop: "1px solid var(--a-border)" }}>
+                  <td className="py-2 text-white">
+                    {u.user ? `${u.user.firstName || ""} ${u.user.lastName || ""}`.trim() || u.user.username || `#${u.telegramId}` : `#${u.telegramId}`}
+                    <div className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>#{u.telegramId}</div>
+                  </td>
+                  <td className="text-right">{u.count}</td>
+                  <td className="text-right">{u.dollar.toFixed(2)}</td>
+                  <td className="text-right">{u.rupee.toFixed(2)}</td>
+                  <td className="text-right">{u.star.toFixed(0)}</td>
+                  <td className="text-right">
+                    <button className="a-btn" onClick={() => purge(u.telegramId)} disabled={busy === String(u.telegramId)}>
+                      {busy === String(u.telegramId) ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 

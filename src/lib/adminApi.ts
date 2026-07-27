@@ -130,6 +130,26 @@ export const walletAdjust = (payload: {
   { method: "POST", body: JSON.stringify(payload) }
 );
 
+// ---------- Fake (admin-added) funds ----------
+export interface FakeFundUser {
+  telegramId: number;
+  count: number;
+  dollar: number;
+  rupee: number;
+  star: number;
+  user?: { telegramId: number; username?: string; firstName?: string; lastName?: string } | null;
+}
+export const getFakeFunds = (telegramId?: number) =>
+  adminFetch<{ total: number; users: FakeFundUser[] }>(
+    `/admin/fake-funds${telegramId ? `?telegramId=${telegramId}` : ""}`
+  );
+export const purgeFakeFunds = (telegramId?: number) =>
+  adminFetch<{ success: true; removed: number; usersUpdated: number }>("/admin/fake-funds/purge", {
+    method: "POST",
+    body: JSON.stringify(telegramId ? { telegramId } : {}),
+  });
+
+
 // ---------- Withdrawals ----------
 export const approveWithdrawal = (transactionId: string) =>
   adminFetch("/admin/withdrawals/approve", { method: "POST", body: JSON.stringify({ transactionId }) });
