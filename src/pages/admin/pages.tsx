@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { Fragment, ReactNode, useEffect, useMemo, useState } from "react";
 import {
   ArrowDownToLine, ArrowUpFromLine, Users as UsersIcon,
   Search, TrendingUp, TrendingDown, Activity,
@@ -2663,8 +2663,8 @@ export function PlayerWinsPage() {
               </thead>
               <tbody>
                 {(data || []).map((p, i) => (
-                  <>
-                    <tr key={p.telegramId}>
+                  <Fragment key={p.telegramId}>
+                    <tr>
                       <td style={{ color: "var(--a-text-dim)" }}>{i + 1}</td>
                       <td>
                         <div className="text-white font-semibold">{uname(p)}</div>
@@ -2688,7 +2688,7 @@ export function PlayerWinsPage() {
                       </td>
                     </tr>
                     {open === p.telegramId && (
-                      <tr key={`${p.telegramId}-d`}>
+                      <tr>
                         <td colSpan={11}>
                           <table className="a-table w-full">
                             <thead>
@@ -2718,7 +2718,7 @@ export function PlayerWinsPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
                 {data && data.length === 0 && (
                   <tr><td colSpan={11} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No gameplay data yet.</td></tr>
