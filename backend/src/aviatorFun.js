@@ -47,10 +47,10 @@ const state = {
 async function getProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: SETTING_KEY });
-    const v = doc && typeof doc.value === "number" ? doc.value : 50;
+    const v = doc && typeof doc.value === "number" ? doc.value : 80;
     return Math.max(0, Math.min(95, v));
   } catch {
-    return 50;
+    return 80;
   }
 }
 
@@ -106,7 +106,7 @@ async function phaseTick(currency) {
     const m = multiplierAt(elapsed);
 
     if (!s.manualOverride) {
-      const profitPct = s.profitPct || 50;
+      const profitPct = s.profitPct || 80;
       const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
       const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
       let maxRemainingBet = 0;
