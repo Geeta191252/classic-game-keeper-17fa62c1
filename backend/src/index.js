@@ -132,6 +132,9 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
+// Hard-locked house profit for ALL games (owner keeps >= 80% of every pool)
+const FORCED_HOUSE_PROFIT = 80;
+
 // MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI)
