@@ -47,21 +47,23 @@ const state = {
 async function getProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: SETTING_KEY });
-    const v = doc && typeof doc.value === "number" ? doc.value : 50;
+    const v = doc && typeof doc.value === "number" ? doc.value : 80;
     return Math.max(0, Math.min(95, v));
   } catch {
-    return 50;
+    return 80;
   }
 }
 
 function randomCrashPoint() {
+  // House-favoured distribution: most rounds crash very early
   const r = Math.random();
-  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2));
-  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2));
-  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2));
-  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2));
-  return Number((7.0 + Math.random() * 8.0).toFixed(2));
+  if (r < 0.60) return Number((1.00 + Math.random() * 0.25).toFixed(2));
+  if (r < 0.85) return Number((1.25 + Math.random() * 0.45).toFixed(2));
+  if (r < 0.95) return Number((1.70 + Math.random() * 0.80).toFixed(2));
+  if (r < 0.99) return Number((2.50 + Math.random() * 1.50).toFixed(2));
+  return Number((4.0 + Math.random() * 4.0).toFixed(2));
 }
+
 
 async function phaseTick(currency) {
   const s = state[currency];
@@ -106,7 +108,7 @@ async function phaseTick(currency) {
     const m = multiplierAt(elapsed);
 
     if (!s.manualOverride) {
-      const profitPct = s.profitPct || 50;
+      const profitPct = s.profitPct || 80;
       const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
       const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
       let maxRemainingBet = 0;
@@ -175,6 +177,23 @@ async function phaseTick(currency) {
 
 function mountAviatorFun(app, deps) {
   const { normalizeCurrency, getCurrencyFields, getOrCreateUser, balancePayload, requireAdmin } = deps;
+
+  // Ensure house profit target is at least 80% (one-time bump from old 50% default)
+  (async () => {
+    try {
+      const doc = await Setting.findOne({ key: SETTING_KEY });
+      if (!doc || typeof doc.value !== "number" || doc.value < 80) {
+        await Setting.findOneAndUpdate(
+          { key: SETTING_KEY },
+          { key: SETTING_KEY, value: 80 },
+          { upsert: true }
+        );
+      }
+    } catch {
+      /* noop */
+    }
+  })();
+
 
   setInterval(() => {
     phaseTick("dollar").catch(() => {});
