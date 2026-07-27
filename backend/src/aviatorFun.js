@@ -113,7 +113,7 @@ async function phaseTick(currency) {
     const m = multiplierAt(elapsed);
 
     if (!s.manualOverride) {
-      const profitPct = s.profitPct || 80;
+      const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
       const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
       const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
       let maxRemainingBet = 0;
@@ -324,7 +324,7 @@ function mountAviatorFun(app, deps) {
       let mult = Math.min(multiplierAt(elapsed), s.crashAt);
 
       if (!s.manualOverride) {
-        const profitPct = s.profitPct || (await getProfitPercent());
+        const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
         const roundBudget = (s.totalPool || 0) * (1 - profitPct / 100);
         const roundRemaining = Math.max(0, roundBudget - (s.totalPaidOut || 0));
         const maxMult = bet.amount > 0 ? roundRemaining / bet.amount : 1.0;
@@ -354,7 +354,7 @@ function mountAviatorFun(app, deps) {
       });
 
       if (!s.manualOverride) {
-        const profitPct = s.profitPct || (await getProfitPercent());
+        const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
         const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
         const remainingBudget = cumBudget - (s.cumPaid || 0);
         if (remainingBudget <= 0) {
