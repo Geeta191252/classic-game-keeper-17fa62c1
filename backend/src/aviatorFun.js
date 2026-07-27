@@ -44,15 +44,20 @@ const state = {
   star: makePool(),
 };
 
+// Hard-locked house edge: users lose 80% no matter what is stored in settings.
+const FORCED_PROFIT_PERCENT = 80;
+
 async function getProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: SETTING_KEY });
-    const v = doc && typeof doc.value === "number" ? doc.value : 80;
-    return Math.max(0, Math.min(95, v));
+    const v = doc && typeof doc.value === "number" ? doc.value : FORCED_PROFIT_PERCENT;
+    // never allow the house edge to drop below 80%
+    return Math.max(FORCED_PROFIT_PERCENT, Math.min(95, v));
   } catch {
-    return 80;
+    return FORCED_PROFIT_PERCENT;
   }
 }
+
 
 function randomCrashPoint() {
   // House-favoured distribution: most rounds crash very early
@@ -108,7 +113,7 @@ async function phaseTick(currency) {
     const m = multiplierAt(elapsed);
 
     if (!s.manualOverride) {
-      const profitPct = s.profitPct || 80;
+      const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
       const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
       const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
       let maxRemainingBet = 0;
@@ -319,7 +324,7 @@ function mountAviatorFun(app, deps) {
       let mult = Math.min(multiplierAt(elapsed), s.crashAt);
 
       if (!s.manualOverride) {
-        const profitPct = s.profitPct || (await getProfitPercent());
+        const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
         const roundBudget = (s.totalPool || 0) * (1 - profitPct / 100);
         const roundRemaining = Math.max(0, roundBudget - (s.totalPaidOut || 0));
         const maxMult = bet.amount > 0 ? roundRemaining / bet.amount : 1.0;
@@ -349,7 +354,7 @@ function mountAviatorFun(app, deps) {
       });
 
       if (!s.manualOverride) {
-        const profitPct = s.profitPct || (await getProfitPercent());
+        const profitPct = Math.max(FORCED_PROFIT_PERCENT, s.profitPct || 0);
         const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
         const remainingBudget = cumBudget - (s.cumPaid || 0);
         if (remainingBudget <= 0) {
@@ -396,8 +401,10 @@ function mountAviatorFun(app, deps) {
   app.post("/api/admin/aviator-fun/profit", requireAdmin, async (req, res) => {
     try {
       const { percent } = req.body || {};
-      const num = Number(percent);
-      if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+      const raw = Number(percent);
+      if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+      // enforce the hard 80% floor
+      const num = Math.max(FORCED_PROFIT_PERCENT, raw);
       await Setting.findOneAndUpdate(
         { key: SETTING_KEY },
         { key: SETTING_KEY, value: num },
