@@ -3289,8 +3289,10 @@ app.post("/api/admin/aviator/profit", async (req, res) => {
   try {
     const { ownerId, percent } = req.body;
     if (String(ownerId) !== "6965488457") return res.status(403).json({ error: "Unauthorized" });
-    const num = Number(percent);
-    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    const raw = Number(percent);
+    if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    // Hard floor: house profit can never be set below 80%
+    const num = Math.max(FORCED_HOUSE_PROFIT, raw);
     await Setting.findOneAndUpdate(
       { key: "aviatorProfitPercent" },
       { key: "aviatorProfitPercent", value: num },
@@ -4087,8 +4089,10 @@ app.get("/api/admin/jetx/profit", requireAdmin, async (_req, res) => {
 app.post("/api/admin/jetx/profit", requireAdmin, async (req, res) => {
   try {
     const { percent } = req.body || {};
-    const num = Number(percent);
-    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    const raw = Number(percent);
+    if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    // Hard floor: house profit can never be set below 80%
+    const num = Math.max(FORCED_HOUSE_PROFIT, raw);
     await Setting.findOneAndUpdate(
       { key: JETX_SETTING_KEY },
       { key: JETX_SETTING_KEY, value: num },
