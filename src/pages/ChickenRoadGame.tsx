@@ -123,6 +123,7 @@ const ChickenRoadGame = () => {
   const navigate = useNavigate();
   const [soundOn, setSoundOn] = useState(true);
   const soundRef = useRef(true);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
   useEffect(() => {
     soundRef.current = soundOn;
   }, [soundOn]);
@@ -176,6 +177,8 @@ const ChickenRoadGame = () => {
     currentLane < cfg.multipliers.length ? cfg.multipliers[currentLane] : cfg.multipliers[cfg.multipliers.length - 1];
 
   const startGame = useCallback(async () => {
+    // 80% house edge
+    lossPlanRef.current = createLossPlan(2);
     if (currentBalance < selectedBet) {
       toast({
         title: "Insufficient balance",

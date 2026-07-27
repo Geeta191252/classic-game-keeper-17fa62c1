@@ -94,6 +94,7 @@ const MinesGame = () => {
   const remainingMinesRef = useRef(0);
   const revealedSafeRef = useRef<Set<number>>(new Set());
   const revealingRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
 
   const startGame = useCallback(async () => {
     if (currentBalance < selectedBet) return;
