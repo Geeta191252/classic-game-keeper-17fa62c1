@@ -39,6 +39,10 @@ const transactionSchema = new mongoose.Schema(
     // Withdrawal-specific fields
     cryptoAddress: String,
     withdrawalNetwork: String,
+    // Admin manual adjustment marker (fake / non-real funds)
+    adminAdjust: { type: Boolean, default: false },
+    adminField: String, // exact user balance field that was changed
+    adminDelta: Number, // signed amount applied
   },
   { timestamps: true }
 );
