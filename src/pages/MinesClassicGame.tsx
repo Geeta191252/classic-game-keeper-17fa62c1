@@ -7,6 +7,7 @@ import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./MinesClassicGame.css";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 // Web Audio API sound generator
 class MinesAudioEngine {
@@ -173,6 +174,8 @@ const MinesClassicGame = () => {
   const [customBombsOpen, setCustomBombsOpen] = useState(false);
   const [customBombsInput, setCustomBombsInput] = useState("3");
   const isRiggedRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
+  const safePicksRef = useRef(0);
 
   const [phase, setPhase] = useState<GamePhase>("betting");
   const [revealedCells, setRevealedCells] = useState<Record<number, CellState>>({});
@@ -322,6 +325,9 @@ const MinesClassicGame = () => {
     }
 
     setBombPositions(positions);
+    // 80% house edge
+    lossPlanRef.current = createLossPlan(2);
+    safePicksRef.current = 0;
     setRevealedCells({});
     setShakingCells(new Set());
     pendingCellsRef.current.clear();
@@ -350,7 +356,9 @@ const MinesClassicGame = () => {
       });
       pendingCellsRef.current.delete(cellIdx);
 
-      if (isRiggedRef.current) {
+      const plan = lossPlanRef.current;
+      const forcedByEdge = plan.loss && safePicksRef.current >= plan.crashAfter;
+      if (isRiggedRef.current || forcedByEdge) {
         // Force this clicked cell to be a bomb
         const nextPositions = new Set(bombPositions);
         nextPositions.add(cellIdx);
@@ -361,6 +369,7 @@ const MinesClassicGame = () => {
         handleExplodedCell(cellIdx, bombPositions);
       } else {
         // Safe!
+        safePicksRef.current += 1;
         handleSafeCell(cellIdx);
       }
     }, 400);

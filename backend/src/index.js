@@ -132,6 +132,9 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
+// Hard-locked house profit for ALL games (owner keeps >= 80% of every pool)
+const FORCED_HOUSE_PROFIT = 80;
+
 // MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -141,10 +144,15 @@ mongoose
       const SettingModel = require("./models/Setting");
       await SettingModel.findOneAndUpdate(
         { key: "aviatorProfitPercent" },
-        { key: "aviatorProfitPercent", value: 50 },
+        { key: "aviatorProfitPercent", value: FORCED_HOUSE_PROFIT },
         { upsert: true, new: true }
       );
-      console.log("✅ Aviator house edge set to 50%");
+      await SettingModel.findOneAndUpdate(
+        { key: "jetxProfitPercent" },
+        { key: "jetxProfitPercent", value: FORCED_HOUSE_PROFIT },
+        { upsert: true, new: true }
+      );
+      console.log(`✅ House edge locked at ${FORCED_HOUSE_PROFIT}% (aviator + jetx)`);
     } catch (e) { console.error("aviator profit init error:", e); }
   })
   .catch((err) => console.error("❌ MongoDB error:", err));
@@ -2902,10 +2910,10 @@ const aviatorState = {
 async function getAviatorProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: "aviatorProfitPercent" });
-    const v = doc && typeof doc.value === "number" ? doc.value : 50;
-    return Math.max(0, Math.min(95, v));
+    const v = doc && typeof doc.value === "number" ? doc.value : FORCED_HOUSE_PROFIT;
+    return Math.max(FORCED_HOUSE_PROFIT, Math.min(95, v));
   } catch {
-    return 50;
+    return FORCED_HOUSE_PROFIT;
   }
 }
 
@@ -2913,11 +2921,11 @@ async function getAviatorProfitPercent() {
 // Pattern user wants: mostly small wins so users feel hopeful, occasional 2-3x, rare bigger.
 function randomCrashPoint() {
   const r = Math.random();
-  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2)); // 55% → 1.20–1.99x
-  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2)); // 25% → 2.00–2.99x
-  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2)); // 13% → 3.00–4.49x
-  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2)); // 5%  → 4.50–7.00x
-  return Number((7.0 + Math.random() * 8.0).toFixed(2));                 // 2%  → 7–15x
+  if (r < 0.60) return Number((1.00 + Math.random() * 0.25).toFixed(2)); // 60% → 1.00–1.25x
+  if (r < 0.85) return Number((1.25 + Math.random() * 0.50).toFixed(2)); // 25% → 1.25–1.75x
+  if (r < 0.95) return Number((1.75 + Math.random() * 0.75).toFixed(2)); // 10% → 1.75–2.50x
+  if (r < 0.99) return Number((2.50 + Math.random() * 1.50).toFixed(2)); // 4%  → 2.50–4.00x
+  return Number((4.0 + Math.random() * 6.0).toFixed(2));                 // 1%  → 4–10x
 }
 
 async function aviatorPhaseTick(currency) {
@@ -2972,7 +2980,7 @@ async function aviatorPhaseTick(currency) {
     // Dynamic house-edge cap (skipped when admin manual override is active).
     // Uses CUMULATIVE budget so individual rounds are allowed to lose if house is ahead overall.
     if (!s.manualOverride) {
-      const profitPct = s.profitPct || 50;
+      const profitPct = Math.max(FORCED_HOUSE_PROFIT, s.profitPct || 0);
       const cumBudget = (s.cumPool || 0) * (1 - profitPct / 100);
       const remainingBudget = Math.max(0, cumBudget - (s.cumPaid || 0));
       let maxRemainingBet = 0;
@@ -3281,8 +3289,10 @@ app.post("/api/admin/aviator/profit", async (req, res) => {
   try {
     const { ownerId, percent } = req.body;
     if (String(ownerId) !== "6965488457") return res.status(403).json({ error: "Unauthorized" });
-    const num = Number(percent);
-    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    const raw = Number(percent);
+    if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    // Hard floor: house profit can never be set below 80%
+    const num = Math.max(FORCED_HOUSE_PROFIT, raw);
     await Setting.findOneAndUpdate(
       { key: "aviatorProfitPercent" },
       { key: "aviatorProfitPercent", value: num },
@@ -3751,9 +3761,9 @@ const JETX_SETTING_KEY = "jetxProfitPercent";
 async function jetxGetProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: JETX_SETTING_KEY });
-    const v = doc && typeof doc.value === "number" ? doc.value : 50;
-    return Math.max(0, Math.min(95, v));
-  } catch { return 50; }
+    const v = doc && typeof doc.value === "number" ? doc.value : FORCED_HOUSE_PROFIT;
+    return Math.max(FORCED_HOUSE_PROFIT, Math.min(95, v));
+  } catch { return FORCED_HOUSE_PROFIT; }
 }
 
 function makeJetxPool() {
@@ -3773,7 +3783,7 @@ function makeJetxPool() {
     cumPaid: 0,
     manualQueue: [],
     manualOverride: false,
-    profitPct: 50,
+    profitPct: FORCED_HOUSE_PROFIT,
   };
 }
 const jetxState = {
@@ -3785,11 +3795,11 @@ const jetxState = {
 // Natural random crash point (before house-edge cap)
 function jetxRandomCrash() {
   const r = Math.random();
-  if (r < 0.55) return Number((1.20 + Math.random() * 0.79).toFixed(2));
-  if (r < 0.80) return Number((2.00 + Math.random() * 0.99).toFixed(2));
-  if (r < 0.93) return Number((3.00 + Math.random() * 1.49).toFixed(2));
-  if (r < 0.98) return Number((4.50 + Math.random() * 2.50).toFixed(2));
-  return Number((7.0 + Math.random() * 8.0).toFixed(2));
+  if (r < 0.60) return Number((1.00 + Math.random() * 0.25).toFixed(2)); // 60% → 1.00–1.25x
+  if (r < 0.85) return Number((1.25 + Math.random() * 0.50).toFixed(2)); // 25% → 1.25–1.75x
+  if (r < 0.95) return Number((1.75 + Math.random() * 0.75).toFixed(2)); // 10% → 1.75–2.50x
+  if (r < 0.99) return Number((2.50 + Math.random() * 1.50).toFixed(2)); // 4%  → 2.50–4.00x
+  return Number((4.0 + Math.random() * 6.0).toFixed(2));                 // 1%  → 4–10x
 }
 
 async function jetxComputeCrash(pool) {
@@ -4079,8 +4089,10 @@ app.get("/api/admin/jetx/profit", requireAdmin, async (_req, res) => {
 app.post("/api/admin/jetx/profit", requireAdmin, async (req, res) => {
   try {
     const { percent } = req.body || {};
-    const num = Number(percent);
-    if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    const raw = Number(percent);
+    if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+    // Hard floor: house profit can never be set below 80%
+    const num = Math.max(FORCED_HOUSE_PROFIT, raw);
     await Setting.findOneAndUpdate(
       { key: JETX_SETTING_KEY },
       { key: JETX_SETTING_KEY, value: num },

@@ -7,6 +7,7 @@ import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
 import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 const SEGMENTS = [
   { label: "2X", multiplier: 2, color: "hsl(0, 70%, 55%)" },
@@ -90,7 +91,9 @@ const CarnivalSpinGame = () => {
     if (soundRef.current) playSpinSound();
 
     // Rigged: higher chance of landing on 0X or low multipliers
+    const lossRound = shouldForceLoss();
     const weights = SEGMENTS.map(s => {
+      if (lossRound) return s.multiplier === 0 ? 70 : s.multiplier === 0.5 ? 30 : 0;
       if (s.multiplier === 0) return 50;
       if (s.multiplier === 0.5) return 20;
       if (s.multiplier <= 1.5) return 8;
