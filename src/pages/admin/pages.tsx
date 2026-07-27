@@ -10,8 +10,10 @@ import {
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
   getUpiConfig, saveUpiConfig, getPlayerWins,
+  getFakeFunds, purgeFakeFunds,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
   type GameStatRow, type GameAnalytics, type UpiConfig, type PlayerWinRow,
+  type FakeFundUser,
 } from "@/lib/adminApi";
 
 /* ============= Shared primitives ============= */
