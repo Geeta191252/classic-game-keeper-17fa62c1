@@ -2576,3 +2576,156 @@ export function OffersPage() {
   );
 }
 
+
+/* ============= Player Wins (kaunsa user kaunsa game khel ke jeeta) ============= */
+
+export function PlayerWinsPage() {
+  const [search, setSearch] = useState("");
+  const [game, setGame] = useState("");
+  const [sort, setSort] = useState("netwin");
+  const [data, setData] = useState<PlayerWinRow[] | null>(null);
+  const [games, setGames] = useState<string[]>([]);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState<number | null>(null);
+
+  const load = () => {
+    setLoading(true); setErr(null);
+    getPlayerWins({ search: search.trim() || undefined, game: game || undefined, sort, limit: 500 })
+      .then((d) => setData(d.players))
+      .catch((e) => setErr(e.message))
+      .finally(() => setLoading(false));
+  };
+  useEffect(load, [sort, game]);
+  useEffect(() => {
+    getGameStats().then((d) => setGames(d.games.map((g) => g.game))).catch(() => {});
+  }, []);
+
+  const totals = useMemo(() => {
+    const p = data || [];
+    return {
+      players: p.length,
+      winners: p.filter((x) => x.netUsd > 0).length,
+      wagered: p.reduce((s, x) => s + x.betUsd, 0),
+      won: p.reduce((s, x) => s + x.winUsd, 0),
+    };
+  }, [data]);
+
+  const uname = (p: PlayerWinRow) =>
+    [p.firstName, p.lastName].filter(Boolean).join(" ") || p.username || `User ${p.telegramId}`;
+
+  return (
+    <>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <StatCard label="Players" value={String(totals.players)} icon={<UsersIcon size={16} />} tone="blue" />
+        <StatCard label="In profit" value={String(totals.winners)} icon={<TrendingUp size={16} />} tone="green" />
+        <StatCard label="Total wagered" value={`$${totals.wagered.toFixed(2)}`} icon={<Coins size={16} />} tone="yellow" />
+        <StatCard label="Total won" value={`$${totals.won.toFixed(2)}`} icon={<TrendingDown size={16} />} tone="pink" />
+      </div>
+
+      <Section
+        eyebrow="PLAYER REPORT"
+        title="Kaunsa user kaunsa game khel ke jeeta"
+        right={<button className="a-btn a-btn-sm" onClick={load}><RefreshCw size={12} /> Refresh</button>}
+      >
+        <div className="a-card mb-3 flex flex-wrap gap-2 items-center">
+          <div className="a-input-wrap flex-1 min-w-[200px]">
+            <Search size={14} />
+            <input
+              className="a-input" placeholder="Search name / username / telegram ID"
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && load()}
+            />
+          </div>
+          <select className="a-select" value={game} onChange={(e) => setGame(e.target.value)}>
+            <option value="">All games</option>
+            {games.map((g) => <option key={g} value={g}>{g}</option>)}
+          </select>
+          <select className="a-select" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="netwin">Top winners</option>
+            <option value="netloss">Top losers</option>
+            <option value="bets">Most wagered</option>
+            <option value="recent">Recently played</option>
+          </select>
+          <button className="a-btn a-btn-sm" onClick={load}><Search size={12} /> Search</button>
+        </div>
+
+        {loading ? <LoadingBlock /> : err ? <ErrorBlock message={err} onRetry={load} /> : (
+          <div className="a-card overflow-x-auto">
+            <table className="a-table w-full">
+              <thead>
+                <tr>
+                  <th>#</th><th>User</th><th>Telegram ID</th><th>Games</th><th>Top game</th>
+                  <th>Wins</th><th>Won ($)</th><th>Wagered ($)</th><th>Net ($)</th><th>Last played</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(data || []).map((p, i) => (
+                  <>
+                    <tr key={p.telegramId}>
+                      <td style={{ color: "var(--a-text-dim)" }}>{i + 1}</td>
+                      <td>
+                        <div className="text-white font-semibold">{uname(p)}</div>
+                        {p.username && <div className="text-[11px]" style={{ color: "var(--a-text-mute)" }}>@{p.username}</div>}
+                      </td>
+                      <td>#{p.telegramId}</td>
+                      <td>{p.gamesPlayed}</td>
+                      <td className="capitalize">{p.topGame || "—"}</td>
+                      <td>{p.winCount} / {p.betCount}</td>
+                      <td style={{ color: "var(--a-green)" }}>${p.winUsd.toFixed(2)}</td>
+                      <td>${p.betUsd.toFixed(2)}</td>
+                      <td className="font-semibold" style={{ color: p.netUsd >= 0 ? "var(--a-green)" : "var(--a-red)" }}>
+                        {p.netUsd >= 0 ? "+" : "-"}${Math.abs(p.netUsd).toFixed(2)}
+                      </td>
+                      <td style={{ color: "var(--a-text-dim)" }}>{p.lastPlayed ? fmtDate(p.lastPlayed) : "—"}</td>
+                      <td>
+                        <button className="a-btn a-btn-sm"
+                          onClick={() => setOpen(open === p.telegramId ? null : p.telegramId)}>
+                          <Activity size={12} /> {open === p.telegramId ? "Hide" : "Games"}
+                        </button>
+                      </td>
+                    </tr>
+                    {open === p.telegramId && (
+                      <tr key={`${p.telegramId}-d`}>
+                        <td colSpan={11}>
+                          <table className="a-table w-full">
+                            <thead>
+                              <tr>
+                                <th>Game</th><th>Bets</th><th>Wins</th>
+                                <th>$ bet / win</th><th>₹ bet / win</th><th>★ bet / win</th>
+                                <th>Net ($)</th><th>Last played</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {p.games.map((g) => (
+                                <tr key={g.game}>
+                                  <td className="text-white font-semibold capitalize">{g.game}</td>
+                                  <td>{g.betCount}</td>
+                                  <td>{g.winCount}</td>
+                                  <td>${g.bet.dollar.toFixed(2)} / ${g.win.dollar.toFixed(2)}</td>
+                                  <td>₹{g.bet.rupee.toFixed(2)} / ₹{g.win.rupee.toFixed(2)}</td>
+                                  <td>★{g.bet.star.toFixed(0)} / ★{g.win.star.toFixed(0)}</td>
+                                  <td style={{ color: g.netUsd >= 0 ? "var(--a-green)" : "var(--a-red)" }}>
+                                    {g.netUsd >= 0 ? "+" : "-"}${Math.abs(g.netUsd).toFixed(2)}
+                                  </td>
+                                  <td style={{ color: "var(--a-text-dim)" }}>{g.lastPlayed ? fmtDate(g.lastPlayed) : "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+                {data && data.length === 0 && (
+                  <tr><td colSpan={11} className="text-center py-6" style={{ color: "var(--a-text-dim)" }}>No gameplay data yet.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+    </>
+  );
+}

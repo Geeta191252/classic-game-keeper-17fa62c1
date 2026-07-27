@@ -365,3 +365,36 @@ export const deleteSupportThread = (telegramId: number) =>
     method: "POST",
     body: JSON.stringify({ telegramId }),
   });
+
+// ---------- Player win/loss report (per user, per game) ----------
+export interface PlayerGameRow {
+  game: string;
+  bet: { dollar: number; rupee: number; star: number };
+  win: { dollar: number; rupee: number; star: number };
+  betCount: number;
+  winCount: number;
+  lastPlayed?: string | null;
+  netUsd: number;
+}
+export interface PlayerWinRow {
+  telegramId: number;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  bet: { dollar: number; rupee: number; star: number };
+  win: { dollar: number; rupee: number; star: number };
+  betCount: number;
+  winCount: number;
+  lastPlayed?: string | null;
+  betUsd: number;
+  winUsd: number;
+  netUsd: number;
+  topGame: string | null;
+  gamesPlayed: number;
+  games: PlayerGameRow[];
+}
+export const getPlayerWins = (params: { search?: string; game?: string; sort?: string; limit?: number } = {}) => {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
+  return adminFetch<{ players: PlayerWinRow[]; total: number }>(`/admin/player-wins?${qs.toString()}`);
+};
