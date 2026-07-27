@@ -401,8 +401,10 @@ function mountAviatorFun(app, deps) {
   app.post("/api/admin/aviator-fun/profit", requireAdmin, async (req, res) => {
     try {
       const { percent } = req.body || {};
-      const num = Number(percent);
-      if (isNaN(num) || num < 0 || num > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+      const raw = Number(percent);
+      if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
+      // enforce the hard 80% floor
+      const num = Math.max(FORCED_PROFIT_PERCENT, raw);
       await Setting.findOneAndUpdate(
         { key: SETTING_KEY },
         { key: SETTING_KEY, value: num },
