@@ -9,9 +9,9 @@ import {
   getSummary, listUsers, listTransactions, walletAdjust,
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
-  getUpiConfig, saveUpiConfig,
+  getUpiConfig, saveUpiConfig, getPlayerWins,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
-  type GameStatRow, type GameAnalytics, type UpiConfig,
+  type GameStatRow, type GameAnalytics, type UpiConfig, type PlayerWinRow,
 } from "@/lib/adminApi";
 
 /* ============= Shared primitives ============= */
@@ -2629,10 +2629,12 @@ export function PlayerWinsPage() {
         right={<button className="a-btn a-btn-sm" onClick={load}><RefreshCw size={12} /> Refresh</button>}
       >
         <div className="a-card mb-3 flex flex-wrap gap-2 items-center">
-          <div className="a-input-wrap flex-1 min-w-[200px]">
-            <Search size={14} />
+          <div className="flex-1 min-w-[200px] flex items-center gap-2 px-3 py-2 rounded-xl"
+               style={{ background: "rgba(10,15,26,0.7)", border: "1px solid var(--a-border)" }}>
+            <Search size={14} style={{ color: "var(--a-text-mute)" }} />
             <input
-              className="a-input" placeholder="Search name / username / telegram ID"
+              className="bg-transparent outline-none text-[13px] w-full placeholder:text-[var(--a-text-mute)]"
+              placeholder="Search name / username / telegram ID"
               value={search} onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load()}
             />
