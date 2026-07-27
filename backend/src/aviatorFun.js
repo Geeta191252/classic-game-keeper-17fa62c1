@@ -178,6 +178,23 @@ async function phaseTick(currency) {
 function mountAviatorFun(app, deps) {
   const { normalizeCurrency, getCurrencyFields, getOrCreateUser, balancePayload, requireAdmin } = deps;
 
+  // Ensure house profit target is at least 80% (one-time bump from old 50% default)
+  (async () => {
+    try {
+      const doc = await Setting.findOne({ key: SETTING_KEY });
+      if (!doc || typeof doc.value !== "number" || doc.value < 80) {
+        await Setting.findOneAndUpdate(
+          { key: SETTING_KEY },
+          { key: SETTING_KEY, value: 80 },
+          { upsert: true }
+        );
+      }
+    } catch {
+      /* noop */
+    }
+  })();
+
+
   setInterval(() => {
     phaseTick("dollar").catch(() => {});
     phaseTick("rupee").catch(() => {});
