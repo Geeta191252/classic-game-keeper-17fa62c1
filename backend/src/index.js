@@ -4846,6 +4846,126 @@ app.get("/api/admin/game-stats", requireAdmin, async (req, res) => {
   }
 });
 
+// GET /api/admin/player-wins?search=&game=&limit=&skip=&sort=
+// Per-user gameplay summary: kaunsa user kaunsa game khel ke kitna jeeta.
+app.get("/api/admin/player-wins", requireAdmin, async (req, res) => {
+  try {
+    const search = String(req.query.search || "").trim();
+    const game = String(req.query.game || "").trim();
+    const limit = Math.min(2000, Number(req.query.limit) || 200);
+    const skip = Number(req.query.skip) || 0;
+    const sort = String(req.query.sort || "netwin");
+
+    const match = { type: { $in: ["bet", "win"] }, status: "completed" };
+    if (game) match.game = game;
+
+    let idFilter = null;
+    if (search) {
+      const asNum = Number(search);
+      const users = await User.find({
+        $or: [
+          ...(Number.isFinite(asNum) ? [{ telegramId: asNum }] : []),
+          { username: { $regex: search, $options: "i" } },
+          { firstName: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+        ],
+      }).select("telegramId").lean();
+      idFilter = users.map((u) => u.telegramId);
+      match.telegramId = { $in: idFilter };
+    }
+
+    const rows = await Transaction.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { telegramId: "$telegramId", game: "$game", type: "$type", currency: "$currency" },
+          total: { $sum: "$amount" },
+          count: { $sum: 1 },
+          last: { $max: "$createdAt" },
+        },
+      },
+    ]);
+
+    const usd = { dollar: 1, rupee: 0.012, star: 0.013 };
+    const byUser = new Map();
+    for (const r of rows) {
+      const tid = r._id.telegramId;
+      if (!byUser.has(tid)) {
+        byUser.set(tid, {
+          telegramId: tid,
+          bet: { dollar: 0, rupee: 0, star: 0 },
+          win: { dollar: 0, rupee: 0, star: 0 },
+          betCount: 0,
+          winCount: 0,
+          lastPlayed: null,
+          games: {},
+        });
+      }
+      const u = byUser.get(tid);
+      const g = r._id.game || "unknown";
+      if (!u.games[g]) {
+        u.games[g] = { game: g, bet: { dollar: 0, rupee: 0, star: 0 }, win: { dollar: 0, rupee: 0, star: 0 }, betCount: 0, winCount: 0, lastPlayed: null };
+      }
+      const amt = Math.abs(r.total || 0);
+      const bucket = r._id.type === "win" ? "win" : "bet";
+      const cur = r._id.currency;
+      if (u[bucket][cur] !== undefined) u[bucket][cur] += amt;
+      if (u.games[g][bucket][cur] !== undefined) u.games[g][bucket][cur] += amt;
+      if (r._id.type === "win") { u.winCount += r.count; u.games[g].winCount += r.count; }
+      else { u.betCount += r.count; u.games[g].betCount += r.count; }
+      if (r.last && (!u.lastPlayed || r.last > u.lastPlayed)) u.lastPlayed = r.last;
+      if (r.last && (!u.games[g].lastPlayed || r.last > u.games[g].lastPlayed)) u.games[g].lastPlayed = r.last;
+    }
+
+    const ids = [...byUser.keys()];
+    const users = await User.find({ telegramId: { $in: ids } })
+      .select("telegramId username firstName lastName").lean();
+    const uMap = new Map(users.map((u) => [u.telegramId, u]));
+
+    const players = [...byUser.values()].map((p) => {
+      const betUsd = p.bet.dollar * usd.dollar + p.bet.rupee * usd.rupee + p.bet.star * usd.star;
+      const winUsd = p.win.dollar * usd.dollar + p.win.rupee * usd.rupee + p.win.star * usd.star;
+      const info = uMap.get(p.telegramId) || {};
+      const games = Object.values(p.games)
+        .map((g) => ({
+          ...g,
+          netUsd:
+            (g.win.dollar - g.bet.dollar) * usd.dollar +
+            (g.win.rupee - g.bet.rupee) * usd.rupee +
+            (g.win.star - g.bet.star) * usd.star,
+        }))
+        .sort((a, b) => b.winCount - a.winCount);
+      return {
+        ...p,
+        games,
+        username: info.username,
+        firstName: info.firstName,
+        lastName: info.lastName,
+        betUsd,
+        winUsd,
+        netUsd: winUsd - betUsd,
+        topGame: games[0]?.game || null,
+        gamesPlayed: games.length,
+      };
+    });
+
+    players.sort((a, b) => {
+      if (sort === "netloss") return a.netUsd - b.netUsd;
+      if (sort === "bets") return b.betUsd - a.betUsd;
+      if (sort === "recent") return new Date(b.lastPlayed || 0) - new Date(a.lastPlayed || 0);
+      return b.winUsd - a.winUsd; // netwin default: biggest winners
+    });
+
+    const total = players.length;
+    res.json({ players: players.slice(skip, skip + limit), total, limit, skip });
+  } catch (e) {
+    console.error("admin/player-wins error:", e);
+    res.status(500).json({ error: "Player wins failed" });
+  }
+});
+
+
+
 // POST /api/admin/deposits/approve   { transactionId }
 app.post("/api/admin/deposits/approve", requireAdmin, async (req, res) => {
   try {
