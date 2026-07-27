@@ -43,6 +43,7 @@ const AdminPages = {
   Dashboard: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.Dashboard }))),
   Users: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.UsersPage }))),
   TopUsers: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.TopUsersPage }))),
+  PlayerWins: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.PlayerWinsPage }))),
   Games: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.GamesPage }))),
   AviatorFun: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AviatorFunControlPage }))),
   JetX: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.JetXControlPage }))),
@@ -177,6 +178,7 @@ const App = () => {
                     <Route path="users" element={<AdminPages.Users />} />
                     <Route path="top-users" element={<AdminPages.TopUsers />} />
                     <Route path="games" element={<AdminPages.Games />} />
+                    <Route path="player-wins" element={<AdminPages.PlayerWins />} />
                     <Route path="aviator-fun" element={<AdminPages.AviatorFun />} />
                     <Route path="jetx" element={<AdminPages.JetX />} />
                     <Route path="deposits" element={<AdminPages.Deposits />} />

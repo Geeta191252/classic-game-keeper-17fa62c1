@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
   BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight,
-  Bell, Search, Sparkles, LogOut, Plane, Crown, Gift, LifeBuoy, type LucideIcon,
+  Bell, Search, Trophy, Sparkles, LogOut, Plane, Crown, Gift, LifeBuoy, type LucideIcon,
 } from "lucide-react";
 import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
@@ -19,6 +19,7 @@ const GROUPS: Group[] = [
       { to: "/admin/users", label: "Users", icon: Users },
       { to: "/admin/top-users", label: "User 11 (Top funds)", icon: Crown },
       { to: "/admin/games", label: "Games", icon: Gamepad2 },
+      { to: "/admin/player-wins", label: "Player Wins", icon: Trophy },
       { to: "/admin/aviator-fun", label: "Aviator Fun", icon: Plane },
       { to: "/admin/jetx", label: "JetX Control", icon: Plane },
     ],
