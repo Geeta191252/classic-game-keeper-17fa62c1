@@ -797,10 +797,6 @@ app.post("/api/transactions", async (req, res) => {
   }
 });
 
-// ============================================
-// iGamingAPI / SoftAPI provider games (100HP etc.)
-// ============================================
-require("./igaming").registerIgaming(app, { User, Transaction, getBackendUrl });
 
 
 // ============================================

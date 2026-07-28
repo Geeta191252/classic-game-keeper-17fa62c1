@@ -57,12 +57,6 @@ const userSchema = new mongoose.Schema(
     username: String,
     firstName: String,
     lastName: String,
-    igamingPlayerId: {
-      type: Number,
-      unique: true,
-      sparse: true,
-      index: true,
-    },
   },
   { timestamps: true }
 );
