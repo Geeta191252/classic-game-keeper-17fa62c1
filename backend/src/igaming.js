@@ -140,46 +140,53 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
         active: true,
       });
 
-      const payload = {
-        user_id: numericId,
-        balance,
-        game_uid: String(gameUid),
-        token: TOKEN,
-        timestamp: Date.now(),
-        return: returnUrl(),
-        callback: callbackUrl(),
-        currency_code: CURRENCY_CODE[currency],
-        language,
-      };
-
-      const body = JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) });
+      // Some SoftAPI brands reject a raw numeric id ("invalid user_id"); try string
+      // and prefixed variants until one is accepted. member_account comes back the
+      // same way, so notify() strips non-digits to recover the telegram id.
+      const userIdVariants = [String(numericId), `rk${numericId}`, `user${numericId}`, numericId];
       const endpoints = [API_URL, `${API_URL}/game_launch`, `${API_URL}/games/launch`];
 
       let json = null;
       let lastStatus = 0;
       let lastErr = "";
 
-      for (const url of endpoints) {
-        try {
-          const upstream = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body,
-            signal: AbortSignal.timeout(20000),
-          });
-          lastStatus = upstream.status;
-          const parsed = await upstream.json().catch(() => null);
-          if (parsed && Number(parsed.code) === 0 && parsed?.data?.url) {
-            json = parsed;
-            break;
+      outer: for (const uid of userIdVariants) {
+        const payload = {
+          user_id: uid,
+          balance,
+          game_uid: String(gameUid),
+          token: TOKEN,
+          timestamp: Date.now(),
+          return: returnUrl(),
+          callback: callbackUrl(),
+          currency_code: CURRENCY_CODE[currency],
+          language,
+        };
+        const body = JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) });
+
+        for (const url of endpoints) {
+          try {
+            const upstream = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body,
+              signal: AbortSignal.timeout(20000),
+            });
+            lastStatus = upstream.status;
+            const parsed = await upstream.json().catch(() => null);
+            if (parsed && Number(parsed.code) === 0 && parsed?.data?.url) {
+              json = parsed;
+              break outer;
+            }
+            lastErr = parsed?.msg || `HTTP ${upstream.status}`;
+            console.error("[igaming] launch attempt failed:", url, uid, upstream.status, JSON.stringify(parsed));
+          } catch (err) {
+            lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
+            console.error("[igaming] launch attempt error:", url, uid, lastErr);
           }
-          lastErr = parsed?.msg || `HTTP ${upstream.status}`;
-          console.error("[igaming] launch attempt failed:", url, upstream.status, JSON.stringify(parsed));
-        } catch (err) {
-          lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
-          console.error("[igaming] launch attempt error:", url, lastErr);
         }
       }
+
 
       if (!json) {
         session.active = false;
