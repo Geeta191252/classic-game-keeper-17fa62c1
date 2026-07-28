@@ -18,7 +18,12 @@ import OfferPopup from "./OfferPopup";
 import SupportModal from "./SupportModal";
 import TournamentLeaderboard, { Tournament } from "./TournamentLeaderboard";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
+const normalizeApiBase = (value?: string) => {
+  const raw = (value || `${window.location.origin}/api`).trim().replace(/\/+$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL);
 
 type FilterTab = "all" | "originals" | "slots" | "crash" | "wheel" | "tournaments";
 
