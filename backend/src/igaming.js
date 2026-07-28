@@ -21,7 +21,8 @@ const IgamingRound = require("./models/IgamingRound");
 
 const isConfigured = () => Boolean(TOKEN && SECRET && SECRET.length === 32);
 const PROVIDER_ID_MIN = 100000;
-const PROVIDER_ID_RANGE = 2000000000;
+const PROVIDER_ID_MAX = 99999999;
+const PROVIDER_ID_ATTEMPTS = 12;
 
 // ---------- AES-256-ECB + PKCS7, base64 ----------
 function encryptPayload(obj) {
@@ -56,28 +57,58 @@ async function cachedJson(url, ttlMs = 5 * 60 * 1000) {
 
 const CURRENCY_CODE = { rupee: "INR", dollar: "USD" };
 
-function makeProviderPlayerId(telegramId, attempt = 0) {
-  const numeric = BigInt(String(Math.trunc(Number(telegramId))));
-  const offset = (numeric + BigInt(attempt * 7919)) % BigInt(PROVIDER_ID_RANGE);
-  return PROVIDER_ID_MIN + Number(offset);
+function isProviderPlayerId(value) {
+  return Number.isInteger(value) && value >= PROVIDER_ID_MIN && value <= PROVIDER_ID_MAX;
 }
 
-async function ensureProviderPlayerId(user, User) {
-  if (Number.isInteger(user.igamingPlayerId) && user.igamingPlayerId > 0) {
-    return user.igamingPlayerId;
-  }
+function compactProviderPlayerId(telegramId, attempt = 0) {
+  // 100HP rejects large Telegram IDs. Keep platform player IDs compact
+  // (6-8 digits), numeric-only, and stable for the same Telegram user.
+  const hash = crypto
+    .createHash("sha256")
+    .update(`${String(Math.trunc(Number(telegramId)))}:${attempt}`)
+    .digest("hex")
+    .slice(0, 12);
+  const offset = Number(BigInt(`0x${hash}`) % BigInt(PROVIDER_ID_MAX - PROVIDER_ID_MIN + 1));
+  return PROVIDER_ID_MIN + offset;
+}
 
-  for (let attempt = 0; attempt < 25; attempt += 1) {
-    const candidate = makeProviderPlayerId(user.telegramId, attempt);
+async function providerPlayerCandidates(user, User) {
+  const candidates = [];
+  const add = (value) => {
+    const n = Number(value);
+    if (isProviderPlayerId(n) && !candidates.includes(n)) candidates.push(n);
+  };
+
+  add(user.igamingPlayerId);
+
+  for (let attempt = 0; attempt < PROVIDER_ID_ATTEMPTS; attempt += 1) {
+    const candidate = compactProviderPlayerId(user.telegramId, attempt);
     const existing = await User.findOne({ igamingPlayerId: candidate, _id: { $ne: user._id } }).lean();
-    if (!existing) {
-      user.igamingPlayerId = candidate;
-      await user.save();
-      return candidate;
-    }
+    if (!existing) add(candidate);
   }
 
-  throw new Error("Could not assign provider player id");
+  return candidates;
+}
+
+async function saveProviderPlayerId(user, providerUserId) {
+  if (user.igamingPlayerId === providerUserId) return;
+  user.igamingPlayerId = providerUserId;
+  try {
+    await user.save();
+  } catch (error) {
+    // If a race created this compact ID first, the next launch attempt will
+    // choose another candidate. Do not mask the provider launch result.
+    if (error?.code !== 11000) throw error;
+  }
+}
+
+function providerErrorMessage(parsed, status) {
+  return parsed?.msg || parsed?.message || parsed?.error || parsed?.data?.msg || parsed?.data?.message || `HTTP ${status}`;
+}
+
+function isInvalidUserIdError(message) {
+  return /invalid\s*(user[_\s-]?id|member[_\s-]?account|player[_\s-]?id)/i.test(String(message || ""));
 }
 
 function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner }) {
@@ -146,7 +177,8 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
 
       const user = await User.findOne({ telegramId: numericId });
       if (!user) return res.status(404).json({ error: "User not found" });
-      const providerUserId = await ensureProviderPlayerId(user, User);
+      const providerIds = await providerPlayerCandidates(user, User);
+      if (!providerIds.length) return res.status(500).json({ error: "Could not assign provider player id" });
 
       const depositField = currency === "rupee" ? "rupeeBalance" : "dollarBalance";
       const winField = currency === "rupee" ? "rupeeWinning" : "dollarWinning";
@@ -154,11 +186,71 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
 
       if (balance <= 0) return res.status(400).json({ error: "Insufficient balance" });
 
+      const endpoints = [API_URL, `${API_URL}/game_launch`, `${API_URL}/games/launch`];
+
+      let json = null;
+      let lastStatus = 0;
+      let lastErr = "";
+      let acceptedProviderUserId = null;
+
+      for (const providerUserId of providerIds) {
+        for (const url of endpoints) {
+          const payload = {
+            // SoftAPI requires a compact integer player id. Telegram ids can
+            // exceed provider limits, so callbacks are mapped through sessions.
+            user_id: providerUserId,
+            member_account: String(providerUserId),
+            balance,
+            game_uid: String(gameUid),
+            token: TOKEN,
+            timestamp: Date.now(),
+            return: returnUrl(),
+            callback: callbackUrl(),
+            currency_code: CURRENCY_CODE[currency],
+            language,
+          };
+          const body = JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) });
+
+          try {
+            const upstream = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body,
+              signal: AbortSignal.timeout(20000),
+            });
+            lastStatus = upstream.status;
+            const parsed = await upstream.json().catch(() => null);
+            if (parsed && Number(parsed.code) === 0 && parsed?.data?.url) {
+              json = parsed;
+              acceptedProviderUserId = providerUserId;
+              break;
+            }
+            lastErr = providerErrorMessage(parsed, upstream.status);
+            console.error("[igaming] launch attempt failed:", url, providerUserId, upstream.status, JSON.stringify(parsed));
+          } catch (err) {
+            lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
+            console.error("[igaming] launch attempt error:", url, providerUserId, lastErr);
+          }
+
+          // Other provider errors (bad token, bad game_uid, no GGR wallet, etc.)
+          // will not be fixed by changing user_id, so stop quickly.
+          if (lastErr && !isInvalidUserIdError(lastErr)) break;
+        }
+        if (json || (lastErr && !isInvalidUserIdError(lastErr))) break;
+      }
+
+
+      if (!json) {
+        return res.status(200).json({ error: lastErr || "Launch failed", status: lastStatus });
+      }
+
+      await saveProviderPlayerId(user, acceptedProviderUserId);
+
       // Close any stale sessions for this player so notifies map to the new one.
       await IgamingSession.updateMany({ telegramId: numericId, active: true }, { $set: { active: false } });
       const session = await IgamingSession.create({
         telegramId: numericId,
-        providerUserId,
+        providerUserId: acceptedProviderUserId,
         currency,
         currencyCode: CURRENCY_CODE[currency],
         gameUid: String(gameUid),
@@ -167,57 +259,6 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
         lastBalance: balance,
         active: true,
       });
-
-      const endpoints = [API_URL, `${API_URL}/game_launch`, `${API_URL}/games/launch`];
-
-      let json = null;
-      let lastStatus = 0;
-      let lastErr = "";
-
-      for (const url of endpoints) {
-        const payload = {
-          // SoftAPI requires an integer player id. Telegram ids can exceed
-          // provider integer limits, so we map each Telegram user to a stable
-          // smaller integer and store it for callbacks.
-          user_id: providerUserId,
-          balance,
-          game_uid: String(gameUid),
-          token: TOKEN,
-          timestamp: Date.now(),
-          return: returnUrl(),
-          callback: callbackUrl(),
-          currency_code: CURRENCY_CODE[currency],
-          language,
-        };
-        const body = JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) });
-
-        try {
-          const upstream = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body,
-            signal: AbortSignal.timeout(20000),
-          });
-          lastStatus = upstream.status;
-          const parsed = await upstream.json().catch(() => null);
-          if (parsed && Number(parsed.code) === 0 && parsed?.data?.url) {
-            json = parsed;
-            break;
-          }
-          lastErr = parsed?.msg || `HTTP ${upstream.status}`;
-          console.error("[igaming] launch attempt failed:", url, providerUserId, upstream.status, JSON.stringify(parsed));
-        } catch (err) {
-          lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
-          console.error("[igaming] launch attempt error:", url, providerUserId, lastErr);
-        }
-      }
-
-
-      if (!json) {
-        session.active = false;
-        await session.save();
-        return res.status(200).json({ error: lastErr || "Launch failed", status: lastStatus });
-      }
 
       return res.json({ url: json.data.url, sessionId: session._id, balance });
     } catch (e) {
@@ -364,4 +405,4 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
   );
 }
 
-module.exports = { registerIgaming, isConfigured, encryptPayload, decryptPayload };
+module.exports = { registerIgaming, isConfigured, encryptPayload, decryptPayload, compactProviderPlayerId, isProviderPlayerId };
