@@ -75,10 +75,11 @@ const ProviderGames = () => {
     return games.filter((g) => g.name?.toLowerCase().includes(q));
   }, [games, query]);
 
-  const launch = async (game: ProviderGame) => {
+  const launch = async (game: ProviderGame): Promise<boolean> => {
     if (!userId) {
+      setAutoError("Open inside Telegram to play");
       toast.error("Open inside Telegram to play");
-      return;
+      return false;
     }
     setLaunching(game.gameUid);
     try {
@@ -95,12 +96,17 @@ const ProviderGames = () => {
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Launch failed");
       setGameUrl(data.url);
+      setAutoState("idle");
+      return true;
     } catch (e: any) {
+      setAutoError(e.message || "Could not open game");
       toast.error(e.message || "Could not open game");
+      return false;
     } finally {
       setLaunching(null);
     }
   };
+
 
   const closeGame = async () => {
     setGameUrl(null);
