@@ -37,7 +37,7 @@ import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
-import providerGamesThumb from "@/assets/provider-games-thumb.jpg";
+
 
 
 interface GameTileProps {
@@ -120,14 +120,6 @@ const HomeScreen = () => {
     return () => clearInterval(id);
   }, [tournaments]);
 
-  const [providerGames, setProviderGames] = useState<{ gameUid: string; name: string; logo?: string }[]>([]);
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/igaming/games`)
-      .then((r) => (r.ok ? r.json() : { games: [] }))
-      .then((d) => setProviderGames(Array.isArray(d.games) ? d.games : []))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/tournaments/active`)
@@ -160,7 +152,7 @@ const HomeScreen = () => {
   const goToTwist = () => navigate("/twist");
   const goToGoblinTower = () => navigate("/goblin-tower");
   const goToJetX = () => navigate("/jetx");
-  const goToProviderGames = () => navigate("/provider-games");
+  
   const goToAdmin = () => navigate("/admin");
 
   const telegramUser = getTelegramUser();
@@ -193,27 +185,7 @@ const HomeScreen = () => {
     { id: "carnival", name: "Carnival Spin", image: gameCarnivalSpin, category: "Wheel", tab: "wheel", badge: "SPIN", badgeColor: "#3b82f6", action: goToCarnivalSpin },
   ];
 
-  const providerTab = (name: string): FilterTab => {
-    const n = name.toLowerCase();
-    if (/crash|jet|astronaut|rocket|starx|spinra|tropicana|airjet|air jet|chicken|pump|punch|tappy/.test(n)) return "crash";
-    if (/wheel|spin|coin flip|coinflip/.test(n)) return "wheel";
-    if (/mines|dice|plinko|keno|hilo|poker|blackjack|double|penalty/.test(n)) return "originals";
-    return "slots";
-  };
-
-  const providerEntries: GameEntry[] = providerGames.map((g) => ({
-    id: `pg-${g.gameUid}`,
-    name: g.name,
-    image: g.logo || providerGamesThumb,
-    category: "100HP",
-    tab: providerTab(g.name || ""),
-    badge: "100HP",
-    badgeColor: "#a855f7",
-    action: () => navigate(`/provider-games?uid=${encodeURIComponent(g.gameUid)}`),
-  }));
-
-
-  const gamesList: GameEntry[] = [...baseGames, ...providerEntries];
+  const gamesList: GameEntry[] = baseGames;
 
 
   // Shuffles/picks a random game
