@@ -173,7 +173,6 @@ const HomeScreen = () => {
 
   // Full Games list categorized
   const baseGames: GameEntry[] = [
-    { id: "provider-100hp", name: "100HP Games", image: providerGamesThumb, category: "Slots", tab: "slots", badge: "ALL GAMES", badgeColor: "#f59e0b", priority: true, action: goToProviderGames },
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
     { id: "mines-classic", name: "Mines Classic", image: gameMines, category: "Originals", tab: "originals", badge: "CLASSIC", badgeColor: "#6366f1", action: goToMinesClassic },
     { id: "dice", name: "Dice Master", image: gameDice, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToDiceMaster },
@@ -189,16 +188,25 @@ const HomeScreen = () => {
     { id: "carnival", name: "Carnival Spin", image: gameCarnivalSpin, category: "Wheel", tab: "wheel", badge: "SPIN", badgeColor: "#3b82f6", action: goToCarnivalSpin },
   ];
 
+  const providerTab = (name: string): FilterTab => {
+    const n = name.toLowerCase();
+    if (/crash|jet|astronaut|rocket|starx|spinra|tropicana|airjet|air jet|chicken|pump|punch|tappy/.test(n)) return "crash";
+    if (/wheel|spin|coin flip|coinflip/.test(n)) return "wheel";
+    if (/mines|dice|plinko|keno|hilo|poker|blackjack|double|penalty/.test(n)) return "originals";
+    return "slots";
+  };
+
   const providerEntries: GameEntry[] = providerGames.map((g) => ({
     id: `pg-${g.gameUid}`,
     name: g.name,
     image: g.logo || providerGamesThumb,
     category: "100HP",
-    tab: "slots" as FilterTab,
+    tab: providerTab(g.name || ""),
     badge: "100HP",
     badgeColor: "#a855f7",
     action: () => navigate(`/provider-games?uid=${encodeURIComponent(g.gameUid)}`),
   }));
+
 
   const gamesList: GameEntry[] = [...baseGames, ...providerEntries];
 
