@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const igamingSessionSchema = new mongoose.Schema(
   {
     telegramId: { type: Number, required: true, index: true },
+    providerUserId: { type: Number, index: true },
     currency: { type: String, enum: ["dollar", "rupee"], default: "rupee" },
     currencyCode: { type: String, default: "INR" },
     gameUid: String,
