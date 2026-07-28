@@ -115,12 +115,22 @@ const HomeScreen = () => {
     return () => clearInterval(id);
   }, [tournaments]);
 
+  const [providerGames, setProviderGames] = useState<{ gameUid: string; name: string; logo?: string }[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/igaming/games`)
+      .then((r) => (r.ok ? r.json() : { games: [] }))
+      .then((d) => setProviderGames(Array.isArray(d.games) ? d.games : []))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/tournaments/active`)
       .then((r) => r.ok ? r.json() : { tournaments: [] })
       .then((d) => setTournaments(d.tournaments || []))
       .catch(() => {});
   }, []);
+
 
   const formatRemaining = (ms: number) => {
     if (ms <= 0) return "Ended";
