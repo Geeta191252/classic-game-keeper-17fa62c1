@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -47,12 +47,26 @@ const ProviderGames = () => {
 
   // Auto-launch when opened with ?uid=<gameUid> from the home lobby
   const autoUid = new URLSearchParams(window.location.search).get("uid");
+  const [autoState, setAutoState] = useState<"idle" | "pending" | "failed">(autoUid ? "pending" : "idle");
+  const [autoError, setAutoError] = useState<string>("");
+  const autoTriedRef = useRef(false);
+
   useEffect(() => {
-    if (!autoUid || loading || gameUrl) return;
-    const target = games.find((g) => g.gameUid === autoUid);
-    if (target) launch(target);
+    if (!autoUid || loading || gameUrl || autoTriedRef.current) return;
+    autoTriedRef.current = true;
+    const target = games.find((g) => String(g.gameUid) === String(autoUid));
+    if (!target) {
+      setAutoState("failed");
+      setAutoError("Game not available right now");
+      return;
+    }
+    launch(target).then((ok) => {
+      if (!ok) setAutoState("failed");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoUid, loading, games]);
+
+
 
 
   const filtered = useMemo(() => {
@@ -61,10 +75,11 @@ const ProviderGames = () => {
     return games.filter((g) => g.name?.toLowerCase().includes(q));
   }, [games, query]);
 
-  const launch = async (game: ProviderGame) => {
+  const launch = async (game: ProviderGame): Promise<boolean> => {
     if (!userId) {
+      setAutoError("Open inside Telegram to play");
       toast.error("Open inside Telegram to play");
-      return;
+      return false;
     }
     setLaunching(game.gameUid);
     try {
@@ -81,12 +96,17 @@ const ProviderGames = () => {
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Launch failed");
       setGameUrl(data.url);
+      setAutoState("idle");
+      return true;
     } catch (e: any) {
+      setAutoError(e.message || "Could not open game");
       toast.error(e.message || "Could not open game");
+      return false;
     } finally {
       setLaunching(null);
     }
   };
+
 
   const closeGame = async () => {
     setGameUrl(null);
@@ -102,21 +122,74 @@ const ProviderGames = () => {
   if (gameUrl) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col">
-        <button
-          onClick={closeGame}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to lobby
-        </button>
+        <div className="flex items-center gap-2 bg-primary">
+          <button
+            onClick={closeGame}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <a
+            href={gameUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-auto px-4 py-2 text-xs font-semibold text-primary-foreground underline"
+          >
+            Open in browser
+          </a>
+        </div>
         <iframe
           src={gameUrl}
           title="Provider game"
           className="flex-1 w-full border-0"
-          allow="autoplay; fullscreen; clipboard-write"
+          allow="autoplay; fullscreen; clipboard-write; payment; encrypted-media; accelerometer; gyroscope"
+          referrerPolicy="no-referrer-when-downgrade"
+          allowFullScreen
         />
       </div>
     );
   }
+
+  // Direct launch from home lobby: show a loader / error instead of the folder list
+  if (autoUid && autoState !== "idle") {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4 px-6 text-center">
+        {autoState === "pending" ? (
+          <>
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Starting game...</p>
+          </>
+        ) : (
+          <>
+            <p className="text-base font-semibold">Game could not start</p>
+            <p className="text-sm text-muted-foreground">{autoError || "Please try again"}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  autoTriedRef.current = false;
+                  setAutoState("pending");
+                  setAutoError("");
+                  const t = games.find((g) => String(g.gameUid) === String(autoUid));
+                  if (t) launch(t).then((ok) => { if (!ok) setAutoState("failed"); });
+                  else setAutoState("failed");
+                }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => setAutoState("idle")}
+                className="px-4 py-2 rounded-lg bg-muted text-sm font-semibold"
+              >
+                Show all games
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
