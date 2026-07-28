@@ -36,6 +36,7 @@ const ChickenClassicGame = lazy(() => import("./pages/ChickenClassicGame"));
 const TwistGame = lazy(() => import("./pages/TwistGame"));
 const GoblinTower = lazy(() => import("./pages/GoblinTower"));
 const RocketCrash = lazy(() => import("./pages/RocketCrash"));
+const ProviderGames = lazy(() => import("./pages/ProviderGames"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
