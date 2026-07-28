@@ -115,12 +115,22 @@ const HomeScreen = () => {
     return () => clearInterval(id);
   }, [tournaments]);
 
+  const [providerGames, setProviderGames] = useState<{ gameUid: string; name: string; logo?: string }[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/igaming/games`)
+      .then((r) => (r.ok ? r.json() : { games: [] }))
+      .then((d) => setProviderGames(Array.isArray(d.games) ? d.games : []))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/tournaments/active`)
       .then((r) => r.ok ? r.json() : { tournaments: [] })
       .then((d) => setTournaments(d.tournaments || []))
       .catch(() => {});
   }, []);
+
 
   const formatRemaining = (ms: number) => {
     if (ms <= 0) return "Ended";
@@ -162,8 +172,8 @@ const HomeScreen = () => {
   ];
 
   // Full Games list categorized
-  const gamesList: GameEntry[] = [
-    { id: "provider-100hp", name: "100HP Games", image: providerGamesThumb, category: "Slots", tab: "slots", badge: "34 GAMES", badgeColor: "#f59e0b", priority: true, action: goToProviderGames },
+  const baseGames: GameEntry[] = [
+    { id: "provider-100hp", name: "100HP Games", image: providerGamesThumb, category: "Slots", tab: "slots", badge: "ALL GAMES", badgeColor: "#f59e0b", priority: true, action: goToProviderGames },
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
     { id: "mines-classic", name: "Mines Classic", image: gameMines, category: "Originals", tab: "originals", badge: "CLASSIC", badgeColor: "#6366f1", action: goToMinesClassic },
     { id: "dice", name: "Dice Master", image: gameDice, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToDiceMaster },
@@ -178,6 +188,20 @@ const HomeScreen = () => {
     { id: "greedy", name: "Greedy King", image: greedyKingThumb, category: "Wheel", tab: "wheel", badge: "MULTIPLIER", badgeColor: "#eab308", action: goToGreedyKing },
     { id: "carnival", name: "Carnival Spin", image: gameCarnivalSpin, category: "Wheel", tab: "wheel", badge: "SPIN", badgeColor: "#3b82f6", action: goToCarnivalSpin },
   ];
+
+  const providerEntries: GameEntry[] = providerGames.map((g) => ({
+    id: `pg-${g.gameUid}`,
+    name: g.name,
+    image: g.logo || providerGamesThumb,
+    category: "100HP",
+    tab: "slots" as FilterTab,
+    badge: "100HP",
+    badgeColor: "#a855f7",
+    action: () => navigate(`/provider-games?uid=${encodeURIComponent(g.gameUid)}`),
+  }));
+
+  const gamesList: GameEntry[] = [...baseGames, ...providerEntries];
+
 
   // Shuffles/picks a random game
   const playRandomGame = () => {

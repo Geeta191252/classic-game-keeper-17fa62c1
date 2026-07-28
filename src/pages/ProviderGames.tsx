@@ -45,6 +45,16 @@ const ProviderGames = () => {
     };
   }, []);
 
+  // Auto-launch when opened with ?uid=<gameUid> from the home lobby
+  const autoUid = new URLSearchParams(window.location.search).get("uid");
+  useEffect(() => {
+    if (!autoUid || loading || gameUrl) return;
+    const target = games.find((g) => g.gameUid === autoUid);
+    if (target) launch(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoUid, loading, games]);
+
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return games;
