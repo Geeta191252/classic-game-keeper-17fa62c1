@@ -4,8 +4,21 @@ import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app/api";
+const normalizeApiBase = (value?: string) => {
+  const raw = (value || "https://broken-bria-chetan1-ea890b93.koyeb.app/api").trim().replace(/\/+$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL);
+
+const readJson = async (res: Response) => {
+  const text = await res.text();
+  try {
+    return text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(res.ok ? "Invalid provider response" : `Backend error (${res.status})`);
+  }
+};
 
 type ProviderGame = {
   gameId: number;
@@ -32,7 +45,7 @@ const ProviderGames = () => {
   useEffect(() => {
     let alive = true;
     fetch(`${API_BASE_URL}/igaming/games`)
-      .then((r) => r.json())
+      .then(readJson)
       .then((d) => {
         if (!alive) return;
         setEnabled(d.enabled !== false);
@@ -93,7 +106,7 @@ const ProviderGames = () => {
           currency: currencyDisplay === "INR" ? "rupee" : "dollar",
         }),
       });
-      const data = await res.json();
+      const data = await readJson(res);
       if (!res.ok || !data.url) throw new Error(data.error || "Launch failed");
       setGameUrl(data.url);
       setAutoState("idle");
