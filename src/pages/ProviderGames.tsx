@@ -47,12 +47,26 @@ const ProviderGames = () => {
 
   // Auto-launch when opened with ?uid=<gameUid> from the home lobby
   const autoUid = new URLSearchParams(window.location.search).get("uid");
+  const [autoState, setAutoState] = useState<"idle" | "pending" | "failed">(autoUid ? "pending" : "idle");
+  const [autoError, setAutoError] = useState<string>("");
+  const autoTriedRef = useRef(false);
+
   useEffect(() => {
-    if (!autoUid || loading || gameUrl) return;
-    const target = games.find((g) => g.gameUid === autoUid);
-    if (target) launch(target);
+    if (!autoUid || loading || gameUrl || autoTriedRef.current) return;
+    autoTriedRef.current = true;
+    const target = games.find((g) => String(g.gameUid) === String(autoUid));
+    if (!target) {
+      setAutoState("failed");
+      setAutoError("Game not available right now");
+      return;
+    }
+    launch(target).then((ok) => {
+      if (!ok) setAutoState("failed");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoUid, loading, games]);
+
+
 
 
   const filtered = useMemo(() => {
