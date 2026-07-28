@@ -32,6 +32,7 @@ import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
+import providerGamesThumb from "@/assets/provider-games-thumb.jpg";
 
 
 interface GameTileProps {
@@ -144,6 +145,7 @@ const HomeScreen = () => {
   const goToTwist = () => navigate("/twist");
   const goToGoblinTower = () => navigate("/goblin-tower");
   const goToJetX = () => navigate("/jetx");
+  const goToProviderGames = () => navigate("/provider-games");
   const goToAdmin = () => navigate("/admin");
 
   const telegramUser = getTelegramUser();
