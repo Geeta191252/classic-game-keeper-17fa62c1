@@ -194,6 +194,8 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
       let acceptedProviderUserId = null;
 
       for (const providerUserId of providerIds) {
+        let sawInvalidUserId = false;
+        let terminalError = "";
         for (const url of endpoints) {
           const payload = {
             // SoftAPI requires a compact integer player id. Telegram ids can
@@ -226,17 +228,24 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
               break;
             }
             lastErr = providerErrorMessage(parsed, upstream.status);
+            if (isInvalidUserIdError(lastErr)) {
+              sawInvalidUserId = true;
+            } else if (!terminalError || upstream.status !== 404) {
+              terminalError = lastErr;
+            }
             console.error("[igaming] launch attempt failed:", url, providerUserId, upstream.status, JSON.stringify(parsed));
           } catch (err) {
             lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
+            if (!terminalError) terminalError = lastErr;
             console.error("[igaming] launch attempt error:", url, providerUserId, lastErr);
           }
-
-          // Other provider errors (bad token, bad game_uid, no GGR wallet, etc.)
-          // will not be fixed by changing user_id, so stop quickly.
-          if (lastErr && !isInvalidUserIdError(lastErr)) break;
         }
-        if (json || (lastErr && !isInvalidUserIdError(lastErr))) break;
+        if (json) break;
+        if (sawInvalidUserId) continue;
+        if (terminalError) {
+          lastErr = terminalError;
+          break;
+        }
       }
 
 
