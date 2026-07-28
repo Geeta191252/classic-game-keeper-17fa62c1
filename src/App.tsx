@@ -171,6 +171,7 @@ const App = () => {
                   <Route path="/twist" element={framed(<TwistGame />)} />
                   <Route path="/goblin-tower" element={framed(<GoblinTower />)} />
                   <Route path="/rocket-crash" element={<RocketCrash />} />
+                  <Route path="/provider-games" element={<ProviderGames />} />
                   <Route path="/admin-legacy" element={<AdminPanel />} />
                   <Route path="/admin" element={<AdminLogin />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
