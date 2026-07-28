@@ -4,7 +4,8 @@ import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app/api";
 
 type ProviderGame = {
   gameId: number;

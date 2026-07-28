@@ -32,6 +32,7 @@ import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import gameTwist from "@/assets/twist.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
+import providerGamesThumb from "@/assets/provider-games-thumb.jpg";
 
 
 interface GameTileProps {
@@ -144,6 +145,7 @@ const HomeScreen = () => {
   const goToTwist = () => navigate("/twist");
   const goToGoblinTower = () => navigate("/goblin-tower");
   const goToJetX = () => navigate("/jetx");
+  const goToProviderGames = () => navigate("/provider-games");
   const goToAdmin = () => navigate("/admin");
 
   const telegramUser = getTelegramUser();
@@ -161,6 +163,7 @@ const HomeScreen = () => {
 
   // Full Games list categorized
   const gamesList: GameEntry[] = [
+    { id: "provider-100hp", name: "100HP Games", image: providerGamesThumb, category: "Slots", tab: "slots", badge: "34 GAMES", badgeColor: "#f59e0b", priority: true, action: goToProviderGames },
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
     { id: "mines-classic", name: "Mines Classic", image: gameMines, category: "Originals", tab: "originals", badge: "CLASSIC", badgeColor: "#6366f1", action: goToMinesClassic },
     { id: "dice", name: "Dice Master", image: gameDice, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToDiceMaster },
