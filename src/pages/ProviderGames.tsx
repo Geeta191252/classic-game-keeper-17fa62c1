@@ -122,21 +122,74 @@ const ProviderGames = () => {
   if (gameUrl) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col">
-        <button
-          onClick={closeGame}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to lobby
-        </button>
+        <div className="flex items-center gap-2 bg-primary">
+          <button
+            onClick={closeGame}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <a
+            href={gameUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="ml-auto px-4 py-2 text-xs font-semibold text-primary-foreground underline"
+          >
+            Open in browser
+          </a>
+        </div>
         <iframe
           src={gameUrl}
           title="Provider game"
           className="flex-1 w-full border-0"
-          allow="autoplay; fullscreen; clipboard-write"
+          allow="autoplay; fullscreen; clipboard-write; payment; encrypted-media; accelerometer; gyroscope"
+          referrerPolicy="no-referrer-when-downgrade"
+          allowFullScreen
         />
       </div>
     );
   }
+
+  // Direct launch from home lobby: show a loader / error instead of the folder list
+  if (autoUid && autoState !== "idle") {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4 px-6 text-center">
+        {autoState === "pending" ? (
+          <>
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Starting game...</p>
+          </>
+        ) : (
+          <>
+            <p className="text-base font-semibold">Game could not start</p>
+            <p className="text-sm text-muted-foreground">{autoError || "Please try again"}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  autoTriedRef.current = false;
+                  setAutoState("pending");
+                  setAutoError("");
+                  const t = games.find((g) => String(g.gameUid) === String(autoUid));
+                  if (t) launch(t).then((ok) => { if (!ok) setAutoState("failed"); });
+                  else setAutoState("failed");
+                }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => setAutoState("idle")}
+                className="px-4 py-2 rounded-lg bg-muted text-sm font-semibold"
+              >
+                Show all games
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
