@@ -152,22 +152,39 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
         language,
       };
 
-      const upstream = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) }),
-      });
-      const json = await upstream.json().catch(() => ({}));
+      const body = JSON.stringify({ token: TOKEN, payload: encryptPayload(payload) });
+      const endpoints = [API_URL, `${API_URL}/game_launch`, `${API_URL}/games/launch`];
 
-      if (Number(json?.code) !== 0 || !json?.data?.url) {
+      let json = null;
+      let lastStatus = 0;
+      let lastErr = "";
+
+      for (const url of endpoints) {
+        try {
+          const upstream = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body,
+            signal: AbortSignal.timeout(20000),
+          });
+          lastStatus = upstream.status;
+          const parsed = await upstream.json().catch(() => null);
+          if (parsed && Number(parsed.code) === 0 && parsed?.data?.url) {
+            json = parsed;
+            break;
+          }
+          lastErr = parsed?.msg || `HTTP ${upstream.status}`;
+          console.error("[igaming] launch attempt failed:", url, upstream.status, JSON.stringify(parsed));
+        } catch (err) {
+          lastErr = err.name === "TimeoutError" ? "Provider timeout" : err.message;
+          console.error("[igaming] launch attempt error:", url, lastErr);
+        }
+      }
+
+      if (!json) {
         session.active = false;
         await session.save();
-        console.error("[igaming] launch failed:", upstream.status, JSON.stringify(json));
-        return res.status(502).json({
-          error: json?.msg || "Launch failed",
-          status: upstream.status,
-          details: json,
-        });
+        return res.status(200).json({ error: lastErr || "Launch failed", status: lastStatus });
       }
 
       return res.json({ url: json.data.url, sessionId: session._id, balance });
