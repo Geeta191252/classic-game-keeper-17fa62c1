@@ -216,7 +216,7 @@ function registerIgaming(app, { User, Transaction, getBackendUrl, notifyOwner })
 
     try {
       const serial = String(body.serial_number || "");
-      const telegramId = Number(body.member_account);
+      const telegramId = Number(String(body.member_account ?? "").replace(/\D/g, ""));
       if (!serial || !telegramId) return;
 
       // Idempotency
