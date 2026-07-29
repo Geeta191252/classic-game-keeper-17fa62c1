@@ -1555,12 +1555,17 @@
     }
     
     .aviator-body .logo-aviator {
-        font-size: 20px;
+        font-size: 16px;
+        max-width: 60px;
+        line-height: 1.05;
     }
 
     .aviator-body .balance-display {
-        font-size: 14px;
+        font-size: 11px;
+        padding: 4px 6px;
+        gap: 2px;
     }
+
     
     .aviator-body .game-area {
         padding: 4px;
