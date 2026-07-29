@@ -44,14 +44,14 @@ const state = {
   star: makePool(),
 };
 
-// Hard-locked house edge: users lose 80% no matter what is stored in settings.
-const FORCED_PROFIT_PERCENT = 80;
+// Hard-locked house edge: users lose 60% no matter what is stored in settings.
+const FORCED_PROFIT_PERCENT = 60;
 
 async function getProfitPercent() {
   try {
     const doc = await Setting.findOne({ key: SETTING_KEY });
     const v = doc && typeof doc.value === "number" ? doc.value : FORCED_PROFIT_PERCENT;
-    // never allow the house edge to drop below 80%
+    // never allow the house edge to drop below 60%
     return Math.max(FORCED_PROFIT_PERCENT, Math.min(95, v));
   } catch {
     return FORCED_PROFIT_PERCENT;
@@ -183,14 +183,14 @@ async function phaseTick(currency) {
 function mountAviatorFun(app, deps) {
   const { normalizeCurrency, getCurrencyFields, getOrCreateUser, balancePayload, requireAdmin } = deps;
 
-  // Ensure house profit target is at least 80% (one-time bump from old 50% default)
+  // Ensure house profit target is at least 60%
   (async () => {
     try {
       const doc = await Setting.findOne({ key: SETTING_KEY });
-      if (!doc || typeof doc.value !== "number" || doc.value < 80) {
+      if (!doc || typeof doc.value !== "number" || doc.value < 60) {
         await Setting.findOneAndUpdate(
           { key: SETTING_KEY },
-          { key: SETTING_KEY, value: 80 },
+          { key: SETTING_KEY, value: 60 },
           { upsert: true }
         );
       }
@@ -403,7 +403,7 @@ function mountAviatorFun(app, deps) {
       const { percent } = req.body || {};
       const raw = Number(percent);
       if (isNaN(raw) || raw < 0 || raw > 95) return res.status(400).json({ error: "Percent must be 0-95" });
-      // enforce the hard 80% floor
+      // enforce the hard 60% floor
       const num = Math.max(FORCED_PROFIT_PERCENT, raw);
       await Setting.findOneAndUpdate(
         { key: SETTING_KEY },

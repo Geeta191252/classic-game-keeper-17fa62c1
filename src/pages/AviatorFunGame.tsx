@@ -243,6 +243,16 @@ const AviatorFunGame = () => {
     return `$${val.toFixed(2)}`;
   }, [displayMode]);
 
+  // Compact header balance so all three currency chips always fit (1.89M, 12.4K…)
+  const compactBal = (val: number, decimals = 2) => {
+    const v = Math.abs(val);
+    if (v >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(2)}B`;
+    if (v >= 1_000_000) return `${(val / 1_000_000).toFixed(2)}M`;
+    if (v >= 10_000) return `${(val / 1000).toFixed(1)}K`;
+    return val.toFixed(decimals);
+  };
+
+
   // NOTE: No auto-pick. User chooses USD / INR / STAR chip manually.
   // Bet is placed strictly in the selected currency; insufficient funds → bet blocked.
 
@@ -884,7 +894,7 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">${totalDollar.toFixed(2)}</span>
+                <span className="balance-amount">${compactBal(totalDollar)}</span>
                 <span className="balance-currency font-black text-[9px] text-[#00a2e8]">USD</span>
               </div>
               
@@ -899,7 +909,7 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">₹{totalRupee.toFixed(2)}</span>
+                <span className="balance-amount">₹{compactBal(totalRupee)}</span>
                 <span className="balance-currency font-black text-[9px]">INR</span>
               </div>
 
@@ -914,10 +924,11 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">★{Math.floor(totalStar).toLocaleString()}</span>
-                <span className="balance-currency font-black text-[9px]">STARS</span>
+                <span className="balance-amount">★{compactBal(Math.floor(totalStar), 0)}</span>
+                <span className="balance-currency font-black text-[9px]">STAR</span>
               </div>
             </div>
+
             
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">

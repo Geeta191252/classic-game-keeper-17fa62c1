@@ -109,22 +109,34 @@
 .aviator-body .header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    justify-content: flex-end;
+}
+
+.aviator-body .balance-display-container {
+    min-width: 0;
+    flex-wrap: nowrap;
 }
 
 .aviator-body .balance-display {
     display: flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 3px;
+    flex-shrink: 1;
+    min-width: 0;
+    white-space: nowrap;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 16px;
+    font-size: 13px;
     cursor: pointer;
     background-color: rgba(0, 0, 0, 0.2);
-    padding: 6px 12px;
+    padding: 5px 8px;
     border-radius: 20px;
     border: 1px solid var(--border-color);
     transition: background 0.2s;
+
 }
 
 .aviator-body .balance-display:hover {
@@ -1543,12 +1555,17 @@
     }
     
     .aviator-body .logo-aviator {
-        font-size: 20px;
+        font-size: 16px;
+        max-width: 60px;
+        line-height: 1.05;
     }
 
     .aviator-body .balance-display {
-        font-size: 14px;
+        font-size: 11px;
+        padding: 4px 6px;
+        gap: 2px;
     }
+
     
     .aviator-body .game-area {
         padding: 4px;
