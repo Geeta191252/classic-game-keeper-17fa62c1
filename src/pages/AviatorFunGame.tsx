@@ -243,6 +243,16 @@ const AviatorFunGame = () => {
     return `$${val.toFixed(2)}`;
   }, [displayMode]);
 
+  // Compact header balance so all three currency chips always fit (1.89M, 12.4K…)
+  const compactBal = (val: number, decimals = 2) => {
+    const v = Math.abs(val);
+    if (v >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(2)}B`;
+    if (v >= 1_000_000) return `${(val / 1_000_000).toFixed(2)}M`;
+    if (v >= 10_000) return `${(val / 1000).toFixed(1)}K`;
+    return val.toFixed(decimals);
+  };
+
+
   // NOTE: No auto-pick. User chooses USD / INR / STAR chip manually.
   // Bet is placed strictly in the selected currency; insufficient funds → bet blocked.
 
