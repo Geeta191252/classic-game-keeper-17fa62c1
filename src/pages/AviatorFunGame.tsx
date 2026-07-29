@@ -884,7 +884,7 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">${totalDollar.toFixed(2)}</span>
+                <span className="balance-amount">${compactBal(totalDollar)}</span>
                 <span className="balance-currency font-black text-[9px] text-[#00a2e8]">USD</span>
               </div>
               
@@ -899,7 +899,7 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">₹{totalRupee.toFixed(2)}</span>
+                <span className="balance-amount">₹{compactBal(totalRupee)}</span>
                 <span className="balance-currency font-black text-[9px]">INR</span>
               </div>
 
@@ -914,10 +914,11 @@ const AviatorFunGame = () => {
                   }
                 }}
               >
-                <span className="balance-amount">★{Math.floor(totalStar).toLocaleString()}</span>
-                <span className="balance-currency font-black text-[9px]">STARS</span>
+                <span className="balance-amount">★{compactBal(Math.floor(totalStar), 0)}</span>
+                <span className="balance-currency font-black text-[9px]">STAR</span>
               </div>
             </div>
+
             
             <button className="menu-btn" onClick={() => setIsMenuOpen(true)}>
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
