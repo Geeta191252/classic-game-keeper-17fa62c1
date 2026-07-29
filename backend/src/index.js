@@ -5585,4 +5585,14 @@ app.listen(PORT, () => {
   bot.setMyCommands(ownerCommands, { scope: { type: "chat", chat_id: 6965488457 } })
     .then(() => console.log("✅ Owner bot commands registered"))
     .catch((err) => console.error("❌ setMyCommands (owner) error:", err?.response?.body?.description || err.message));
+
+  // Set the persistent bottom menu button (replaces Telegram's default "Open app" text)
+  const menuButton = {
+    type: "web_app",
+    text: "Play Now ⏯️",
+    web_app: { url: getWebAppUrl() },
+  };
+  bot._request("setChatMenuButton", { form: { menu_button: JSON.stringify(menuButton) } })
+    .then(() => console.log("✅ Menu button set: Play Now ⏯️"))
+    .catch((err) => console.error("❌ setChatMenuButton error:", err?.response?.body?.description || err.message));
 });
