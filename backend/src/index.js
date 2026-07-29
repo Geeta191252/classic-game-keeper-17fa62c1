@@ -5592,7 +5592,7 @@ app.listen(PORT, () => {
     text: "Play Now ⏯️",
     web_app: { url: getWebAppUrl() },
   };
-  bot.setChatMenuButton(undefined, menuButton)
+  bot._request("setChatMenuButton", { form: { menu_button: JSON.stringify(menuButton) } })
     .then(() => console.log("✅ Menu button set: Play Now ⏯️"))
     .catch((err) => console.error("❌ setChatMenuButton error:", err?.response?.body?.description || err.message));
 });
