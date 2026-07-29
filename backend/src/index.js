@@ -765,10 +765,21 @@ app.post("/api/balance", async (req, res) => {
     const user = await getOrCreateUser(userId);
     // Update lastActive timestamp
     user.lastActive = new Date();
+
+    // Authoritative referral count: number of users referred by this user
+    let refCount = user.referralCount || 0;
+    try {
+      const actual = await User.countDocuments({ referredBy: user.telegramId });
+      if (actual > refCount) {
+        refCount = actual;
+        user.referralCount = actual;
+      }
+    } catch (e) { /* ignore */ }
+
     await user.save();
     return res.json({
       ...balancePayload(user),
-      referralCount: user.referralCount || 0,
+      referralCount: refCount,
     });
   } catch (error) {
     console.error("Balance error:", error);
