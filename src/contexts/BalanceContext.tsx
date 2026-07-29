@@ -48,7 +48,11 @@ export const BalanceProvider = ({ children }: { children: React.ReactNode }) => 
     const handleBalanceUpdate = (event: Event) => {
       const payload = (event as CustomEvent<BalancePayload>).detail;
       if (isBalancePayload(payload)) {
-        queryClient.setQueryData(["balance"], payload);
+        // Merge so extra fields (e.g. referralCount) are not wiped by partial updates
+        queryClient.setQueryData(["balance"], (prev: Record<string, unknown> | undefined) => ({
+          ...(prev || {}),
+          ...payload,
+        }));
       }
     };
 
