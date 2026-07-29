@@ -158,7 +158,14 @@ mongoose
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 // Telegram Bot (polling mode for dev, webhook for production)
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: false });
+// Koyeb resolves api.telegram.org to IPv6 which times out (ETIMEDOUT 2001:67c:...).
+// Force IPv4 for all outgoing Telegram requests.
+try { require("dns").setDefaultResultOrder("ipv4first"); } catch (_) { /* node < 18 */ }
+const httpsAgentV4 = new (require("https").Agent)({ family: 4, keepAlive: true, maxSockets: 100 });
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+  polling: false,
+  request: { agent: httpsAgentV4, family: 4 },
+});
 const OWNER_TELEGRAM_ID = Number(process.env.OWNER_TELEGRAM_ID || 6965488457);
 const NEW_USER_CHANNEL = process.env.NEW_USER_CHANNEL || "@royalkinggamedata";
 const WITHDRAWAL_CHANNEL = process.env.WITHDRAWAL_CHANNEL || "@royal_king_game_Withdrawal";
