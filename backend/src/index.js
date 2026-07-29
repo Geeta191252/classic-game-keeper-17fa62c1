@@ -457,15 +457,19 @@ async function grantReferralReward(referredUser, referrerTelegramId, referredNam
       });
     } catch (e) { /* ignore */ }
 
+    const safeName = String(referredName || "A friend").replace(/[*_`[\]()~>#+\-=|{}.!]/g, "");
+    const referralMsg =
+      `🎉 New Referral!\n\n` +
+      `👤 ${safeName} joined using your link!\n` +
+      `💰 You earned ${REFERRAL_REWARD_STARS} ⭐\n` +
+      `📊 Total referrals: ${referrer.referralCount}`;
     try {
-      await bot.sendMessage(referrer.telegramId,
-        `🎉 *New Referral!*\n\n` +
-        `👤 ${referredName || "A friend"} joined using your link!\n` +
-        `💰 You earned ${REFERRAL_REWARD_STARS} ⭐\n` +
-        `📊 Total referrals: ${referrer.referralCount}`,
-        { parse_mode: "Markdown" }
-      );
-    } catch (e) { /* ignore */ }
+      // Plain text (no parse_mode) so special characters in names never break delivery
+      await bot.sendMessage(referrer.telegramId, referralMsg);
+    } catch (e) {
+      console.error("Referral notify failed:", referrer.telegramId, e?.response?.body?.description || e.message);
+    }
+
 
     return referrer;
   } catch (err) {
