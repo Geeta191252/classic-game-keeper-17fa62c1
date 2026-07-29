@@ -269,12 +269,13 @@ export const processReferral = async (): Promise<void> => {
     const key = `ref_processed_${userId}`;
     if (localStorage.getItem(key)) return;
 
-    await fetch(`${API_BASE_URL}/referral`, {
+    const res = await fetch(`${API_BASE_URL}/referral`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, referrerId }),
     });
-    localStorage.setItem(key, "1");
+    if (res.ok) localStorage.setItem(key, "1");
+
   } catch (err) {
     console.error("processReferral error:", err);
   }
