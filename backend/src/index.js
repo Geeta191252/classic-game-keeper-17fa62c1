@@ -106,6 +106,24 @@ async function sendWebAppMessage(chatId, text, buttonText, url, options = {}) {
   }
 }
 
+// Send a photo with caption + Play Now web_app button below it
+async function sendWebAppPhoto(chatId, photo, caption, buttonText, url, options = {}) {
+  const safeUrl = normalizeHttpsUrl(url, getWebAppBaseUrl());
+  const extras = getExtraButtonRows();
+  const base = { ...options, caption };
+  try {
+    return await bot.sendPhoto(chatId, photo, {
+      ...base,
+      reply_markup: {
+        inline_keyboard: [[{ text: buttonText, web_app: { url: safeUrl } }], ...extras],
+      },
+    });
+  } catch (error) {
+    console.error("Telegram sendPhoto error:", error?.response?.body?.description || error.message);
+    return sendWebAppMessage(chatId, caption, buttonText, url, options);
+  }
+}
+
 async function sendChannelWithButtons(chatId, text, playUrl, options = {}) {
   const safePlay = normalizeHttpsUrl(playUrl, getWebAppBaseUrl());
   const extras = getExtraButtonRows();
@@ -1350,12 +1368,23 @@ app.post("/api/telegram-webhook", async (req, res) => {
         ? `${webAppUrl}?startapp=${encodeURIComponent(startParam)}`
         : webAppUrl;
 
-      await sendWebAppMessage(
-        chatId,
-        `🎮 Welcome ${firstName} to Royal King Game!\n\nTap the button below to start playing!`,
-        "🎮 Play Now",
-        appUrl
-      );
+      const startCaption =
+        `🎮 Play Aviator, JetX, Mines & more.\n` +
+        `⭐ Fast deposit & withdrawal.\n\n` +
+        `Play Now 👇`;
+
+      const bannerPath = path.join(__dirname, "..", "assets", "start-banner.jpg");
+      if (fs.existsSync(bannerPath)) {
+        await sendWebAppPhoto(
+          chatId,
+          fs.createReadStream(bannerPath),
+          startCaption,
+          "🎮 Play Now",
+          appUrl
+        );
+      } else {
+        await sendWebAppMessage(chatId, startCaption, "🎮 Play Now", appUrl);
+      }
 
       return res.sendStatus(200);
     }
