@@ -40,14 +40,6 @@ const GameCurrencyChips = ({ mode, onChange, disabled, className = "" }: Props) 
       hasFunds: hasDollar,
     },
     {
-      id: "INR",
-      label: "₹",
-      value: `₹${totalRupee.toFixed(0)}`,
-      activeBg: "bg-emerald-500",
-      activeText: "text-white",
-      hasFunds: hasRupee,
-    },
-    {
       id: "STAR",
       label: "★",
       value: `${totalStar.toLocaleString()}`,

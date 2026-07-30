@@ -100,7 +100,7 @@ const JetXGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance } = useBalanceContext();
   const tgUser = getTelegramUser();
 
-  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("INR");
+  const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const currency: CurrencyType = modeToWallet(currencyMode);
 
   const [phase, setPhase] = useState<Phase>("betting");
@@ -323,7 +323,6 @@ const JetXGame = () => {
   const potentialWin = useMemo(() => (myBet ? myBet.amount : betAmount) * 0.98 * multiplier, [myBet, betAmount, multiplier]);
 
   const currencyOptions: { mode: GameCurrencyMode; label: string }[] = [
-    { mode: "INR", label: "₹" },
     { mode: "USD", label: "$" },
     { mode: "STAR", label: "★" },
   ];
