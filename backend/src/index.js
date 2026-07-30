@@ -1368,12 +1368,23 @@ app.post("/api/telegram-webhook", async (req, res) => {
         ? `${webAppUrl}?startapp=${encodeURIComponent(startParam)}`
         : webAppUrl;
 
-      await sendWebAppMessage(
-        chatId,
-        `🎮 Welcome ${firstName} to Royal King Game!\n\nTap the button below to start playing!`,
-        "🎮 Play Now",
-        appUrl
-      );
+      const startCaption =
+        `🎮 Play Aviator, JetX, Mines & more.\n` +
+        `⭐ Fast deposit & withdrawal.\n\n` +
+        `Play Now 👇`;
+
+      const bannerPath = path.join(__dirname, "..", "assets", "start-banner.jpg");
+      if (fs.existsSync(bannerPath)) {
+        await sendWebAppPhoto(
+          chatId,
+          fs.createReadStream(bannerPath),
+          startCaption,
+          "🎮 Play Now",
+          appUrl
+        );
+      } else {
+        await sendWebAppMessage(chatId, startCaption, "🎮 Play Now", appUrl);
+      }
 
       return res.sendStatus(200);
     }
