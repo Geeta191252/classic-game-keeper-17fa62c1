@@ -898,21 +898,6 @@ const AviatorFunGame = () => {
                 <span className="balance-currency font-black text-[9px] text-[#00a2e8]">USD</span>
               </div>
               
-              {/* INR Balance */}
-              <div 
-                className={`balance-display cursor-pointer transition-all ${displayMode === "INR" ? "ring-1 ring-emerald-500 bg-emerald-500/10 text-emerald-400" : "bg-slate-900 opacity-60 text-emerald-500/70"}`}
-                onClick={() => {
-                  if (gameState !== "FLYING") {
-                    setDisplayMode("INR");
-                    setPanel1(prev => ({ ...prev, amount: 100 }));
-                    setPanel2(prev => ({ ...prev, amount: 100 }));
-                  }
-                }}
-              >
-                <span className="balance-amount">₹{compactBal(totalRupee)}</span>
-                <span className="balance-currency font-black text-[9px]">INR</span>
-              </div>
-
               {/* Star Balance */}
               <div 
                 className={`balance-display cursor-pointer transition-all ${displayMode === "STAR" ? "ring-1 ring-amber-500 bg-amber-500/10 text-amber-400" : "bg-slate-900 opacity-60 text-amber-500/70"}`}
