@@ -878,7 +878,7 @@ const WalletScreen = () => {
                 </p>
                 {([
                   { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: cryptoMinsReady ? `Min ${formatUsdMin(Math.min(...Object.values(cryptoMins)))}+` : "Min Loading…", icon: DollarSign, color: "#00a2e8" },
-                  { id: "inr", label: "INR", desc: "UPI / QR Code", min: `Min ₹${inrDepositMin}`, icon: IndianRupee, color: "#10b981" },
+                  
                   { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${starDepositMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
 
@@ -1248,7 +1248,7 @@ const WalletScreen = () => {
                 </p>
                 {([
                   { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: `Min $${cryptoWithdrawMin}`, icon: DollarSign, color: "#00a2e8" },
-                  { id: "inr", label: "INR", desc: "UPI / Bank UPI ID", min: `Min ₹${inrWithdrawMin}`, icon: IndianRupee, color: "#10b981" },
+                  
                   { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${starWithdrawMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
 
