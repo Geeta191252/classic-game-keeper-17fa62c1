@@ -1247,7 +1247,7 @@ const WalletScreen = () => {
                   Choose Withdraw Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: `Min $${cryptoWithdrawMin}`, icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min $${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${starWithdrawMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
