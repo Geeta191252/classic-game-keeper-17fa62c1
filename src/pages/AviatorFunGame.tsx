@@ -670,7 +670,7 @@ const AviatorFunGame = () => {
     if (panel.status !== "NONE") return;
 
     if (balance < panel.amount) {
-      const unit = displayMode === "USD" ? "$" : displayMode === "INR" ? "₹" : "★";
+      const unit = displayMode === "USD" ? "💎" : displayMode === "INR" ? "₹" : "★";
       toast.error(`Insufficient ${unit} balance!`);
       return;
     }
@@ -753,7 +753,7 @@ const AviatorFunGame = () => {
   // Display-mode-aware step & presets
   const stepUnit = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
   const presets = displayMode === "USD" ? [5, 10, 20, 50] : displayMode === "INR" ? [100, 500, 1000, 2500] : [50, 100, 250, 500];
-  const unitLabel = displayMode === "USD" ? "USD" : displayMode === "INR" ? "INR" : "STR";
+  const unitLabel = displayMode === "USD" ? "TON" : displayMode === "INR" ? "INR" : "STR";
 
   // Manual Adjustments
   const adjustBet = (panelId: "panel-1" | "panel-2", amountChange: number) => {
@@ -895,7 +895,7 @@ const AviatorFunGame = () => {
                 }}
               >
                 <span className="balance-amount">${compactBal(totalDollar)}</span>
-                <span className="balance-currency font-black text-[9px] text-[#00a2e8]">USD</span>
+                <span className="balance-currency font-black text-[9px] text-[#00a2e8]">TON</span>
               </div>
               
               {/* Star Balance */}

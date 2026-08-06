@@ -33,8 +33,8 @@ const GameCurrencyChips = ({ mode, onChange, disabled, className = "" }: Props) 
   }> = [
     {
       id: "USD",
-      label: "$",
-      value: `$${totalDollar.toFixed(2)}`,
+      label: "💎",
+      value: `${totalDollar.toFixed(2)}`,
       activeBg: "bg-sky-500",
       activeText: "text-white",
       hasFunds: hasDollar,
@@ -57,7 +57,7 @@ const GameCurrencyChips = ({ mode, onChange, disabled, className = "" }: Props) 
           ? "No ⭐ balance — deposit stars to play"
           : c.id === "INR"
           ? "No ₹ balance — deposit funds to play"
-          : "No $ balance — deposit funds to play"
+          : "No 💎 balance — deposit TON to play"
       );
       return;
     }

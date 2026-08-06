@@ -323,7 +323,7 @@ const JetXGame = () => {
   const potentialWin = useMemo(() => (myBet ? myBet.amount : betAmount) * 0.98 * multiplier, [myBet, betAmount, multiplier]);
 
   const currencyOptions: { mode: GameCurrencyMode; label: string }[] = [
-    { mode: "USD", label: "$" },
+    { mode: "USD", label: "💎" },
     { mode: "STAR", label: "★" },
   ];
 

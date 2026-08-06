@@ -20,8 +20,8 @@ export const toDisplayAmount = (nativeVal: number, mode: GameCurrencyMode): numb
 export const formatAmount = (val: number, mode: GameCurrencyMode): string => {
   if (mode === "STAR") return `★${Math.floor(val).toLocaleString()}`;
   if (mode === "INR") return `₹${val.toFixed(2)}`;
-  return `$${val.toFixed(2)}`;
+  return `💎${val.toFixed(2)}`;
 };
 
 export const currencySymbol = (mode: GameCurrencyMode): string =>
-  mode === "STAR" ? "★" : mode === "INR" ? "₹" : "$";
+  mode === "STAR" ? "★" : mode === "INR" ? "₹" : "💎";
