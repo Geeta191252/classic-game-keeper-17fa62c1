@@ -351,7 +351,7 @@ const HomeScreen = () => {
             onClick={() => setActiveTab(4)}
             className="flex items-center gap-1 bg-[#090d16] border border-white/[0.02] rounded-xl px-2 py-1.5 cursor-pointer hover:bg-slate-900 transition-all select-none"
           >
-            <span className="text-[9px]">💲</span>
+            <span className="text-[9px]">💎</span>
             <span className="text-[9px] font-black text-emerald-400">
               {totalDollar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -694,8 +694,8 @@ const HomeScreen = () => {
                   </div>
                   <div className="h-px bg-white/[0.04]" />
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-[#8e97a4]">💲 Balance</span>
-                    <span className="text-[10px] font-bold text-emerald-400">${totalDollar.toFixed(2)}</span>
+                    <span className="text-[10px] text-[#8e97a4]">💎 TON Balance</span>
+                    <span className="text-[10px] font-bold text-emerald-400">💎{totalDollar.toFixed(2)}</span>
                   </div>
                   <div className="h-px bg-white/[0.04]" />
                   <div className="flex justify-between items-center">
