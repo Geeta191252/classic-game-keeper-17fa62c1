@@ -1016,34 +1016,80 @@ const WalletScreen = () => {
                       </button>
                     )}
                   </div>
-                  {tonAddress ? (
-                    <div className="space-y-1.5">
-                      <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Instant TON Deposit</p>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                        <div className="relative min-w-0">
-                          <Input
-                            type="number"
-                            placeholder="Amount of TON"
-                            value={tonDepositAmount}
-                            onChange={(e) => setTonDepositAmount(e.target.value)}
-                            className="pr-8 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                          />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">TON</span>
-                        </div>
-                        <button
-                          onClick={handleTonDeposit}
-                          disabled={tonProcessing || !tonDepositAmount}
-                          className="w-full sm:w-auto rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
-                        >
-                          {tonProcessing ? "..." : "Deposit"}
-                        </button>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Instant TON Deposit</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <div className="relative min-w-0">
+                        <Input
+                          type="number"
+                          placeholder="Amount of TON"
+                          value={tonDepositAmount}
+                          onChange={(e) => setTonDepositAmount(e.target.value)}
+                          className="pr-8 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">TON</span>
                       </div>
+                      <button
+                        onClick={handleTonDeposit}
+                        disabled={tonProcessing || !tonDepositAmount}
+                        className="w-full sm:w-auto rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                      >
+                        {tonProcessing ? "..." : "Deposit"}
+                      </button>
                     </div>
-                  ) : (
-                    <p className="text-[9px] text-[#8e97a4] text-center py-2">
-                      ⚠️ Connect your TON wallet above to perform instant TON deposits.
-                    </p>
+                    {!tonAddress && (
+                      <p className="text-[9px] text-[#8e97a4]">
+                        Wallet connect nahi hai? Fir bhi Deposit dabayein — manual address + comment mil jayega.
+                      </p>
+                    )}
+                  </div>
+
+                  {tonManual && (
+                    <div className="rounded-2xl bg-[#0d121f] p-3 space-y-2 border border-[#0098ea]/30">
+                      <p className="text-[9px] font-extrabold text-[#0098ea] uppercase tracking-wider">
+                        Manual payment (auto credit)
+                      </p>
+                      <p className="text-[9px] text-[#8e97a4]">
+                        Exactly <b className="text-white">{tonManual.amount} TON</b> bhejein, comment zaroor lagayein.
+                      </p>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Address</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.address}</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.address); toast({ title: "Address copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.comment}</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.comment); toast({ title: "Comment copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <a
+                        href={`ton://transfer/${tonManual.address}?amount=${Math.floor(tonManual.amount * 1e9)}&text=${encodeURIComponent(tonManual.comment)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-center rounded-xl h-9 leading-9 text-[10px] font-black uppercase bg-[#0098ea] text-white tracking-wider"
+                      >
+                        Open in TON Wallet
+                      </a>
+                      <p className="text-[9px] text-[#8e97a4] text-center">
+                        Payment ke baad ~30 sec me fund apne aap add ho jayega.
+                      </p>
+                    </div>
                   )}
+
                 </div>
               </motion.div>
             )}
