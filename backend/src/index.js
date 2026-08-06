@@ -2041,6 +2041,29 @@ app.post("/api/ton/init-deposit", async (req, res) => {
   }
 });
 
+// Admin: get/set owner TON wallet address
+app.get("/api/admin/ton-wallet", requireAdmin, async (_req, res) => {
+  const address = await getOwnerTonWallet();
+  res.json({ address, fromEnv: !!OWNER_TON_WALLET });
+});
+
+app.post("/api/admin/ton-wallet", requireAdmin, async (req, res) => {
+  try {
+    const address = String(req.body?.address || "").trim();
+    if (!address) return res.status(400).json({ error: "address required" });
+    const SettingModel = require("./models/Setting");
+    await SettingModel.findOneAndUpdate(
+      { key: "ownerTonWallet" },
+      { key: "ownerTonWallet", value: { address } },
+      { upsert: true, new: true }
+    );
+    res.json({ success: true, address });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to save TON wallet" });
+  }
+});
+
+
 // POST /api/ton/confirm-deposit - Confirm deposit after user sends TON
 app.post("/api/ton/confirm-deposit", async (req, res) => {
   try {
