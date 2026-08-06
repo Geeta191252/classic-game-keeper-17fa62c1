@@ -182,7 +182,7 @@ const ChickenRoadGame = () => {
     if (currentBalance < selectedBet) {
       toast({
         title: "Insufficient balance",
-        description: `Need ${currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}${selectedBet}${
+        description: `Need ${"💎"}${selectedBet}${
           activeWallet === "star" ? " ⭐" : ""
         } to play`,
         variant: "destructive",
@@ -440,11 +440,11 @@ const ChickenRoadGame = () => {
             className="flex gap-5 inline-block"
           >
             {[
-              { n: "Blush Comp...", a: "+$160.00" },
-              { n: "LuckyMike", a: "+$98.50" },
-              { n: "QueenB", a: "+$75.20" },
-              { n: "JohnnyX", a: "+$52.00" },
-              { n: "MaxPwr", a: "+$230.00" },
+              { n: "Blush Comp...", a: "+💎160.00" },
+              { n: "LuckyMike", a: "+💎98.50" },
+              { n: "QueenB", a: "+💎75.20" },
+              { n: "JohnnyX", a: "+💎52.00" },
+              { n: "MaxPwr", a: "+💎230.00" },
             ].map((t, i) => (
               <span key={i} className="inline-flex items-center gap-1">
                 <span style={{ color: "hsl(45 90% 60%)" }}>⭐</span>
@@ -808,7 +808,7 @@ const ChickenRoadGame = () => {
                     color: "#1a1d26",
                   }}
                 >
-                  {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : "⭐"}
+                  {currencyMode === "STAR" ? "⭐" : "💎"}
                 </span>
               </button>
             );
@@ -858,7 +858,7 @@ const ChickenRoadGame = () => {
             >
               <div className="text-[9px] tracking-wider">CASH OUT</div>
               <div className="text-[14px] leading-tight">
-                {(selectedBet * currentMultiplier).toFixed(0)} {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : "⭐"}
+                {(selectedBet * currentMultiplier).toFixed(0)} {currencyMode === "STAR" ? "⭐" : "💎"}
               </div>
             </motion.button>
           )}

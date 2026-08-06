@@ -173,7 +173,7 @@ const WalletScreen = () => {
   const formatCurrencyAmount = (currency: CurrencyType, amount: number) => {
     if (currency === "star") return `${amount.toLocaleString()} ⭐`;
     if (currency === "rupee") return `₹${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-    return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `💎${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const safeCopy = (text: string) => {
@@ -200,7 +200,7 @@ const WalletScreen = () => {
   const [limits, setLimits] = useState(defaultLimits);
   const [cryptoMinsReady, setCryptoMinsReady] = useState(false);
   const cryptoMins = limits.crypto.depositMin;
-  const formatUsdMin = (value: number | undefined) => `$${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatUsdMin = (value: number | undefined) => `💎${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const cryptoMinLabel = (coinId: string) => cryptoMinsReady ? formatUsdMin(cryptoMins[coinId]) : "Loading…";
   const inrDepositMin = limits.inr.depositMin;
   const inrWithdrawMin = limits.inr.withdrawMin;
@@ -375,7 +375,7 @@ const WalletScreen = () => {
         if (data.status === "completed") {
           toast({
             title: "Payment Received! ✅",
-            description: `$${data.amount} has been added to your wallet.`,
+            description: `💎${data.amount} has been added to your wallet.`,
           });
           refreshBalance();
           setCryptoPayment(null);
@@ -470,7 +470,7 @@ const WalletScreen = () => {
 
       toast({
         title: "TON Deposit Successful! ✅",
-        description: `${tonAmt} TON ≈ $${initData.usdEquivalent.toFixed(2)} added to your wallet!`,
+        description: `${tonAmt} TON ≈ 💎${initData.usdEquivalent.toFixed(2)} added to your wallet!`,
       });
       setTonDepositAmount("");
       refreshBalance();
@@ -488,7 +488,7 @@ const WalletScreen = () => {
   const handleTonWithdraw = async () => {
     const dollarAmt = Number(tonWithdrawAmount);
     if (!dollarAmt || dollarAmt < 10) {
-      toast({ title: "Minimum $10", description: "Minimum withdrawal is $10.", variant: "destructive" });
+      toast({ title: "Minimum 💎10", description: "Minimum withdrawal is 💎10.", variant: "destructive" });
       return;
     }
     if (dollarAmt > dollarBalance) {
@@ -515,7 +515,7 @@ const WalletScreen = () => {
 
       toast({
         title: "Withdrawal Submitted! ✅",
-        description: `$${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to your wallet.`,
+        description: `💎${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to your wallet.`,
       });
       setTonWithdrawAmount("");
       refreshBalance();
@@ -634,7 +634,7 @@ const WalletScreen = () => {
   const handleWithdrawSubmit = async () => {
     const amt = parseFloat(withdrawAmount);
     if (!amt || amt < 10) {
-      toast({ title: "Minimum $10", description: "Minimum withdrawal amount is $10.", variant: "destructive" });
+      toast({ title: "Minimum 💎10", description: "Minimum withdrawal amount is 💎10.", variant: "destructive" });
       return;
     }
     if (!withdrawAddress.trim()) {
@@ -706,7 +706,7 @@ const WalletScreen = () => {
 
       toast({
         title: "Converted! ✅",
-        description: `${starInputNum} ⭐ → $${dollarOutput} added to your Dollar wallet.`,
+        description: `${starInputNum} ⭐ → 💎${dollarOutput} added to your Dollar wallet.`,
       });
       setConvertStars("");
       refreshBalance();
@@ -1086,7 +1086,7 @@ const WalletScreen = () => {
                     <ArrowRightLeft className="h-4 w-4 text-[#00a2e8]" />
                     <h3 className="font-black text-xs text-white uppercase tracking-wider">Star to Cash Converter</h3>
                   </div>
-                  <p className="text-[10px] text-[#8e97a4]">Convert Star balance to withdrawable Dollars ({STAR_TO_DOLLAR_RATE} ⭐ = $1.00)</p>
+                  <p className="text-[10px] text-[#8e97a4]">Convert Star balance to withdrawable TON ({STAR_TO_DOLLAR_RATE} ⭐ = 💎1.00)</p>
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <Input
@@ -1104,7 +1104,7 @@ const WalletScreen = () => {
                       disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
                       className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                     >
-                      {converting ? "..." : `Convert to $${dollarOutput}`}
+                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
                     </button>
                   </div>
                 </div>
@@ -1129,7 +1129,7 @@ const WalletScreen = () => {
                   Choose Withdraw Method
                 </p>
                 {([
-                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min $${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min 💎${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${starWithdrawMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -1225,14 +1225,14 @@ const WalletScreen = () => {
                         <div className="flex-1 relative">
                           <Input
                             type="number"
-                            placeholder={`Amount to withdraw (min $${cryptoWithdrawMin})`}
+                            placeholder={`Amount to withdraw (min 💎${cryptoWithdrawMin})`}
                             value={tonWithdrawAmount}
                             onChange={(e) => setTonWithdrawAmount(e.target.value)}
                             className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
                             min={cryptoWithdrawMin}
                           />
 
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">$</span>
+                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">💎</span>
                         </div>
                         <button
                           onClick={handleTonWithdraw}
@@ -1368,7 +1368,7 @@ const WalletScreen = () => {
                   </div>
 
                   <p className="text-[10px] text-[#8e97a4]">
-                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from TON tab.
+                    Convert Stars to TON ({STAR_TO_DOLLAR_RATE} ⭐ = 💎1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw 💎 from TON tab.
                   </p>
 
                   <div className="flex gap-2">
@@ -1388,7 +1388,7 @@ const WalletScreen = () => {
                       disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
                       className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-amber-500 hover:bg-amber-600 text-black tracking-wider shadow-md transition-all disabled:opacity-50"
                     >
-                      {converting ? "..." : `Convert to $${dollarOutput}`}
+                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
                     </button>
                   </div>
                 </div>

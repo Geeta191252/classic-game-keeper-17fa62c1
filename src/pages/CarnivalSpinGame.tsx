@@ -332,7 +332,7 @@ const CarnivalSpinGame = () => {
             color: phase === "betting" ? "white" : "hsl(0, 0%, 60%)",
           }}
         >
-          {phase === "betting" ? `🎡 Spin - Bet ${currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}${selectedBet}${activeWallet === "star" ? " ⭐" : ""}` : phase === "spinning" ? "Spinning..." : `Next in ${resultTimer}s`}
+          {phase === "betting" ? `🎡 Spin - Bet ${"💎"}${selectedBet}${activeWallet === "star" ? " ⭐" : ""}` : phase === "spinning" ? "Spinning..." : `Next in ${resultTimer}s`}
         </motion.button>
       </div>
 

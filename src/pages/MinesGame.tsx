@@ -277,7 +277,7 @@ const MinesGame = () => {
               💎 {safePicks} safe • {currentMultiplier.toFixed(2)}x
             </span>
             <span className="text-sm font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>
-              {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}{(selectedBet * currentMultiplier).toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}
+              {"💎"}{(selectedBet * currentMultiplier).toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}
             </span>
           </div>
         </div>
@@ -339,12 +339,12 @@ const MinesGame = () => {
       <AnimatePresence>
         {phase === "lost" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-3">
-            <p className="text-xl font-bold" style={{ color: "hsl(0, 70%, 65%)" }}>💥 Boom! Lost {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}</p>
+            <p className="text-xl font-bold" style={{ color: "hsl(0, 70%, 65%)" }}>💥 Boom! Lost {"💎"}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}</p>
           </motion.div>
         )}
         {phase === "cashed" && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-3">
-            <p className="text-xl font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>🎉 Cashed Out {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}{winAmount.toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}!</p>
+            <p className="text-xl font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>🎉 Cashed Out {"💎"}{winAmount.toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}!</p>
             <p className="text-sm" style={{ color: "hsl(120, 50%, 65%)" }}>{currentMultiplier.toFixed(2)}x multiplier</p>
           </motion.div>
         )}
@@ -365,7 +365,7 @@ const MinesGame = () => {
               color: currentBalance >= selectedBet ? "white" : "hsl(0, 0%, 60%)",
             }}
           >
-            {phase === "betting" ? "🎮 Start Game" : "🔄 Play Again"} — {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}
+            {phase === "betting" ? "🎮 Start Game" : "🔄 Play Again"} — {"💎"}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}
           </motion.button>
         ) : (
           <motion.button
@@ -380,7 +380,7 @@ const MinesGame = () => {
               color: safePicks > 0 ? "white" : "hsl(0, 0%, 60%)",
             }}
           >
-            💰 Cash Out — {currencyMode === "USD" ? "$" : currencyMode === "INR" ? "₹" : ""}{(selectedBet * currentMultiplier).toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}
+            💰 Cash Out — {"💎"}{(selectedBet * currentMultiplier).toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}
           </motion.button>
         )}
       </div>
