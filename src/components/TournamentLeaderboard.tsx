@@ -68,7 +68,7 @@ const TournamentLeaderboard = ({ tournament, onClose }: Props) => {
     })();
   }, [tournament._id]);
 
-  const sym = tournament.prizeCurrency === "dollar" ? "$" : "⭐";
+  const sym = tournament.prizeCurrency === "dollar" ? "💎" : "⭐";
   const remainingMs = tournament.endsAt ? new Date(tournament.endsAt).getTime() - now : 0;
 
   return (

@@ -478,7 +478,7 @@ const HomeScreen = () => {
                 </div>
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
                   {tournaments.map((t) => {
-                    const sym = t.prizeCurrency === "dollar" ? "$" : "⭐";
+                    const sym = t.prizeCurrency === "dollar" ? "💎" : "⭐";
                     const firstPrize = t.prizeTiers && t.prizeTiers.length > 0 ? t.prizeTiers[0].amount : t.prizePerWinner;
                     const remainingMs = t.endsAt ? new Date(t.endsAt).getTime() - now : 0;
                     return (

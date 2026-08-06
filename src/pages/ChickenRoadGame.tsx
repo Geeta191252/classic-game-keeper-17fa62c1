@@ -440,11 +440,11 @@ const ChickenRoadGame = () => {
             className="flex gap-5 inline-block"
           >
             {[
-              { n: "Blush Comp...", a: "+$160.00" },
-              { n: "LuckyMike", a: "+$98.50" },
-              { n: "QueenB", a: "+$75.20" },
-              { n: "JohnnyX", a: "+$52.00" },
-              { n: "MaxPwr", a: "+$230.00" },
+              { n: "Blush Comp...", a: "+💎160.00" },
+              { n: "LuckyMike", a: "+💎98.50" },
+              { n: "QueenB", a: "+💎75.20" },
+              { n: "JohnnyX", a: "+💎52.00" },
+              { n: "MaxPwr", a: "+💎230.00" },
             ].map((t, i) => (
               <span key={i} className="inline-flex items-center gap-1">
                 <span style={{ color: "hsl(45 90% 60%)" }}>⭐</span>

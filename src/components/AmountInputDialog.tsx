@@ -17,7 +17,7 @@ const RUPEE_PRESETS = [100, 500, 1000, 5000];
 const STAR_PRESETS = [100, 500, 1000, 5000];
 
 const currencyMeta = {
-  dollar: { symbol: "$", label: "dollars", suffix: false, presets: DOLLAR_PRESETS },
+  dollar: { symbol: "💎", label: "dollars", suffix: false, presets: DOLLAR_PRESETS },
   rupee: { symbol: "₹", label: "rupees", suffix: false, presets: RUPEE_PRESETS },
   star: { symbol: "⭐", label: "stars", suffix: true, presets: STAR_PRESETS },
 };
