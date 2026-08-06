@@ -877,7 +877,7 @@ const WalletScreen = () => {
                   Choose Deposit Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: cryptoMinsReady ? `Min ${formatUsdMin(Math.min(...Object.values(cryptoMins)))}+` : "Min Loading…", icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin deposit 💎", min: "Instant", icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${starDepositMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
