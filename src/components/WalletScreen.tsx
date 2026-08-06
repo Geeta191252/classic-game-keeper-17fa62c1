@@ -470,7 +470,7 @@ const WalletScreen = () => {
 
       toast({
         title: "TON Deposit Successful! ✅",
-        description: `${tonAmt} TON ≈ $${initData.usdEquivalent.toFixed(2)} added to your wallet!`,
+        description: `${tonAmt} TON ≈ 💎${initData.usdEquivalent.toFixed(2)} added to your wallet!`,
       });
       setTonDepositAmount("");
       refreshBalance();
@@ -706,7 +706,7 @@ const WalletScreen = () => {
 
       toast({
         title: "Converted! ✅",
-        description: `${starInputNum} ⭐ → $${dollarOutput} added to your Dollar wallet.`,
+        description: `${starInputNum} ⭐ → 💎${dollarOutput} added to your Dollar wallet.`,
       });
       setConvertStars("");
       refreshBalance();
@@ -1104,7 +1104,7 @@ const WalletScreen = () => {
                       disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
                       className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                     >
-                      {converting ? "..." : `Convert to $${dollarOutput}`}
+                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
                     </button>
                   </div>
                 </div>
@@ -1129,7 +1129,7 @@ const WalletScreen = () => {
                   Choose Withdraw Method
                 </p>
                 {([
-                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min $${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min 💎${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${starWithdrawMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -1225,7 +1225,7 @@ const WalletScreen = () => {
                         <div className="flex-1 relative">
                           <Input
                             type="number"
-                            placeholder={`Amount to withdraw (min $${cryptoWithdrawMin})`}
+                            placeholder={`Amount to withdraw (min 💎${cryptoWithdrawMin})`}
                             value={tonWithdrawAmount}
                             onChange={(e) => setTonWithdrawAmount(e.target.value)}
                             className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
@@ -1388,7 +1388,7 @@ const WalletScreen = () => {
                       disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
                       className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-amber-500 hover:bg-amber-600 text-black tracking-wider shadow-md transition-all disabled:opacity-50"
                     >
-                      {converting ? "..." : `Convert to $${dollarOutput}`}
+                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
                     </button>
                   </div>
                 </div>
