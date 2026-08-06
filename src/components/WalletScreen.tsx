@@ -526,7 +526,11 @@ const WalletScreen = () => {
       if (err?.message?.includes("Rejected")) {
         toast({ title: "Cancelled", description: "Transaction was cancelled." });
       } else {
-        toast({ title: "Error", description: err?.message || "TON deposit failed.", variant: "destructive" });
+        toast({
+          title: "Wallet request failed",
+          description: "Neeche diye TON address + comment se manually bhejein — fund auto add ho jayega.",
+          variant: "destructive",
+        });
       }
     } finally {
       setTonProcessing(false);
