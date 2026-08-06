@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { Wallet, useState, useMemo, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
@@ -43,6 +43,7 @@ const GROUPS: Group[] = [
   {
     label: "Configuration",
     items: [
+      { to: "/admin/ton-wallet", label: "TON Wallet", icon: Wallet },
       { to: "/admin/settings", label: "Settings", icon: Settings },
       { to: "/admin/profile", label: "Profile", icon: UserCircle2 },
     ],
