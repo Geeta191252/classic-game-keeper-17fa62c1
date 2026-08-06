@@ -6,7 +6,7 @@ import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdown
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult, type CurrencyType } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets, formatBet } from "@/lib/gameCurrency";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 const DICE_FACES = [
@@ -18,7 +18,6 @@ const DICE_FACES = [
   { value: 6, dots: "⚅", multiplier: 10 },
 ];
 
-const BET_PRESETS = [1, 3, 5, 10, 50];
 
 type GamePhase = "betting" | "rolling" | "result";
 
@@ -36,8 +35,9 @@ const DiceMasterGame = () => {
   const gameStarBalance = starBalance + starWinning + localStarAdj;
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const activeWallet = modeToWallet(currencyMode);
+  useEffect(() => { setSelectedBet(minBet(currencyMode)); }, [currencyMode]);
   const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
-  const [selectedBet, setSelectedBet] = useState(1);
+  const [selectedBet, setSelectedBet] = useState(minBet("USD"));
   
   const [phase, setPhase] = useState<GamePhase>("betting");
   const [rollingDice, setRollingDice] = useState([1, 1]);
@@ -285,30 +285,30 @@ const DiceMasterGame = () => {
         <div className="rounded-2xl p-2 mb-2" style={{ background: "hsla(0, 0%, 15%, 0.9)" }}>
           <div className="flex items-center justify-between rounded-xl overflow-hidden" style={{ background: "hsla(0, 0%, 25%, 0.8)" }}>
             <button
-              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => Math.max(1, prev - 1)); }}
+              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => stepBet(prev, currencyMode, -1)); }}
               disabled={phase !== "betting"}
               className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>−</button>
             <div className="flex-1 text-center">
               <span className="text-xl font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
-                {currencyMode === "STAR" ? `${selectedBet.toFixed(2)} ⭐` : `${currencySymbol(currencyMode)}${selectedBet.toFixed(2)}`}
+                {formatBet(selectedBet, currencyMode)}
               </span>
             </div>
             <button
-              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => prev + 1); }}
+              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => stepBet(prev, currencyMode, 1)); }}
               disabled={phase !== "betting"}
               className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>+</button>
           </div>
           {/* Preset buttons */}
           <div className="grid grid-cols-4 gap-2 mt-2">
-            {BET_PRESETS.map((bet) => (
-              <button key={bet} onClick={() => phase === "betting" && setSelectedBet(prev => prev + bet)}
+            {betPresets(currencyMode).map((bet) => (
+              <button key={bet} onClick={() => phase === "betting" && setSelectedBet(clampBet(bet, currencyMode))}
                 className={`rounded-xl py-2.5 text-sm font-bold transition-all ${phase !== "betting" ? "opacity-50" : ""}`}
                 style={{
                   background: selectedBet === bet ? "hsl(0, 65%, 50%)" : "hsla(0, 0%, 30%, 0.8)",
                   color: selectedBet === bet ? "hsl(0, 0%, 100%)" : "hsl(0, 0%, 80%)",
                   border: selectedBet === bet ? "1px solid hsl(50, 90%, 55%)" : "1px solid hsla(0, 0%, 40%, 0.5)",
                 }}>
-                {currencyMode === "STAR" ? `${bet} ⭐` : `${currencySymbol(currencyMode)}${bet}`}
+                {formatBet(bet, currencyMode)}
               </button>
             ))}
           </div>
