@@ -2021,14 +2021,14 @@ app.post("/api/ton/init-deposit", async (req, res) => {
       amount: tonAmount,
       status: "pending",
       tonAmount: tonAmount,
-      tonReceiverAddress: OWNER_TON_WALLET,
+      tonReceiverAddress: ownerTonWallet,
       depositComment,
       usdEquivalent,
       description: `TON Deposit: ${tonAmount} TON ≈ $${usdEquivalent.toFixed(2)}`,
     });
 
     return res.json({
-      ownerWallet: OWNER_TON_WALLET,
+      ownerWallet: ownerTonWallet,
       depositComment,
       tonAmount,
       usdEquivalent,
