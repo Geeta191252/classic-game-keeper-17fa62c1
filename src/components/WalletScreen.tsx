@@ -1295,76 +1295,8 @@ const WalletScreen = () => {
                   <span className="font-black text-xs text-white uppercase tracking-wider">Crypto Withdraw</span>
                 </div>
 
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-4 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <ArrowUpRight className="h-4 w-4 text-[#00a2e8]" />
-                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Withdraw Winnings</h3>
-                    </div>
-                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                      Available: ${dollarWinnings.toFixed(2)}
-                    </span>
-                  </div>
 
-                  <p className="text-[10px] text-[#8e97a4]">
-                    Minimum withdrawal: <span className="text-amber-400 font-black">$10</span>
-                  </p>
 
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {withdrawCryptoOptions.map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => {
-                          setWithdrawCrypto(c.id);
-                          setWithdrawNetwork(c.network);
-                        }}
-                        className={`py-2 rounded-xl text-[10px] font-black border transition-colors ${
-                          withdrawCrypto === c.id
-                            ? "border-[#00a2e8] bg-[#00a2e8]/10 text-white"
-                            : "border-white/[0.02] bg-[#0d121f] text-slate-400"
-                        }`}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Withdraw Address</label>
-                    <Input
-                      type="text"
-                      placeholder={`Your ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''} address`}
-                      value={withdrawAddress}
-                      onChange={e => setWithdrawAddress(e.target.value)}
-                      className="rounded-xl bg-[#0d121f] border-white/[0.02] font-mono text-[9px] text-white h-9"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD) — Min ${cryptoWithdrawMin}</label>
-                    <Input
-                      type="number"
-                      placeholder={`Amount to withdraw (min $${cryptoWithdrawMin})`}
-                      value={withdrawAmount}
-                      onChange={e => { setWithdrawAmount(e.target.value); setWithdrawCurrency("dollar"); }}
-                      className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
-                      min={cryptoWithdrawMin}
-                    />
-                  </div>
-
-                  <Button
-                    onClick={() => { setWithdrawCurrency("dollar"); handleWithdrawSubmit(); }}
-                    disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < cryptoWithdrawMin}
-
-                    className="w-full rounded-xl h-10 font-black text-xs uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
-                  >
-                    {withdrawing ? "Submitting..." : `Withdraw via ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''}`}
-                  </Button>
-
-                  <p className="text-[8px] text-slate-500 text-center leading-relaxed">
-                    ⏳ Requests go to admin for approval. You'll get a Telegram message once processed.
-                  </p>
-                </div>
 
                 {/* TON Instant Withdraw */}
                 <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
