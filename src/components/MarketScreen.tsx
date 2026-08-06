@@ -100,7 +100,7 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
         payAmount: data.payAmount,
         payCurrency: data.payCurrency,
         orderId: data.orderId,
-        offerLabel: `${offer.title} • Get $${offer.getAmount}`,
+        offerLabel: `${offer.title} • Get ${offer.getAmount} 💎`,
       });
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Could not start offer.", variant: "destructive" });
@@ -120,7 +120,7 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
         <span className="text-2xl">🏪</span>
         <div>
           <h2 className="font-extrabold text-sm text-white">Market Shop</h2>
-          <p className="text-[10px] text-[#8e97a4] mt-0.5">Purchase star packages and cash balance bundles</p>
+          <p className="text-[10px] text-[#8e97a4] mt-0.5">Purchase star packages and TON balance bundles</p>
         </div>
       </div>
 
