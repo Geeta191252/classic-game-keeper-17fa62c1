@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Copy } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getTelegram, requestInvoice } from "@/lib/telegram";
 import { useBalanceContext } from "@/contexts/BalanceContext";
@@ -22,23 +22,12 @@ interface BackendOffer {
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || "https://broken-bria-chetan1-ea890b93.koyeb.app/api";
 
-const cryptoApiTicker: Record<string, string> = { usdt: "usdttrc20" };
-const CRYPTO_OPTIONS: Array<{ id: string; label: string; emoji: string }> = [
-  { id: "btc", label: "BTC", emoji: "₿" },
-  { id: "ltc", label: "LTC", emoji: "Ł" },
-  { id: "usdt", label: "USDT", emoji: "₮" },
-  { id: "ton", label: "TON", emoji: "💎" },
-  { id: "sol", label: "SOL", emoji: "◎" },
-  { id: "trx", label: "TRX", emoji: "🔺" },
-  { id: "doge", label: "DOGE", emoji: "🐕" },
-];
 
 const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
   const { refreshBalance } = useBalanceContext();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [offers, setOffers] = useState<BackendOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [coinPickerOffer, setCoinPickerOffer] = useState<BackendOffer | null>(null);
   const [cryptoPayment, setCryptoPayment] = useState<{
     payAddress: string;
     payAmount: number;
@@ -87,7 +76,8 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
   };
 
   const claimDollarOffer = (offer: BackendOffer) => {
-    setCoinPickerOffer(offer);
+    // TON only — no crypto coin picker
+    startCryptoPayment(offer, "ton");
   };
 
   const startCryptoPayment = async (offer: BackendOffer, coinId: string) => {
@@ -96,7 +86,7 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
     try {
       const tg = getTelegram();
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
-      const apiCurrency = cryptoApiTicker[coinId] || coinId;
+      const apiCurrency = coinId;
       const res = await fetch(`${apiBase}/crypto/create-payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,46 +149,6 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
           After payment, bonus will be credited automatically by admin.
         </p>
       )}
-
-      {/* Crypto Selector Modal */}
-      <AnimatePresence>
-        {coinPickerOffer && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setCoinPickerOffer(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-sm rounded-3xl p-5 max-h-[80vh] overflow-y-auto bg-[#141b2b] border border-white/[0.03] shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-xs text-white">Pay ${coinPickerOffer.payAmount} with…</h3>
-                <button onClick={() => setCoinPickerOffer(null)} className="h-7 w-7 rounded-full bg-[#0d121f] flex items-center justify-center">
-                  <X className="h-4 w-4 text-slate-400" />
-                </button>
-              </div>
-              <p className="text-[10px] text-[#8e97a4] mb-4">
-                Select a cryptocurrency. Bonus: {coinPickerOffer.bonusLabel || `Get $${coinPickerOffer.getAmount}`}
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                {CRYPTO_OPTIONS.map((c) => (
-                  <motion.button
-                    key={c.id}
-                    whileTap={{ scale: 0.94 }}
-                    onClick={() => startCryptoPayment(coinPickerOffer, c.id)}
-                    className="rounded-xl py-2.5 font-bold flex flex-col items-center gap-1 bg-[#0d121f] border border-white/[0.02] hover:bg-slate-800 transition-colors"
-                  >
-                    <span className="text-xl">{c.emoji}</span>
-                    <span className="text-[10px] text-slate-300">{c.label}</span>
-                  </motion.button>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Payment Details Modal */}
       <AnimatePresence>
