@@ -468,12 +468,37 @@ const WalletScreen = () => {
       const confirmData = await confirmRes.json();
       if (!confirmRes.ok) throw new Error(confirmData.error || "Failed to confirm deposit");
 
-      toast({
-        title: "TON Deposit Successful! ✅",
-        description: `${tonAmt} TON ≈ 💎${initData.usdEquivalent.toFixed(2)} added to your wallet!`,
-      });
+      if (confirmData.pending) {
+        toast({
+          title: "Payment sent ⏳",
+          description: "Blockchain confirm hote hi fund apne aap add ho jayega (~30 sec).",
+        });
+        // auto-poll until credited
+        const txId = initData.transactionId;
+        let credited = false;
+        for (let i = 0; i < 20 && !credited; i++) {
+          await new Promise((r) => setTimeout(r, 6000));
+          try {
+            const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
+            if (st?.status === "completed") {
+              credited = true;
+              toast({
+                title: "TON Deposit Successful! ✅",
+                description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
+              });
+              refreshBalance();
+            }
+          } catch {}
+        }
+      } else {
+        toast({
+          title: "TON Deposit Successful! ✅",
+          description: `${tonAmt} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
+        });
+        refreshBalance();
+      }
       setTonDepositAmount("");
-      refreshBalance();
+
     } catch (err: any) {
       if (err?.message?.includes("Rejected")) {
         toast({ title: "Cancelled", description: "Transaction was cancelled." });

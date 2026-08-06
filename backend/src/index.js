@@ -2064,7 +2064,82 @@ app.post("/api/admin/ton-wallet", requireAdmin, async (req, res) => {
 });
 
 
-// POST /api/ton/confirm-deposit - Confirm deposit after user sends TON
+// ---- On-chain TON verification helpers ----
+const TONCENTER_BASE = process.env.TONCENTER_BASE || "https://toncenter.com/api/v3";
+const TONCENTER_KEY = process.env.TONCENTER_API_KEY || "";
+
+// Fetch recent incoming transactions of owner wallet -> [{ comment, tonValue, hash }]
+async function fetchOwnerIncomingTons(limit = 50) {
+  const owner = await getOwnerTonWallet();
+  if (!owner) return [];
+  const url = `${TONCENTER_BASE}/transactions?account=${encodeURIComponent(owner)}&limit=${limit}&sort=desc`;
+  const headers = TONCENTER_KEY ? { "X-API-Key": TONCENTER_KEY } : {};
+  const r = await fetch(url, { headers });
+  if (!r.ok) throw new Error(`toncenter ${r.status}`);
+  const data = await r.json();
+  const out = [];
+  for (const t of data?.transactions || []) {
+    const inMsg = t.in_msg;
+    if (!inMsg || !inMsg.source) continue; // skip external
+    const value = Number(inMsg.value || 0) / 1e9;
+    const comment =
+      inMsg?.message_content?.decoded?.comment ??
+      inMsg?.decoded_body?.text ??
+      "";
+    out.push({ comment: String(comment || "").trim(), tonValue: value, hash: t.hash || inMsg.hash || "" });
+  }
+  return out;
+}
+
+// Credit a pending ton_deposit tx using the real on-chain amount
+async function creditTonDeposit(tx, receivedTon, hash) {
+  if (!tx || tx.status !== "pending") return null;
+  const tonPrice = await getTonUsdPrice();
+  const usd = receivedTon * tonPrice;
+  tx.status = "completed";
+  tx.tonAmount = receivedTon;
+  tx.usdEquivalent = usd;
+  tx.tonTxHash = hash || tx.tonTxHash || "onchain";
+  tx.description = `TON Deposit: ${receivedTon} TON ≈ $${usd.toFixed(2)}`;
+  await tx.save();
+
+  const user = await getOrCreateUser(tx.telegramId);
+  user.dollarBalance += usd;
+  await user.save();
+
+  console.log(`✅ TON auto-credit: ${receivedTon} TON ($${usd.toFixed(2)}) -> ${tx.telegramId}`);
+
+  try {
+    const displayName = user.firstName || user.username || `User ${tx.telegramId}`;
+    const userTag = user.username ? `@${user.username}` : `${tx.telegramId}`;
+    await bot.sendMessage(OWNER_TELEGRAM_ID,
+      `💰 New TON Deposit (auto)!\n\n👤 User: ${displayName} (${userTag})\n🆔 ID: ${tx.telegramId}\n💎 Amount: ${receivedTon} TON\n💵 USD Value: $${usd.toFixed(2)}`
+    );
+  } catch (e) {
+    console.error("Owner TON notify failed:", e.message);
+  }
+  try {
+    await bot.sendMessage(tx.telegramId, `✅ Deposit successful!\n💎 ${receivedTon} TON added (≈ $${usd.toFixed(2)}).`);
+  } catch {}
+
+  return { usd, user };
+}
+
+// Try to match & credit one pending tx by its deposit comment
+async function tryVerifyPendingTon(tx) {
+  let list = [];
+  try {
+    list = await fetchOwnerIncomingTons(60);
+  } catch (e) {
+    console.error("toncenter fetch failed:", e.message);
+    return null;
+  }
+  const match = list.find((m) => m.comment && tx.depositComment && m.comment === tx.depositComment);
+  if (!match || match.tonValue <= 0) return null;
+  return await creditTonDeposit(tx, match.tonValue, match.hash);
+}
+
+// POST /api/ton/confirm-deposit - user signed in wallet; verify on-chain then credit
 app.post("/api/ton/confirm-deposit", async (req, res) => {
   try {
     const { userId, transactionId, bocHash } = req.body;
@@ -2073,50 +2148,82 @@ app.post("/api/ton/confirm-deposit", async (req, res) => {
     }
 
     const tx = await Transaction.findById(transactionId);
-    if (!tx || tx.status !== "pending" || tx.type !== "ton_deposit") {
-      return res.status(400).json({ error: "Invalid or already processed transaction" });
+    if (!tx || tx.type !== "ton_deposit") {
+      return res.status(400).json({ error: "Invalid transaction" });
     }
     if (tx.telegramId !== Number(userId)) {
       return res.status(403).json({ error: "Unauthorized" });
     }
+    if (tx.status === "completed") {
+      const u = await getOrCreateUser(userId);
+      return res.json({ success: true, credited: tx.usdEquivalent, dollarBalance: u.dollarBalance, starBalance: u.starBalance });
+    }
 
-    // Mark as completed and credit user balance
-    tx.status = "completed";
-    tx.tonTxHash = bocHash || "tonconnect_confirmed";
+    if (bocHash) tx.tonTxHash = bocHash;
     await tx.save();
 
-    const user = await getOrCreateUser(userId);
-    user.dollarBalance += tx.usdEquivalent;
-    await user.save();
-
-    console.log(`✅ TON Deposit: ${tx.tonAmount} TON ($${tx.usdEquivalent.toFixed(2)}) for user ${userId}`);
-
-    try {
-      const displayName = user.firstName || user.username || `User ${userId}`;
-      const userTag = user.username ? `@${user.username}` : `\`${userId}\``;
-      await bot.sendMessage(OWNER_TELEGRAM_ID,
-        `💰 *New TON Deposit!*\n\n` +
-        `👤 User: ${displayName} (${userTag})\n` +
-        `🆔 ID: \`${userId}\`\n` +
-        `💎 Amount: ${tx.tonAmount} TON\n` +
-        `💵 USD Value: $${tx.usdEquivalent.toFixed(2)}`,
-        { parse_mode: "Markdown" }
-      );
-    } catch (notifyErr) {
-      console.error("Owner TON notify failed:", notifyErr.message);
+    const result = await tryVerifyPendingTon(tx);
+    if (!result) {
+      return res.json({
+        success: true,
+        pending: true,
+        message: "Transaction sent. Blockchain confirm hone par balance apne aap add ho jayega (~30 sec).",
+      });
     }
 
     return res.json({
       success: true,
-      credited: tx.usdEquivalent,
-      dollarBalance: user.dollarBalance,
-      starBalance: user.starBalance,
+      credited: result.usd,
+      dollarBalance: result.user.dollarBalance,
+      starBalance: result.user.starBalance,
     });
   } catch (error) {
     console.error("TON confirm-deposit error:", error);
     return res.status(500).json({ error: "Failed to confirm TON deposit" });
   }
 });
+
+// GET /api/ton/deposit-status/:id - frontend polls until auto-credited
+app.get("/api/ton/deposit-status/:id", async (req, res) => {
+  try {
+    const tx = await Transaction.findById(req.params.id);
+    if (!tx) return res.status(404).json({ error: "Not found" });
+    if (tx.status === "pending") await tryVerifyPendingTon(tx);
+    const fresh = await Transaction.findById(req.params.id);
+    res.json({ status: fresh.status, credited: fresh.status === "completed" ? fresh.usdEquivalent : 0, tonAmount: fresh.tonAmount });
+  } catch (e) {
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Background watcher: auto-accept every pending TON deposit (any wallet, any amount)
+async function tonDepositWatcher() {
+  try {
+    const owner = await getOwnerTonWallet();
+    if (!owner) return;
+    const cutoff = new Date(Date.now() - 6 * 60 * 60 * 1000);
+    const pending = await Transaction.find({
+      type: "ton_deposit",
+      status: "pending",
+      createdAt: { $gte: cutoff },
+    }).limit(100);
+    if (!pending.length) return;
+
+    const list = await fetchOwnerIncomingTons(100);
+    if (!list.length) return;
+    for (const tx of pending) {
+      const match = list.find((m) => m.comment && m.comment === tx.depositComment);
+      if (match && match.tonValue > 0) {
+        await creditTonDeposit(tx, match.tonValue, match.hash);
+      }
+    }
+  } catch (e) {
+    console.error("TON watcher error:", e.message);
+  }
+}
+setInterval(tonDepositWatcher, 20000);
+setTimeout(tonDepositWatcher, 8000);
+
 
 // POST /api/ton/withdraw - Withdraw dollars via TON
 app.post("/api/ton/withdraw", async (req, res) => {
