@@ -413,14 +413,29 @@ const WalletScreen = () => {
     refetchInterval: 60000,
   });
 
+  const pollTonDeposit = async (txId: string) => {
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 6000));
+      try {
+        const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
+        if (st?.status === "completed") {
+          toast({
+            title: "TON Deposit Successful! ✅",
+            description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
+          });
+          refreshBalance();
+          setTonManual(null);
+          return true;
+        }
+      } catch {}
+    }
+    return false;
+  };
+
   const handleTonDeposit = async () => {
     const tonAmt = Number(tonDepositAmount);
     if (!tonAmt || tonAmt <= 0) {
       toast({ title: "Invalid amount", description: "Enter a valid TON amount.", variant: "destructive" });
-      return;
-    }
-    if (!tonAddress) {
-      toast({ title: "Wallet not connected", description: "Connect your TON wallet first.", variant: "destructive" });
       return;
     }
 
@@ -437,13 +452,34 @@ const WalletScreen = () => {
       const initData = await initRes.json();
       if (!initRes.ok) throw new Error(initData.error || "Failed to init deposit");
 
+      // Always expose a manual payment fallback (works even if TonConnect bridge fails)
+      setTonManual({
+        address: initData.ownerWallet,
+        comment: initData.depositComment,
+        amount: tonAmt,
+        txId: initData.transactionId,
+      });
+      pollTonDeposit(initData.transactionId);
+
+      if (!tonAddress) {
+        toast({
+          title: "Manual payment ready",
+          description: "Neeche diye address + comment se TON bhejein, fund auto add ho jayega.",
+        });
+        return;
+      }
+
       const nanoTon = BigInt(Math.floor(tonAmt * 1e9)).toString();
       const { beginCell } = await import("@ton/core");
       const body = beginCell()
         .storeUint(0, 32)
         .storeStringTail(initData.depositComment)
         .endCell();
-      const payloadBase64 = body.toBoc().toString("base64");
+      // Browser-safe base64 (Buffer polyfill may be unavailable)
+      const bocBytes = new Uint8Array(body.toBoc());
+      let bin = "";
+      bocBytes.forEach((b) => { bin += String.fromCharCode(b); });
+      const payloadBase64 = btoa(bin);
 
       const txResult = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 600,
@@ -455,6 +491,7 @@ const WalletScreen = () => {
           },
         ],
       });
+
 
       const confirmRes = await fetch(`${apiBase}/ton/confirm-deposit`, {
         method: "POST",
