@@ -128,6 +128,7 @@ const WalletScreen = () => {
   const [tonWithdrawAmount, setTonWithdrawAmount] = useState("");
   const [tonProcessing, setTonProcessing] = useState(false);
   const [tonPrice, setTonPrice] = useState<number | null>(null);
+  const [tonManual, setTonManual] = useState<{ address: string; comment: string; amount: number; txId: string } | null>(null);
 
   const [cryptoCurrency, setCryptoCurrency] = useState("btc");
   const [cryptoProcessing, setCryptoProcessing] = useState(false);
