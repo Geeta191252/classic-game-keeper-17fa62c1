@@ -1292,7 +1292,7 @@ const WalletScreen = () => {
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Crypto Withdraw</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">TON Withdraw</span>
                 </div>
 
 
