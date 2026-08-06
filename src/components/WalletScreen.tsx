@@ -830,7 +830,7 @@ const WalletScreen = () => {
       </motion.div>
 
       {/* Balances Card */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -839,32 +839,16 @@ const WalletScreen = () => {
           <div className="flex items-center justify-between gap-1">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[#8e97a4] text-[9px] font-extrabold uppercase tracking-wider">
-                <DollarSign className="h-3.5 w-3.5 text-emerald-400" /> Dollar
+                <span className="text-sm leading-none">💎</span> TON
               </div>
               <p className="font-black text-sm text-white">
-                ${totalDollarWallet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                💎{totalDollarWallet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.03 }}
-          className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-3 space-y-1 shadow-md"
-        >
-          <div className="flex items-center justify-between gap-1">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[#8e97a4] text-[9px] font-extrabold uppercase tracking-wider">
-                <IndianRupee className="h-3.5 w-3.5 text-emerald-400" /> Rupee
-              </div>
-              <p className="font-black text-sm text-white">
-                ₹{totalRupeeWallet.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+
 
         
         <motion.div
@@ -1179,33 +1163,8 @@ const WalletScreen = () => {
                   </button>
                 </div>
 
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
-                  <div className="flex items-center gap-1.5">
-                    <ArrowRightLeft className="h-4 w-4 text-[#00a2e8]" />
-                    <h3 className="font-black text-xs text-white uppercase tracking-wider">Star to Cash Converter</h3>
-                  </div>
-                  <p className="text-[10px] text-[#8e97a4]">Convert Star balance to withdrawable TON ({STAR_TO_DOLLAR_RATE} ⭐ = 💎1.00)</p>
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        placeholder={`Min ${STAR_TO_DOLLAR_RATE} ⭐`}
-                        value={convertStars}
-                        onChange={(e) => setConvertStars(e.target.value)}
-                        className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min={STAR_TO_DOLLAR_RATE}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">⭐</span>
-                    </div>
-                    <button
-                      onClick={handleConvert}
-                      disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
-                      className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
-                    >
-                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
-                    </button>
-                  </div>
-                </div>
+
+
               </motion.div>
             )}
 
@@ -1454,42 +1413,8 @@ const WalletScreen = () => {
                   <span className="font-black text-xs text-white uppercase tracking-wider">Star Withdraw</span>
                 </div>
 
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <ArrowRightLeft className="h-4 w-4 text-amber-400" />
-                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Star to Cash</h3>
-                    </div>
-                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                      Available: {starBalance.toLocaleString()} ⭐
-                    </span>
-                  </div>
 
-                  <p className="text-[10px] text-[#8e97a4]">
-                    Convert Stars to TON ({STAR_TO_DOLLAR_RATE} ⭐ = 💎1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw 💎 from TON tab.
-                  </p>
 
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        placeholder={`Min ${STAR_TO_DOLLAR_RATE} ⭐`}
-                        value={convertStars}
-                        onChange={(e) => setConvertStars(e.target.value)}
-                        className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min={STAR_TO_DOLLAR_RATE}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">⭐</span>
-                    </div>
-                    <button
-                      onClick={handleConvert}
-                      disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
-                      className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-amber-500 hover:bg-amber-600 text-black tracking-wider shadow-md transition-all disabled:opacity-50"
-                    >
-                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
-                    </button>
-                  </div>
-                </div>
 
                 {/* Direct Telegram Star Withdrawal */}
                 <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
