@@ -511,31 +511,16 @@ const WalletScreen = () => {
           title: "Payment sent ⏳",
           description: "Blockchain confirm hote hi fund apne aap add ho jayega (~30 sec).",
         });
-        // auto-poll until credited
-        const txId = initData.transactionId;
-        let credited = false;
-        for (let i = 0; i < 20 && !credited; i++) {
-          await new Promise((r) => setTimeout(r, 6000));
-          try {
-            const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
-            if (st?.status === "completed") {
-              credited = true;
-              toast({
-                title: "TON Deposit Successful! ✅",
-                description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
-              });
-              refreshBalance();
-            }
-          } catch {}
-        }
       } else {
         toast({
           title: "TON Deposit Successful! ✅",
           description: `${tonAmt} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
         });
         refreshBalance();
+        setTonManual(null);
       }
       setTonDepositAmount("");
+
 
     } catch (err: any) {
       if (err?.message?.includes("Rejected")) {
