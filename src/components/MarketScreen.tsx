@@ -82,7 +82,7 @@ const MarketScreen = ({ onGoToWallet }: MarketScreenProps) => {
 
   const startCryptoPayment = async (offer: BackendOffer, coinId: string) => {
     setBusyId(offer._id);
-    setCoinPickerOffer(null);
+    
     try {
       const tg = getTelegram();
       const userId = tg?.initDataUnsafe?.user?.id || "demo";
