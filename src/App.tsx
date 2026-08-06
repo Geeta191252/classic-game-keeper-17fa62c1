@@ -28,7 +28,6 @@ const DiceMasterGame = lazy(() => import("./pages/DiceMasterGame"));
 const CarnivalSpinGame = lazy(() => import("./pages/CarnivalSpinGame"));
 const MinesGame = lazy(() => import("./pages/MinesGame"));
 const MinesClassicGame = lazy(() => import("./pages/MinesClassicGame"));
-const AviatorGame = lazy(() => import("./pages/AviatorGame"));
 const AviatorFunGame = lazy(() => import("./pages/AviatorFunGame"));
 const PlinkoGame = lazy(() => import("./pages/PlinkoGame"));
 const ChickenRoadGame = lazy(() => import("./pages/ChickenRoadGame"));
@@ -62,7 +61,6 @@ const queryClient = new QueryClient();
 const manifestUrl = `${window.location.origin}/tonconnect-manifest.json`;
 
 const STARTAPP_GAME_ROUTES: Record<string, string> = {
-  g_aviator: "/aviator",
   g_aviator_fun: "/aviator-fun",
   g_mines: "/mines",
   g_mines_classic: "/mines-classic",
@@ -96,7 +94,6 @@ const StartParamNavigator = () => {
 // Prefetch ALL game chunks in parallel immediately so any click opens instantly.
 const prefetchGames = () => {
   const loaders: Array<() => Promise<unknown>> = [
-    () => import("./pages/AviatorGame"),
     () => import("./pages/AviatorFunGame"),
     () => import("./pages/GreedyKingGame"),
     () => import("./pages/MinesGame"),
@@ -161,7 +158,6 @@ const App = () => {
                   <Route path="/carnival-spin" element={framed(<CarnivalSpinGame />)} />
                   <Route path="/mines" element={framed(<MinesGame />)} />
                   <Route path="/mines-classic" element={framed(<MinesClassicGame />)} />
-                  <Route path="/aviator" element={framed(<AviatorGame />)} />
                   <Route path="/aviator-fun" element={framed(<AviatorFunGame />)} />
                   <Route path="/plinko" element={framed(<PlinkoGame />)} />
                   <Route path="/chicken-road" element={framed(<ChickenRoadGame />)} />
