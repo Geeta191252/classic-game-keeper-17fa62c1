@@ -694,7 +694,7 @@ const HomeScreen = () => {
                   </div>
                   <div className="h-px bg-white/[0.04]" />
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-[#8e97a4]">💲 Balance</span>
+                    <span className="text-[10px] text-[#8e97a4]">💎 TON Balance</span>
                     <span className="text-[10px] font-bold text-emerald-400">💎{totalDollar.toFixed(2)}</span>
                   </div>
                   <div className="h-px bg-white/[0.04]" />
