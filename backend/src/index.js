@@ -1971,6 +1971,18 @@ app.post("/api/telegram-webhook", async (req, res) => {
 // ============================================
 const OWNER_TON_WALLET = process.env.OWNER_TON_WALLET || "";
 
+// Resolve owner TON wallet from env first, then DB setting (admin configurable)
+async function getOwnerTonWallet() {
+  if (OWNER_TON_WALLET) return OWNER_TON_WALLET;
+  try {
+    const SettingModel = require("./models/Setting");
+    const doc = await SettingModel.findOne({ key: "ownerTonWallet" });
+    return (doc?.value?.address || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 // Helper: Fetch TON/USD price from CoinGecko
 async function getTonUsdPrice() {
   try {
@@ -1989,9 +2001,11 @@ app.post("/api/ton/init-deposit", async (req, res) => {
     if (!userId || !tonAmount || tonAmount <= 0) {
       return res.status(400).json({ error: "Missing userId or tonAmount" });
     }
-    if (!OWNER_TON_WALLET) {
-      return res.status(500).json({ error: "Owner TON wallet not configured" });
+    const ownerTonWallet = await getOwnerTonWallet();
+    if (!ownerTonWallet) {
+      return res.status(500).json({ error: "Owner TON wallet not configured. Admin panel > TON wallet me address set karein." });
     }
+
 
     const tonPrice = await getTonUsdPrice();
     const usdEquivalent = tonAmount * tonPrice;
