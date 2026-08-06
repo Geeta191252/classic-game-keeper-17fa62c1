@@ -830,7 +830,7 @@ const WalletScreen = () => {
       </motion.div>
 
       {/* Balances Card */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -839,32 +839,16 @@ const WalletScreen = () => {
           <div className="flex items-center justify-between gap-1">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[#8e97a4] text-[9px] font-extrabold uppercase tracking-wider">
-                <DollarSign className="h-3.5 w-3.5 text-emerald-400" /> Dollar
+                <span className="text-sm leading-none">💎</span> TON
               </div>
               <p className="font-black text-sm text-white">
-                ${totalDollarWallet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                💎{totalDollarWallet.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.03 }}
-          className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-3 space-y-1 shadow-md"
-        >
-          <div className="flex items-center justify-between gap-1">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[#8e97a4] text-[9px] font-extrabold uppercase tracking-wider">
-                <IndianRupee className="h-3.5 w-3.5 text-emerald-400" /> Rupee
-              </div>
-              <p className="font-black text-sm text-white">
-                ₹{totalRupeeWallet.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+
 
         
         <motion.div
