@@ -176,8 +176,8 @@ const AviatorFunGame = () => {
   const [withdrawAmount, setWithdrawAmount] = useState(500);
 
   // Dual Betting Panels State
-  const [panel1, setPanel1] = useState<PanelState>({ status: "NONE", amount: 3, autoCashout: false, autoMultiplier: 2.0 });
-  const [panel2, setPanel2] = useState<PanelState>({ status: "NONE", amount: 3, autoCashout: false, autoMultiplier: 2.0 });
+  const [panel1, setPanel1] = useState<PanelState>({ status: "NONE", amount: 0.2, autoCashout: false, autoMultiplier: 2.0 });
+  const [panel2, setPanel2] = useState<PanelState>({ status: "NONE", amount: 0.2, autoCashout: false, autoMultiplier: 2.0 });
   const [panel1ActiveTab, setPanel1ActiveTab] = useState<"bet" | "auto">("bet");
   const [panel2ActiveTab, setPanel2ActiveTab] = useState<"bet" | "auto">("bet");
   const [panel2Collapsed, setPanel2Collapsed] = useState(false);
@@ -210,8 +210,8 @@ const AviatorFunGame = () => {
     lastFrameTime: 0,
     waitingTimer: 5000,
     waitingDuration: 5000,
-    panel1: { status: "NONE" as BetStatus, amount: 3, autoCashout: false, autoMultiplier: 2.0 },
-    panel2: { status: "NONE" as BetStatus, amount: 3, autoCashout: false, autoMultiplier: 2.0 },
+    panel1: { status: "NONE" as BetStatus, amount: 0.2, autoCashout: false, autoMultiplier: 2.0 },
+    panel2: { status: "NONE" as BetStatus, amount: 0.2, autoCashout: false, autoMultiplier: 2.0 },
     simPlayers: [] as SimulatedPlayer[],
     roundTotalWin: 0
   });
@@ -752,7 +752,7 @@ const AviatorFunGame = () => {
 
   // Display-mode-aware step & presets
   const stepUnit = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
-  const presets = displayMode === "USD" ? [5, 10, 20, 50] : displayMode === "INR" ? [100, 500, 1000, 2500] : [50, 100, 250, 500];
+  const presets = displayMode === "USD" ? [0.2, 0.5, 1, 5] : displayMode === "INR" ? [20, 50, 100, 500] : [10, 50, 100, 500];
   const unitLabel = displayMode === "USD" ? "TON" : displayMode === "INR" ? "INR" : "STR";
 
   // Manual Adjustments
@@ -761,9 +761,11 @@ const AviatorFunGame = () => {
     const updater = panelId === "panel-1" ? setPanel1 : setPanel2;
     updater(prev => {
       if (prev.status !== "NONE") return prev;
-      const minVal = displayMode === "USD" ? 1 : displayMode === "INR" ? 50 : 10;
+      const minVal = displayMode === "USD" ? 0.2 : displayMode === "INR" ? 20 : 10;
       const maxVal = displayMode === "USD" ? 1000 : displayMode === "INR" ? 100000 : 10000;
-      const next = Math.max(minVal, Math.min(maxVal, prev.amount + amountChange));
+      const stepUnit = displayMode === "USD" ? 0.2 : displayMode === "INR" ? 20 : 10;
+      const dir = amountChange >= 0 ? 1 : -1;
+      const next = Math.round(Math.max(minVal, Math.min(maxVal, prev.amount + dir * stepUnit)) * 100) / 100;
       return { ...prev, amount: next };
     });
   };
@@ -889,8 +891,8 @@ const AviatorFunGame = () => {
                 onClick={() => {
                   if (gameState !== "FLYING") {
                     setDisplayMode("USD");
-                    setPanel1(prev => ({ ...prev, amount: 3 }));
-                    setPanel2(prev => ({ ...prev, amount: 3 }));
+                    setPanel1(prev => ({ ...prev, amount: 0.2 }));
+                    setPanel2(prev => ({ ...prev, amount: 0.2 }));
                   }
                 }}
               >
@@ -904,8 +906,8 @@ const AviatorFunGame = () => {
                 onClick={() => {
                   if (gameState !== "FLYING") {
                     setDisplayMode("STAR");
-                    setPanel1(prev => ({ ...prev, amount: 30 }));
-                    setPanel2(prev => ({ ...prev, amount: 30 }));
+                    setPanel1(prev => ({ ...prev, amount: 10 }));
+                    setPanel2(prev => ({ ...prev, amount: 10 }));
                   }
                 }}
               >

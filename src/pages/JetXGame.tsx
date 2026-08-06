@@ -12,7 +12,7 @@ import {
   type CurrencyType,
   type JetXState,
 } from "@/lib/telegram";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, toDisplayAmount, currencySymbol, minBet, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import rocketImg from "@/assets/jetx-rocket-fast.webp";
 // Cartoon cloud sky — procedural SVG tiles (two parallax layers, varied clouds)
 const CLOUDS_BACK = `data:image/svg+xml;utf8,${encodeURIComponent(`
@@ -77,11 +77,6 @@ const CLOUDS_FRONT = `data:image/svg+xml;utf8,${encodeURIComponent(`
 
 type Phase = "betting" | "flying" | "crashed";
 
-const PRESETS: Record<CurrencyType, number[]> = {
-  dollar: [1, 5, 10, 50],
-  rupee: [100, 500, 1000, 5000],
-  star: [10, 50, 100, 500],
-};
 
 const CASHOUT_PRESETS = [1.5, 2, 2.45, 5];
 
@@ -111,7 +106,7 @@ const JetXGame = () => {
   const [roundNumber, setRoundNumber] = useState(0);
   const [totalPlayers, setTotalPlayers] = useState(0);
 
-  const [betAmount, setBetAmount] = useState(500);
+  const [betAmount, setBetAmount] = useState(minBet("USD"));
   const [autoCashout, setAutoCashout] = useState(2.45);
   const [autoBet, setAutoBet] = useState(false);
   const [myBet, setMyBet] = useState<{ amount: number; cashedOutAt: number | null; winAmount: number } | null>(null);
@@ -127,7 +122,7 @@ const JetXGame = () => {
   const autoCashRef = useRef(autoCashout); autoCashRef.current = autoCashout;
 
   useEffect(() => {
-    setBetAmount(currencyMode === "INR" ? 500 : currencyMode === "STAR" ? 50 : 5);
+    setBetAmount(minBet(currencyMode));
   }, [currencyMode]);
 
   const totalBal =
@@ -747,7 +742,7 @@ const JetXGame = () => {
           <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Bet Amount</div>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={() => setBetAmount(v => Math.max(1, +(v - (currencyMode === "INR" ? 100 : 1)).toFixed(2)))}
+              onClick={() => setBetAmount(v => stepBet(v, currencyMode, -1))}
               className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
             >
               <Minus className="h-3.5 w-3.5" />
@@ -755,21 +750,21 @@ const JetXGame = () => {
             <input
               type="number"
               value={betAmount}
-              onChange={e => setBetAmount(Math.max(0, Number(e.target.value) || 0))}
+              onChange={e => setBetAmount(clampBet(Number(e.target.value) || 0, currencyMode))}
               className="flex-1 bg-transparent text-center text-base font-black outline-none w-0"
             />
             <button
-              onClick={() => setBetAmount(v => +(v + (currencyMode === "INR" ? 100 : 1)).toFixed(2))}
+              onClick={() => setBetAmount(v => stepBet(v, currencyMode, 1))}
               className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="grid grid-cols-4 gap-1 mt-1.5">
-            {PRESETS[currency].map(p => (
+            {betPresets(currencyMode).map(p => (
               <button
                 key={p}
-                onClick={() => setBetAmount(p)}
+                onClick={() => setBetAmount(clampBet(p, currencyMode))}
                 className="text-[9px] font-black py-1 rounded-md transition"
                 style={{
                   background: betAmount === p

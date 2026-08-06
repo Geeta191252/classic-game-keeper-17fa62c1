@@ -152,6 +152,7 @@ const MinesClassicGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const currency: CurrencyType = modeToWallet(currencyMode);
+  useEffect(() => { setBetInputStr(minBetFor(currencyMode).toFixed(2)); }, [currencyMode]);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalRupee = rupeeBalance + rupeeWinning;
@@ -279,7 +280,7 @@ const MinesClassicGame = () => {
     }
 
     const parsedBet = parseFloat(betInputStr) || 0;
-    const minLimit = currencyMode === "USD" ? 0.1 : currencyMode === "INR" ? 10 : 10;
+    const minLimit = minBetFor(currencyMode);
     const maxLimit = currencyMode === "USD" ? 1000 : currencyMode === "INR" ? 100000 : 10000;
 
     if (parsedBet < minLimit) {

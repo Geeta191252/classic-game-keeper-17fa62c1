@@ -210,7 +210,7 @@ const ChickenClassicGame = () => {
   const handlePresetSelect = (val: number) => {
     unlockAudio();
     audioRef.current.playClick();
-    setBetAmount(val);
+    setBetAmount(clampBet(val, currencyMode));
   };
 
   const currentCfg = useMemo(() => DIFFICULTY_CONFIG[difficulty], [difficulty]);
