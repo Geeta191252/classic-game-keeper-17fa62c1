@@ -1,10 +1,11 @@
-import { Wallet, useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Activity, Users, Gamepad2, ArrowDownToLine, ArrowUpFromLine, Coins,
-  BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight,
+  BarChart3, Settings, UserCircle2, ChevronLeft, ChevronRight, Wallet,
   Bell, Search, Trophy, Sparkles, LogOut, Plane, Crown, Gift, LifeBuoy, type LucideIcon,
 } from "lucide-react";
+
 import { isAdminAuthed, adminLogout } from "@/lib/adminApi";
 import "@/styles/admin.css";
 
