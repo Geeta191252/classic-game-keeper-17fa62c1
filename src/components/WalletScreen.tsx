@@ -128,6 +128,7 @@ const WalletScreen = () => {
   const [tonWithdrawAmount, setTonWithdrawAmount] = useState("");
   const [tonProcessing, setTonProcessing] = useState(false);
   const [tonPrice, setTonPrice] = useState<number | null>(null);
+  const [tonManual, setTonManual] = useState<{ address: string; comment: string; amount: number; txId: string } | null>(null);
 
   const [cryptoCurrency, setCryptoCurrency] = useState("btc");
   const [cryptoProcessing, setCryptoProcessing] = useState(false);
@@ -413,14 +414,29 @@ const WalletScreen = () => {
     refetchInterval: 60000,
   });
 
+  const pollTonDeposit = async (txId: string) => {
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 6000));
+      try {
+        const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
+        if (st?.status === "completed") {
+          toast({
+            title: "TON Deposit Successful! ✅",
+            description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
+          });
+          refreshBalance();
+          setTonManual(null);
+          return true;
+        }
+      } catch {}
+    }
+    return false;
+  };
+
   const handleTonDeposit = async () => {
     const tonAmt = Number(tonDepositAmount);
     if (!tonAmt || tonAmt <= 0) {
       toast({ title: "Invalid amount", description: "Enter a valid TON amount.", variant: "destructive" });
-      return;
-    }
-    if (!tonAddress) {
-      toast({ title: "Wallet not connected", description: "Connect your TON wallet first.", variant: "destructive" });
       return;
     }
 
@@ -437,13 +453,34 @@ const WalletScreen = () => {
       const initData = await initRes.json();
       if (!initRes.ok) throw new Error(initData.error || "Failed to init deposit");
 
+      // Always expose a manual payment fallback (works even if TonConnect bridge fails)
+      setTonManual({
+        address: initData.ownerWallet,
+        comment: initData.depositComment,
+        amount: tonAmt,
+        txId: initData.transactionId,
+      });
+      pollTonDeposit(initData.transactionId);
+
+      if (!tonAddress) {
+        toast({
+          title: "Manual payment ready",
+          description: "Neeche diye address + comment se TON bhejein, fund auto add ho jayega.",
+        });
+        return;
+      }
+
       const nanoTon = BigInt(Math.floor(tonAmt * 1e9)).toString();
       const { beginCell } = await import("@ton/core");
       const body = beginCell()
         .storeUint(0, 32)
         .storeStringTail(initData.depositComment)
         .endCell();
-      const payloadBase64 = body.toBoc().toString("base64");
+      // Browser-safe base64 (Buffer polyfill may be unavailable)
+      const bocBytes = new Uint8Array(body.toBoc());
+      let bin = "";
+      bocBytes.forEach((b) => { bin += String.fromCharCode(b); });
+      const payloadBase64 = btoa(bin);
 
       const txResult = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 600,
@@ -455,6 +492,7 @@ const WalletScreen = () => {
           },
         ],
       });
+
 
       const confirmRes = await fetch(`${apiBase}/ton/confirm-deposit`, {
         method: "POST",
@@ -473,37 +511,26 @@ const WalletScreen = () => {
           title: "Payment sent ⏳",
           description: "Blockchain confirm hote hi fund apne aap add ho jayega (~30 sec).",
         });
-        // auto-poll until credited
-        const txId = initData.transactionId;
-        let credited = false;
-        for (let i = 0; i < 20 && !credited; i++) {
-          await new Promise((r) => setTimeout(r, 6000));
-          try {
-            const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
-            if (st?.status === "completed") {
-              credited = true;
-              toast({
-                title: "TON Deposit Successful! ✅",
-                description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
-              });
-              refreshBalance();
-            }
-          } catch {}
-        }
       } else {
         toast({
           title: "TON Deposit Successful! ✅",
           description: `${tonAmt} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
         });
         refreshBalance();
+        setTonManual(null);
       }
       setTonDepositAmount("");
+
 
     } catch (err: any) {
       if (err?.message?.includes("Rejected")) {
         toast({ title: "Cancelled", description: "Transaction was cancelled." });
       } else {
-        toast({ title: "Error", description: err?.message || "TON deposit failed.", variant: "destructive" });
+        toast({
+          title: "Wallet request failed",
+          description: "Neeche diye TON address + comment se manually bhejein — fund auto add ho jayega.",
+          variant: "destructive",
+        });
       }
     } finally {
       setTonProcessing(false);
@@ -989,34 +1016,80 @@ const WalletScreen = () => {
                       </button>
                     )}
                   </div>
-                  {tonAddress ? (
-                    <div className="space-y-1.5">
-                      <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Instant TON Deposit</p>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                        <div className="relative min-w-0">
-                          <Input
-                            type="number"
-                            placeholder="Amount of TON"
-                            value={tonDepositAmount}
-                            onChange={(e) => setTonDepositAmount(e.target.value)}
-                            className="pr-8 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                          />
-                          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">TON</span>
-                        </div>
-                        <button
-                          onClick={handleTonDeposit}
-                          disabled={tonProcessing || !tonDepositAmount}
-                          className="w-full sm:w-auto rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
-                        >
-                          {tonProcessing ? "..." : "Deposit"}
-                        </button>
+                  <div className="space-y-1.5">
+                    <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Instant TON Deposit</p>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <div className="relative min-w-0">
+                        <Input
+                          type="number"
+                          placeholder="Amount of TON"
+                          value={tonDepositAmount}
+                          onChange={(e) => setTonDepositAmount(e.target.value)}
+                          className="pr-8 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
+                        />
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">TON</span>
                       </div>
+                      <button
+                        onClick={handleTonDeposit}
+                        disabled={tonProcessing || !tonDepositAmount}
+                        className="w-full sm:w-auto rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
+                      >
+                        {tonProcessing ? "..." : "Deposit"}
+                      </button>
                     </div>
-                  ) : (
-                    <p className="text-[9px] text-[#8e97a4] text-center py-2">
-                      ⚠️ Connect your TON wallet above to perform instant TON deposits.
-                    </p>
+                    {!tonAddress && (
+                      <p className="text-[9px] text-[#8e97a4]">
+                        Wallet connect nahi hai? Fir bhi Deposit dabayein — manual address + comment mil jayega.
+                      </p>
+                    )}
+                  </div>
+
+                  {tonManual && (
+                    <div className="rounded-2xl bg-[#0d121f] p-3 space-y-2 border border-[#0098ea]/30">
+                      <p className="text-[9px] font-extrabold text-[#0098ea] uppercase tracking-wider">
+                        Manual payment (auto credit)
+                      </p>
+                      <p className="text-[9px] text-[#8e97a4]">
+                        Exactly <b className="text-white">{tonManual.amount} TON</b> bhejein, comment zaroor lagayein.
+                      </p>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Address</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.address}</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.address); toast({ title: "Address copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.comment}</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.comment); toast({ title: "Comment copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <a
+                        href={`ton://transfer/${tonManual.address}?amount=${Math.floor(tonManual.amount * 1e9)}&text=${encodeURIComponent(tonManual.comment)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-center rounded-xl h-9 leading-9 text-[10px] font-black uppercase bg-[#0098ea] text-white tracking-wider"
+                      >
+                        Open in TON Wallet
+                      </a>
+                      <p className="text-[9px] text-[#8e97a4] text-center">
+                        Payment ke baad ~30 sec me fund apne aap add ho jayega.
+                      </p>
+                    </div>
                   )}
+
                 </div>
               </motion.div>
             )}
