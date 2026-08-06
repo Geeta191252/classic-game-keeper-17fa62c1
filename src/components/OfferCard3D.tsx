@@ -22,8 +22,8 @@ interface Props {
 const OfferCard3D = ({ offer, onClaim, busy }: Props) => {
   const isDollar = offer.payCurrency === "dollar";
   const heroImg = isDollar ? megaDealImg : specialOfferImg;
-  const symbol = isDollar ? "$" : "⭐";
-  const payDisp = isDollar ? `$${offer.payAmount}` : `${offer.payAmount} ⭐`;
+  const symbol = isDollar ? "💎" : "⭐";
+  const payDisp = isDollar ? `${offer.payAmount} 💎` : `${offer.payAmount} ⭐`;
   const title = offer.title || (isDollar ? "MEGA DEAL" : "SPECIAL OFFER");
 
   // Parse bonus label e.g. "+$10 +50 ⭐" to surface a single visible "+X" tile next to the Get
@@ -49,10 +49,10 @@ const OfferCard3D = ({ offer, onClaim, busy }: Props) => {
         const mDol = (offer.bonusLabel || "").match(/\+\s*\$\s*(\d+(?:\.\d+)?)/);
         const bDol = mDol ? parseFloat(mDol[1]) : (isDollar ? inferredBonus : 0);
         const bonusPrimary = isDollar
-          ? bDol > 0 ? `$${bDol}` : bStar > 0 ? `${bStar}` : ""
+          ? bDol > 0 ? `${bDol}` : bStar > 0 ? `${bStar}` : ""
           : bStar > 0 ? `${bStar}` : "";
         const showBonus = bonusPrimary !== "";
-        const tileIcon = isDollar ? "💰" : "⭐";
+        const tileIcon = isDollar ? "💎" : "⭐";
         const total = offer.getAmount || offer.payAmount + (isDollar ? bDol : bStar);
         const computedValueLabel = inferredBonus > 0 && offer.payAmount > 0
           ? `${Math.round((inferredBonus / offer.payAmount) * 100)}% OFF`
@@ -110,7 +110,7 @@ const OfferCard3D = ({ offer, onClaim, busy }: Props) => {
                     }}
                   >
                     <span className="text-2xl leading-none" style={{ filter: "drop-shadow(0 2px 2px hsla(0,0%,0%,0.5))" }}>
-                      {isDollar && bDol > 0 ? "💰" : "⭐"}
+                      {isDollar && bDol > 0 ? "💎" : "⭐"}
                     </span>
                     <span className="font-black text-lg leading-none mt-0.5" style={{ color: "hsl(0 0% 100%)", textShadow: "2px 2px 0 hsla(0,0%,0%,0.6)" }}>
                       {bonusPrimary}
