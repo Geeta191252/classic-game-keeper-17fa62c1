@@ -877,7 +877,7 @@ const WalletScreen = () => {
                   Choose Deposit Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: cryptoMinsReady ? `Min ${formatUsdMin(Math.min(...Object.values(cryptoMins)))}+` : "Min Loading…", icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin deposit 💎", min: "Instant", icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Telegram Stars ⭐", min: `Min ${starDepositMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -922,129 +922,11 @@ const WalletScreen = () => {
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Crypto Deposit</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">TON Deposit</span>
                 </div>
 
-                {/* Crypto currency grid */}
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
-                  <p className="text-[10px] text-[#8e97a4]">Select currency → Pay → Get $ in wallet</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {cryptoOptions.map((coin) => {
-                      const active = cryptoCurrency === coin.id;
-                      return (
-                        <button
-                          key={coin.id}
-                          onClick={() => setCryptoCurrency(coin.id)}
-                          className={`rounded-2xl p-3 flex flex-col items-start gap-2 transition-all border ${
-                            active
-                              ? "bg-[#00a2e8]/10 border-[#00a2e8]/50 shadow-md shadow-[#00a2e8]/10"
-                              : "bg-[#0d121f] border-white/[0.04] hover:border-white/10"
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 w-full">
-                            <div
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-black flex-shrink-0"
-                              style={{ background: coin.color }}
-                            >
-                              {coin.symbol}
-                            </div>
-                            <span className="text-[13px] font-black text-white tracking-tight">{coin.label}</span>
-                          </div>
-                          <span className="text-[10px] text-[#8e97a4] font-medium leading-none">{coin.name}</span>
-                          <span className={`text-[9px] font-black leading-none mt-0.5 ${active ? "text-[#00a2e8]" : "text-amber-400/80"}`}>Min {cryptoMinLabel(coin.id)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <p className="text-[10px] text-[#8e97a4]">
-                      Minimum for <span className="text-white font-black">{cryptoCurrency.toUpperCase()}</span>: <span className="text-amber-400 font-black">{cryptoMinLabel(cryptoCurrency)}</span>. Create address only when you are ready to pay.
-                    </p>
-                    {cryptoProcessing && (
-                      <span className="text-[10px] text-[#00a2e8] font-black">Loading…</span>
-                    )}
-                  </div>
-
-                  {!cryptoPayment && (
-                    <div className="flex items-stretch gap-2">
-                      <div className="flex-1 flex items-center gap-2 rounded-2xl bg-[#0d121f] border border-white/[0.04] px-4">
-                        <input
-                          type="number"
-                          inputMode="decimal"
-                          min={cryptoMins[cryptoCurrency] || 1}
-                          value={cryptoUsdAmount}
-                          onChange={(e) => setCryptoUsdAmount(e.target.value)}
-                          placeholder={`USD amount (min ${cryptoMinLabel(cryptoCurrency)})`}
-                          className="flex-1 bg-transparent outline-none text-sm font-black text-white placeholder:text-[#5a6373] py-3"
-                        />
-                        <span className="text-[#8e97a4] text-sm font-black">$</span>
-                      </div>
-                      <button
-                        disabled={cryptoProcessing || !cryptoMinsReady}
-                        onClick={() => handleCryptoDeposit(cryptoCurrency)}
-                        className="rounded-2xl px-5 text-sm font-black uppercase tracking-wider text-white bg-[#00a2e8] hover:bg-[#0091d0] disabled:opacity-50 flex items-center gap-1.5"
-                      >
-                        {cryptoProcessing ? "…" : (<>PAY <ExternalLink className="h-3.5 w-3.5" /></>)}
-                      </button>
-                    </div>
-                  )}
 
 
-                  <AnimatePresence>
-                    {cryptoPayment && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="bg-[#0d121f] border border-white/[0.02] rounded-xl p-4 space-y-3"
-                      >
-                        <p className="text-[11px] font-semibold text-white">
-                          Scan QR or copy the <span className="text-[#00a2e8] font-bold">{cryptoPayment.payCurrency.toUpperCase()}</span> address below
-                        </p>
-                        <div className="flex justify-center py-2">
-                          <div className="bg-white p-2.5 rounded-2xl shadow-inner">
-                            <QRCodeSVG
-                              value={cryptoPayment.payAddress}
-                              size={150}
-                              level="H"
-                              includeMargin={false}
-                            />
-                          </div>
-                        </div>
-                        <div className="bg-[#141b2b] border border-white/[0.02] rounded-xl p-3">
-                          <p className="text-[9px] font-extrabold text-[#00a2e8] mb-0.5 uppercase tracking-wider">
-                            {cryptoPayment.payCurrency.toUpperCase()} Address:
-                          </p>
-                          <p className="text-[9px] font-mono text-slate-200 break-all select-all">{cryptoPayment.payAddress}</p>
-                        </div>
-                        <button
-                          className="w-full rounded-xl py-2 text-xs font-black uppercase tracking-wider bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/[0.02] transition-colors"
-                          onClick={() => safeCopy(cryptoPayment.payAddress)}
-                        >
-                          Copy Address
-                        </button>
-                        <p className="text-[8px] text-[#8e97a4] text-center">
-                          Send minimum shown for this coin • Balance/payment history shows only after blockchain confirmation
-                        </p>
-                        {paymentStatus && paymentStatus !== "completed" && (
-                          <div className="flex items-center gap-2 bg-[#00a2e8]/10 rounded-xl px-3 py-2 border border-[#00a2e8]/10">
-                            <span className="animate-pulse text-[#00a2e8] text-lg">⏳</span>
-                            <span className="text-[10px] font-medium text-slate-200 capitalize">
-                              Status: {paymentStatus === "pending" ? "Waiting for payment..." : paymentStatus}
-                            </span>
-                          </div>
-                        )}
-                        <button
-                          className="w-full text-[10px] font-bold text-slate-500 hover:text-white mt-1"
-                          onClick={() => setCryptoPayment(null)}
-                        >
-                          Close
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
 
                 {/* TON Deposit — also on crypto page */}
                 <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md max-w-full overflow-hidden">
@@ -1247,7 +1129,7 @@ const WalletScreen = () => {
                   Choose Withdraw Method
                 </p>
                 {([
-                  { id: "crypto", label: "Crypto $", desc: "BTC • LTC • TON • SOL • TRX • DOGE", min: `Min $${cryptoWithdrawMin}`, icon: DollarSign, color: "#00a2e8" },
+                  { id: "crypto", label: "TON Wallet", desc: "Instant Toncoin withdraw 💎", min: `Min $${cryptoWithdrawMin}`, icon: Wallet, color: "#0098ea" },
                   
                   { id: "star", label: "Star", desc: "Convert Stars → $ then withdraw", min: `Min ${starWithdrawMin} ⭐`, icon: Star, color: "#f59e0b" },
                 ] as const).map((m) => {
@@ -1292,79 +1174,11 @@ const WalletScreen = () => {
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <span className="font-black text-xs text-white uppercase tracking-wider">Crypto Withdraw</span>
+                  <span className="font-black text-xs text-white uppercase tracking-wider">TON Withdraw</span>
                 </div>
 
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-4 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <ArrowUpRight className="h-4 w-4 text-[#00a2e8]" />
-                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Withdraw Winnings</h3>
-                    </div>
-                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-emerald-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                      Available: ${dollarWinnings.toFixed(2)}
-                    </span>
-                  </div>
 
-                  <p className="text-[10px] text-[#8e97a4]">
-                    Minimum withdrawal: <span className="text-amber-400 font-black">$10</span>
-                  </p>
 
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {withdrawCryptoOptions.map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => {
-                          setWithdrawCrypto(c.id);
-                          setWithdrawNetwork(c.network);
-                        }}
-                        className={`py-2 rounded-xl text-[10px] font-black border transition-colors ${
-                          withdrawCrypto === c.id
-                            ? "border-[#00a2e8] bg-[#00a2e8]/10 text-white"
-                            : "border-white/[0.02] bg-[#0d121f] text-slate-400"
-                        }`}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Withdraw Address</label>
-                    <Input
-                      type="text"
-                      placeholder={`Your ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''} address`}
-                      value={withdrawAddress}
-                      onChange={e => setWithdrawAddress(e.target.value)}
-                      className="rounded-xl bg-[#0d121f] border-white/[0.02] font-mono text-[9px] text-white h-9"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400">Amount (USD) — Min ${cryptoWithdrawMin}</label>
-                    <Input
-                      type="number"
-                      placeholder={`Amount to withdraw (min $${cryptoWithdrawMin})`}
-                      value={withdrawAmount}
-                      onChange={e => { setWithdrawAmount(e.target.value); setWithdrawCurrency("dollar"); }}
-                      className="rounded-xl bg-[#0d121f] border-white/[0.02] text-white h-9 text-xs"
-                      min={cryptoWithdrawMin}
-                    />
-                  </div>
-
-                  <Button
-                    onClick={() => { setWithdrawCurrency("dollar"); handleWithdrawSubmit(); }}
-                    disabled={withdrawing || !withdrawAmount || !withdrawAddress.trim() || parseFloat(withdrawAmount) < cryptoWithdrawMin}
-
-                    className="w-full rounded-xl h-10 font-black text-xs uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
-                  >
-                    {withdrawing ? "Submitting..." : `Withdraw via ${withdrawCryptoOptions.find(c => c.id === withdrawCrypto)?.label || ''}`}
-                  </Button>
-
-                  <p className="text-[8px] text-slate-500 text-center leading-relaxed">
-                    ⏳ Requests go to admin for approval. You'll get a Telegram message once processed.
-                  </p>
-                </div>
 
                 {/* TON Instant Withdraw */}
                 <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
@@ -1554,7 +1368,7 @@ const WalletScreen = () => {
                   </div>
 
                   <p className="text-[10px] text-[#8e97a4]">
-                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from Crypto tab.
+                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from TON tab.
                   </p>
 
                   <div className="flex gap-2">
