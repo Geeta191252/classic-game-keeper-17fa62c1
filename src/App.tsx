@@ -142,7 +142,12 @@ const App = () => {
   }, []);
 
   return (
-    <TonConnectUIProvider manifestUrl={manifestUrl}>
+    <TonConnectUIProvider
+      manifestUrl={manifestUrl}
+      actionsConfiguration={{
+        twaReturnUrl: "https://t.me/RoyalKingGameBot/RoyalKingGame",
+      }}
+    >
       <QueryClientProvider client={queryClient}>
         <BalanceProvider>
           <TooltipProvider>
