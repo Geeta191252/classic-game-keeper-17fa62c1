@@ -1368,7 +1368,7 @@ const WalletScreen = () => {
                   </div>
 
                   <p className="text-[10px] text-[#8e97a4]">
-                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from Crypto tab.
+                    Convert Stars to $ ({STAR_TO_DOLLAR_RATE} ⭐ = $1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw $ from TON tab.
                   </p>
 
                   <div className="flex gap-2">
