@@ -240,7 +240,7 @@ const AviatorFunGame = () => {
   const formatMoney = useCallback((val: number) => {
     if (displayMode === "STAR") return `★${Math.floor(val).toLocaleString()}`;
     if (displayMode === "INR") return `₹${val.toFixed(2)}`;
-    return `$${val.toFixed(2)}`;
+    return `💎${val.toFixed(2)}`;
   }, [displayMode]);
 
   // Compact header balance so all three currency chips always fit (1.89M, 12.4K…)
@@ -946,7 +946,7 @@ const AviatorFunGame = () => {
               </div>
               <div className="total-win">
                 <span className="win-label">Total win</span>
-                <span className="win-value">{currency === "star" ? `★${Math.floor(roundTotalWin).toLocaleString()}` : `$${roundTotalWin.toFixed(2)}`}</span>
+                <span className="win-value">{currency === "star" ? `★${Math.floor(roundTotalWin).toLocaleString()}` : `💎${roundTotalWin.toFixed(2)}`}</span>
               </div>
             </div>
             
