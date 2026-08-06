@@ -197,7 +197,7 @@ const RocketCrash = () => {
   const [players, setPlayers] = useState<Player[]>(genPlayers(8));
 
   // ── BET STATE ──────────────────────
-  const [betAmount, setBetAmount] = useState(100);
+  const [betAmount, setBetAmount] = useState(0.2);
   const [autoCashout, setAutoCashout] = useState(2.0);
   const [autoBet, setAutoBet] = useState(false);
   const [myBet, setMyBet] = useState<{ amount: number; cashout: number | null; win: number } | null>(null);
@@ -560,19 +560,19 @@ const RocketCrash = () => {
         <div className={`${glass} rounded-2xl p-2.5`}>
           <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Bet Amount</div>
           <div className="flex items-center gap-1.5">
-            <button onClick={() => setBetAmount((v) => Math.max(10, v - 50))} className={`w-8 h-9 rounded-lg ${glass} flex items-center justify-center active:scale-90`}><Minus className="h-3.5 w-3.5" /></button>
-            <input type="number" value={betAmount} onChange={(e) => setBetAmount(Math.max(0, +e.target.value || 0))}
+            <button onClick={() => setBetAmount((v) => Math.max(0.2, Math.round((v - 0.2) * 100) / 100))} className={`w-8 h-9 rounded-lg ${glass} flex items-center justify-center active:scale-90`}><Minus className="h-3.5 w-3.5" /></button>
+            <input type="number" value={betAmount} onChange={(e) => setBetAmount(Math.max(0.2, +e.target.value || 0.2))}
               className="flex-1 bg-transparent text-center text-base font-black outline-none w-0" />
-            <button onClick={() => setBetAmount((v) => v + 50)} className={`w-8 h-9 rounded-lg ${glass} flex items-center justify-center active:scale-90`}><Plus className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setBetAmount((v) => Math.round((v + 0.2) * 100) / 100)} className={`w-8 h-9 rounded-lg ${glass} flex items-center justify-center active:scale-90`}><Plus className="h-3.5 w-3.5" /></button>
           </div>
           <div className="grid grid-cols-4 gap-1 mt-1.5">
-            {[100, 500, 1000, 5000].map((p) => (
+            {[0.2, 0.5, 1, 5].map((p) => (
               <button key={p} onClick={() => setBetAmount(p)} className="text-[9px] font-black py-1 rounded-md transition"
                 style={{
                   background: betAmount === p ? `linear-gradient(180deg,${C.neonGreen},#14532d)` : "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.08)",
                   boxShadow: betAmount === p ? `0 4px 10px ${C.neonGreen}66` : "none",
-                }}>₹{p}</button>
+                }}>💎{p}</button>
             ))}
           </div>
         </div>

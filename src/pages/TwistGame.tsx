@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { getTelegramUser, type CurrencyType, reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./TwistGame.css";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
@@ -245,11 +245,6 @@ const MULTIPLIERS = [
   [0, 3.90, 12.5, 28.0, 52.0, 85.0, 133.0, 200.0, 1000.0]  // Fire (Outer)
 ];
 
-const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
-  USD: [1, 3, 5, 10, 20, 50, 100],
-  INR: [100, 300, 500, 1000, 2000, 5000, 10000],
-  STAR: [10, 25, 50, 100, 250, 500, 1000],
-};
 
 
 const stepAngles = MULTIPLIERS.map(arr => {
@@ -269,9 +264,9 @@ const TwistGame = () => {
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const currency: CurrencyType = modeToWallet(currencyMode);
   useEffect(() => {
-    setBet(currencyMode === "INR" ? 100 : currency === "star" ? 30 : 3);
+    setBet(minBet(currencyMode));
   }, [currencyMode]);
-  const [bet, setBet] = useState(3);
+  const [bet, setBet] = useState(minBet("USD"));
   const [lastWin, setLastWin] = useState<number | null>(null);
   
   // Game state
@@ -781,7 +776,7 @@ const TwistGame = () => {
     synthRef.current.init();
     synthRef.current.playClick();
     if (isRoundActive) return;
-    setBet(prev => Math.max(1, Math.min(currencyMode === "USD" ? 100 : currencyMode === "INR" ? 10000 : 1000, prev + amt)));
+    setBet(prev => stepBet(prev, currencyMode, amt >= 0 ? 1 : -1));
   };
 
   // Click handler on canvas to toggle rings
@@ -1208,14 +1203,14 @@ const TwistGame = () => {
 
             {/* Presets */}
             <div className="flex gap-1 justify-between w-full mb-1">
-              {PRESETS_BY_MODE[currencyMode].map((preset) => (
+              {betPresets(currencyMode).map((preset) => (
                 <button
                   key={preset}
                   disabled={isRoundActive}
                   onClick={() => {
                     synthRef.current.init();
                     synthRef.current.playClick();
-                    setBet(preset);
+                    setBet(clampBet(preset, currencyMode));
                   }}
                   className={`flex-1 py-1 rounded text-[10px] font-bold transition border ${
                     bet === preset

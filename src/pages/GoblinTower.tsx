@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { type CurrencyType, reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./GoblinTower.css";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
@@ -17,11 +17,6 @@ const MULTIPLIERS = {
   high: [4.80, 23.04, 110.59, 530.84, 2548.04, 12230.59, 58706.84, 281792.84, 1352605.65, 6492507.13, 31164034.21]
 };
 
-const PRESETS_BY_CURRENCY: Record<GameCurrencyMode, number[]> = {
-  USD: [1, 3, 5, 10, 20, 50, 100],
-  INR: [100, 300, 500, 1000, 2000, 5000, 10000],
-  STAR: [10, 25, 50, 100, 250, 500, 1000]
-};
 
 // Web Audio API Sound Engine
 class GoblinAudioEngine {
@@ -165,11 +160,11 @@ const GoblinTower = () => {
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const currency: CurrencyType = modeToWallet(currencyMode);
   useEffect(() => {
-    setBet(currencyMode === "INR" ? 100 : currency === "star" ? 30 : 3);
+    setBet(minBet(currencyMode));
   }, [currencyMode]);
 
   // States
-  const [bet, setBet] = useState(3);
+  const [bet, setBet] = useState(minBet("USD"));
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentLevel, setCurrentLevel] = useState(0); // 0 to 10
   const [difficulty, setDifficulty] = useState<DifficultyType>("easy");
@@ -446,7 +441,7 @@ const GoblinTower = () => {
 
   const adjustBet = (amt: number) => {
     if (isPlaying) return;
-    setBet(prev => Math.max(1, Math.min(currencyMode === "USD" ? 1000 : currencyMode === "INR" ? 100000 : 10000, prev + amt)));
+    setBet(prev => stepBet(prev, currencyMode, amt >= 0 ? 1 : -1));
   };
 
   const handleDifficultySelect = (diff: DifficultyType) => {

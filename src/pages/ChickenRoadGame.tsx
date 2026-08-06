@@ -22,7 +22,7 @@ import {
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult, getTelegram } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, WalletKind, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, WalletKind, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import { toast } from "@/hooks/use-toast";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
@@ -117,7 +117,6 @@ const DIFFICULTY_CONFIG: Record<
   },
 };
 
-const BET_PRESETS = [0.5, 1, 2, 7];
 
 const ChickenRoadGame = () => {
   const navigate = useNavigate();
@@ -153,7 +152,8 @@ const ChickenRoadGame = () => {
 
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const activeWallet = modeToWallet(currencyMode);
-  const [selectedBet, setSelectedBet] = useState(1);
+  useEffect(() => { setSelectedBet(minBet(currencyMode)); }, [currencyMode]);
+  const [selectedBet, setSelectedBet] = useState(minBet("USD"));
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [phase, setPhase] = useState<Phase>("betting");
   const [currentLane, setCurrentLane] = useState(0);
@@ -766,32 +766,32 @@ const ChickenRoadGame = () => {
           style={{ background: "#2b2f3d", border: "1px solid #1d2029" }}
         >
           <button
-            onClick={() => setSelectedBet(0.5)}
-            className="h-12 px-4 rounded-xl text-[13px] font-black"
+            onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, -1))}
+            className="h-12 px-4 rounded-xl text-[20px] font-black"
             style={{ background: "#3a3f50", color: "#eaecf2" }}
           >
-            MIN
+            −
           </button>
           <div className="flex-1 text-center text-[18px] font-black" style={{ color: "#eaecf2" }}>
-            {selectedBet < 1 ? selectedBet.toFixed(2) : selectedBet.toFixed(0)}
+            {selectedBet.toFixed(2)}
           </div>
           <button
-            onClick={() => setSelectedBet(Math.max(0.5, Math.floor(currentBalance)))}
-            className="h-12 px-4 rounded-xl text-[13px] font-black"
+            onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, 1))}
+            className="h-12 px-4 rounded-xl text-[20px] font-black"
             style={{ background: "#3a3f50", color: "#eaecf2" }}
           >
-            MAX
+            +
           </button>
         </div>
 
         {/* Row 2: bet presets */}
         <div className="grid grid-cols-4 gap-1.5">
-          {BET_PRESETS.map((bet) => {
+          {betPresets(currencyMode).map((bet) => {
             const active = selectedBet === bet;
             return (
               <button
                 key={bet}
-                onClick={() => setSelectedBet(bet)}
+                onClick={() => setSelectedBet(clampBet(bet, currencyMode))}
                 className="h-14 rounded-2xl text-[15px] font-black flex items-center justify-center gap-1.5"
                 style={{
                   background: "#2b2f3d",

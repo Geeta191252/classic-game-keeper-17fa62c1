@@ -19,7 +19,8 @@ const FOOD_ITEMS = [
   { emoji: "🥕", name: "Carrot", multiplier: 5 },
 ];
 
-const BET_OPTIONS = [10, 100, 1000, 10000];
+const BET_OPTIONS_USD = [0.2, 1, 5, 20];
+const BET_OPTIONS_STAR = [10, 50, 100, 500];
 
 const DOLLAR_PLAYERS = [
   "Meer", "Ali Khan", "Hassan", "kailash", "Raj", "Amit K.", "Vikram", "Rohit P.",
@@ -64,9 +65,11 @@ const GreedyKingGame = () => {
   const [todayProfits, setTodayProfits] = useState(0);
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const activeWallet = modeToWallet(currencyMode);
+  const BET_OPTIONS = currencyMode === "STAR" ? BET_OPTIONS_STAR : BET_OPTIONS_USD;
+  useEffect(() => { setSelectedBet(currencyMode === "STAR" ? 10 : 0.2); }, [currencyMode]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<CurrencyType>("dollar");
-  const [selectedBet, setSelectedBet] = useState(10);
+  const [selectedBet, setSelectedBet] = useState(0.2);
 
   // Multiplayer state from server
   const [serverState, setServerState] = useState<GreedyKingState | null>(null);

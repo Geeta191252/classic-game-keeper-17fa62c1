@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, Volume2, VolumeX } from "lucide-react";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { type CurrencyType, reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet as minBetFor, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./MinesClassicGame.css";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
@@ -145,11 +145,6 @@ const CUSTOM_MULTIPLIERS: Record<number, number[]> = {
   24: [23.75]
 };
 
-const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
-  USD: [1, 5, 10],
-  INR: [100, 500, 1000],
-  STAR: [100, 500, 1000],
-};
 
 
 const MinesClassicGame = () => {
@@ -157,6 +152,7 @@ const MinesClassicGame = () => {
   const { dollarBalance, rupeeBalance, starBalance, dollarWinning, rupeeWinning, starWinning, refreshBalance, currencyDisplay, toggleCurrencyDisplay } = useBalanceContext();
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const currency: CurrencyType = modeToWallet(currencyMode);
+  useEffect(() => { setBetInputStr(minBetFor(currencyMode).toFixed(2)); }, [currencyMode]);
 
   const totalDollar = dollarBalance + dollarWinning;
   const totalRupee = rupeeBalance + rupeeWinning;
@@ -169,7 +165,7 @@ const MinesClassicGame = () => {
   const audioUnlockedRef = useRef(false);
 
   // Betting & Game configuration
-  const [betInputStr, setBetInputStr] = useState("1.00");
+  const [betInputStr, setBetInputStr] = useState(minBetFor("USD").toFixed(2));
   const [bombsCount, setBombsCount] = useState(3);
   const [customBombsOpen, setCustomBombsOpen] = useState(false);
   const [customBombsInput, setCustomBombsInput] = useState("3");
@@ -235,21 +231,20 @@ const MinesClassicGame = () => {
   const handleMinBet = () => {
     unlockAudio();
     audioRef.current.playClick();
-    setBetInputStr(currencyMode === "USD" ? "0.10" : currencyMode === "INR" ? "10" : "10");
+    setBetInputStr(prev => stepBet(parseFloat(prev) || 0, currencyMode, -1).toFixed(2));
   };
 
   const handleMaxBet = () => {
     unlockAudio();
     audioRef.current.playClick();
-    const maxDisplay = currencyMode === "USD" ? 500 : currencyMode === "INR" ? 50000 : 5000;
-    setBetInputStr(Math.min(balance, maxDisplay).toString());
+    setBetInputStr(prev => stepBet(parseFloat(prev) || 0, currencyMode, 1).toFixed(2));
   };
 
 
   const handlePresetSelect = (val: number) => {
     unlockAudio();
     audioRef.current.playClick();
-    setBetInputStr(val.toString());
+    setBetInputStr(clampBet(val, currencyMode).toFixed(2));
   };
 
   const handleBombPresetSelect = (count: number) => {
@@ -285,7 +280,7 @@ const MinesClassicGame = () => {
     }
 
     const parsedBet = parseFloat(betInputStr) || 0;
-    const minLimit = currencyMode === "USD" ? 0.1 : currencyMode === "INR" ? 10 : 10;
+    const minLimit = minBetFor(currencyMode);
     const maxLimit = currencyMode === "USD" ? 1000 : currencyMode === "INR" ? 100000 : 10000;
 
     if (parsedBet < minLimit) {
@@ -559,22 +554,22 @@ const MinesClassicGame = () => {
         {/* Bet value slider box */}
         <div className="control-label">Bet Amount</div>
         <div className="input-wrapper">
-          <button className="minmax-btn" onClick={handleMinBet} disabled={phase !== "betting"}>MIN</button>
+          <button className="minmax-btn" onClick={handleMinBet} disabled={phase !== "betting"}>−</button>
           <input 
             type="number"
             className="bet-input"
-            step={currencyMode === "USD" ? "0.10" : "10"}
-            min={currencyMode === "USD" ? "0.10" : "10"}
+            step={currencyMode === "USD" ? "0.20" : "10"}
+            min={currencyMode === "USD" ? "0.20" : "10"}
             value={betInputStr}
             onChange={(e) => setBetInputStr(e.target.value)}
             disabled={phase !== "betting"}
           />
-          <button className="minmax-btn" onClick={handleMaxBet} disabled={phase !== "betting"}>MAX</button>
+          <button className="minmax-btn" onClick={handleMaxBet} disabled={phase !== "betting"}>+</button>
         </div>
 
         {/* Quick select presets */}
         <div className="presets-row">
-          {PRESETS_BY_MODE[currencyMode].map(val => (
+          {betPresets(currencyMode).map(val => (
             <button 
               key={val} 
               className="preset-btn" 

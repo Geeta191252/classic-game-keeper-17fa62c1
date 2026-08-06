@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, Volume2, VolumeX } from "lucide-react";
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { type CurrencyType, reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet as minBetFor, stepBet, clampBet, betPresets } from "@/lib/gameCurrency";
 import { toast } from "sonner";
 import "./ChickenClassicGame.css";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
@@ -136,11 +136,6 @@ const DIFFICULTY_CONFIG: Record<
   }
 };
 
-const PRESETS_BY_MODE: Record<GameCurrencyMode, number[]> = {
-  USD: [0.5, 1, 2, 7],
-  INR: [50, 100, 200, 500],
-  STAR: [10, 25, 50, 100],
-};
 
 
 const ChickenClassicGame = () => {
@@ -163,7 +158,7 @@ const ChickenClassicGame = () => {
   const [isMuted, setIsMuted] = useState(false);
 
   // Game Core States
-  const [betAmount, setBetAmount] = useState(0.5);
+  const [betAmount, setBetAmount] = useState(minBetFor("USD"));
   const [difficulty, setDifficulty] = useState<Difficulty>("Easy");
   const [diffDropdownOpen, setDiffDropdownOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>("betting");
@@ -180,7 +175,7 @@ const ChickenClassicGame = () => {
 
   // Sync bet presets on currency mode change
   useEffect(() => {
-    setBetAmount(currencyMode === "USD" ? 0.5 : currencyMode === "INR" ? 50 : 10);
+    setBetAmount(minBetFor(currencyMode));
   }, [currencyMode]);
 
 
@@ -202,21 +197,20 @@ const ChickenClassicGame = () => {
   const handleMinBet = () => {
     unlockAudio();
     audioRef.current.playClick();
-    setBetAmount(currencyMode === "USD" ? 0.1 : currencyMode === "INR" ? 10 : 1);
+    setBetAmount(prev => stepBet(prev, currencyMode, -1));
   };
 
   const handleMaxBet = () => {
     unlockAudio();
     audioRef.current.playClick();
-    const maxVal = currencyMode === "USD" ? 500 : currencyMode === "INR" ? 50000 : 5000;
-    setBetAmount(Math.min(balance, maxVal));
+    setBetAmount(prev => stepBet(prev, currencyMode, 1));
   };
 
   // Quick Preset values clicked
   const handlePresetSelect = (val: number) => {
     unlockAudio();
     audioRef.current.playClick();
-    setBetAmount(val);
+    setBetAmount(clampBet(val, currencyMode));
   };
 
   const currentCfg = useMemo(() => DIFFICULTY_CONFIG[difficulty], [difficulty]);
@@ -274,7 +268,7 @@ const ChickenClassicGame = () => {
       isRiggedRef.current = false;
     }
 
-    const minBet = currencyMode === "USD" ? 0.1 : currencyMode === "INR" ? 10 : 1;
+    const minBet = minBetFor(currencyMode);
     const maxBet = currencyMode === "USD" ? 1000 : currencyMode === "INR" ? 100000 : 10000;
 
     if (betAmount < minBet) {
@@ -539,22 +533,22 @@ const ChickenClassicGame = () => {
         
         {/* Bet value slider box */}
         <div className="play-row play-row-top">
-          <button className="minmax-btn" onClick={handleMinBet} disabled={phase !== "betting"}>MIN</button>
+          <button className="minmax-btn" onClick={handleMinBet} disabled={phase !== "betting"}>−</button>
           <input 
             className="minmax-input" 
             type="number" 
-            step={currencyMode === "USD" ? "0.1" : "1"} 
-            min={currencyMode === "USD" ? "0.1" : "1"} 
+            step={currencyMode === "USD" ? "0.2" : "10"} 
+            min={currencyMode === "USD" ? "0.20" : "10"} 
             value={betAmount} 
-            onChange={(e) => setBetAmount(Math.max(currencyMode === "USD" ? 0.1 : 1, parseFloat(e.target.value) || 0))}
+            onChange={(e) => setBetAmount(clampBet(parseFloat(e.target.value) || 0, currencyMode))}
             disabled={phase !== "betting"} 
           />
-          <button className="minmax-btn" onClick={handleMaxBet} disabled={phase !== "betting"}>MAX</button>
+          <button className="minmax-btn" onClick={handleMaxBet} disabled={phase !== "betting"}>+</button>
         </div>
 
         {/* Quick select presets */}
         <div className="play-row-amounts">
-          {PRESETS_BY_MODE[currencyMode].map(val => (
+          {betPresets(currencyMode).map(val => (
             <button 
               key={val} 
               className="amount-btn" 

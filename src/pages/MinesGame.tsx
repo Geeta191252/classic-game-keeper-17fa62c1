@@ -6,13 +6,12 @@ import { playBetSound, playWinSound, playLoseSound, playResultReveal, startBgMus
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets, formatBet } from "@/lib/gameCurrency";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
 
 const GRID_SIZE = 5;
 const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 const MINE_OPTIONS = [1, 3, 5, 7, 10, 15];
-const BET_PRESETS = [1, 3, 5, 10, 50];
 
 type CellState = "hidden" | "safe" | "mine" | "revealed-mine";
 type GamePhase = "betting" | "playing" | "lost" | "cashed";
@@ -69,8 +68,9 @@ const MinesGame = () => {
 
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const activeWallet = modeToWallet(currencyMode);
+  useEffect(() => { setSelectedBet(minBet(currencyMode)); }, [currencyMode]);
   const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
-  const [selectedBet, setSelectedBet] = useState(1);
+  const [selectedBet, setSelectedBet] = useState(minBet("USD"));
   const [mineCount, setMineCount] = useState(3);
   const [phase, setPhase] = useState<GamePhase>("betting");
   const [grid, setGrid] = useState<CellState[]>(Array(TOTAL_CELLS).fill("hidden"));
@@ -409,26 +409,26 @@ const MinesGame = () => {
           {/* Bet amount */}
           <div className="rounded-2xl p-2" style={{ background: "hsla(0, 0%, 12%, 0.9)" }}>
             <div className="flex items-center justify-between rounded-xl overflow-hidden" style={{ background: "hsla(0, 0%, 25%, 0.8)" }}>
-              <button onClick={() => setSelectedBet(prev => Math.max(1, prev - 1))}
+              <button onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, -1))}
                 className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>−</button>
               <div className="flex-1 text-center">
                 <span className="text-xl font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
-                  {currencyMode === "STAR" ? `${selectedBet.toFixed(2)} ⭐` : `${currencySymbol(currencyMode)}${selectedBet.toFixed(2)}`}
+                  {formatBet(selectedBet, currencyMode)}
                 </span>
               </div>
-              <button onClick={() => setSelectedBet(prev => prev + 1)}
+              <button onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, 1))}
                 className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>+</button>
             </div>
             <div className="grid grid-cols-4 gap-2 mt-2">
-              {BET_PRESETS.map(bet => (
-                <button key={bet} onClick={() => setSelectedBet(prev => prev + bet)}
+              {betPresets(currencyMode).map(bet => (
+                <button key={bet} onClick={() => setSelectedBet(clampBet(bet, currencyMode))}
                   className="rounded-xl py-2.5 text-sm font-bold transition-all"
                   style={{
                     background: "hsla(0, 0%, 30%, 0.8)",
                     color: "hsl(0, 0%, 80%)",
                     border: "1px solid hsla(0, 0%, 40%, 0.5)",
                   }}>
-                  {currencyMode === "STAR" ? `${bet} ⭐` : `${currencySymbol(currencyMode)}${bet}`}
+                  {formatBet(bet, currencyMode)}
                 </button>
 
               ))}

@@ -13,7 +13,7 @@ import {
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { reportGameResult } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, toNativeAmount, currencySymbol, minBet, stepBet, clampBet, betPresets, formatBet } from "@/lib/gameCurrency";
 import plinkoHeader from "@/assets/plinko-header.png";
 import plinkoPillar from "@/assets/plinko-pillar.png";
 import { createLossPlan, shouldForceLoss, NO_LOSS_PLAN } from "@/lib/houseEdge";
@@ -57,7 +57,6 @@ const MULTIPLIER_TABLE: Record<Risk, Record<number, number[]>> = {
   },
 };
 
-const BET_PRESETS = [1, 5, 10, 50, 100];
 
 // Build weights biased to center for rigging (more bias = bigger house edge)
 const buildRiggedWeights = (lines: number, risk: Risk): number[] => {
@@ -162,8 +161,9 @@ const PlinkoGame = () => {
 
   const [currencyMode, setCurrencyMode] = useState<GameCurrencyMode>("USD");
   const activeWallet = modeToWallet(currencyMode);
+  useEffect(() => { setBet(minBet(currencyMode)); }, [currencyMode]);
   const setActiveWallet = (w: "dollar" | "star") => setCurrencyMode(w === "star" ? "STAR" : "USD");
-  const [bet, setBet] = useState(1);
+  const [bet, setBet] = useState(minBet("USD"));
   const [lines, setLines] = useState(8);
   const [risk, setRisk] = useState<Risk>("medium");
   const [dropping, setDropping] = useState(false);
@@ -283,7 +283,7 @@ const PlinkoGame = () => {
     setBallStep(-1);
   }, [dropping, currentBalance, bet, activeWallet, computePath, refreshBalance, lines, risk, multipliers]);
 
-  const adjustBet = (delta: number) => setBet((b) => Math.max(1, b + delta));
+  const adjustBet = (dir: number) => setBet((b) => stepBet(b, currencyMode, dir >= 0 ? 1 : -1));
   const adjustLines = (delta: number) => {
     if (dropping) return;
     setLines((l) => Math.max(8, Math.min(16, l + delta)));
@@ -705,10 +705,10 @@ const PlinkoGame = () => {
 
         {/* Bet presets */}
         <div className="flex justify-center gap-1.5 mt-2">
-          {BET_PRESETS.map((p) => (
+          {betPresets(currencyMode).map((p) => (
             <button
               key={p}
-              onClick={() => setBet((b) => b + p)}
+              onClick={() => setBet(clampBet(p, currencyMode))}
               disabled={dropping}
               className="px-2 py-1 rounded-full text-[10px] font-bold"
               style={{
@@ -717,11 +717,11 @@ const PlinkoGame = () => {
                 border: "1px solid hsla(45,80%,55%,0.35)",
               }}
             >
-              +{currencyMode === "STAR" ? `${p}⭐` : `${currencySymbol(currencyMode)}${p}`}
+              {formatBet(p, currencyMode)}
             </button>
           ))}
           <button
-            onClick={() => setBet(1)}
+            onClick={() => setBet(minBet(currencyMode))}
             disabled={dropping}
             className="px-2 py-1 rounded-full text-[10px] font-bold"
             style={{
