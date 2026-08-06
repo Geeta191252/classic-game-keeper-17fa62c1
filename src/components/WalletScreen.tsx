@@ -1413,42 +1413,8 @@ const WalletScreen = () => {
                   <span className="font-black text-xs text-white uppercase tracking-wider">Star Withdraw</span>
                 </div>
 
-                <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <ArrowRightLeft className="h-4 w-4 text-amber-400" />
-                      <h3 className="font-black text-xs text-white uppercase tracking-wider">Star to Cash</h3>
-                    </div>
-                    <span className="text-[9px] font-extrabold bg-[#0d121f] text-amber-400 px-2 py-0.5 rounded border border-white/[0.01]">
-                      Available: {starBalance.toLocaleString()} ⭐
-                    </span>
-                  </div>
 
-                  <p className="text-[10px] text-[#8e97a4]">
-                    Convert Stars to TON ({STAR_TO_DOLLAR_RATE} ⭐ = 💎1). Minimum: <span className="text-amber-400 font-black">{STAR_TO_DOLLAR_RATE} ⭐</span>. Then withdraw 💎 from TON tab.
-                  </p>
 
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <Input
-                        type="number"
-                        placeholder={`Min ${STAR_TO_DOLLAR_RATE} ⭐`}
-                        value={convertStars}
-                        onChange={(e) => setConvertStars(e.target.value)}
-                        className="pr-6 rounded-xl bg-[#0d121f] h-9 text-xs border-white/[0.02] text-white placeholder-slate-500 font-bold"
-                        min={STAR_TO_DOLLAR_RATE}
-                      />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-[#8e97a4]">⭐</span>
-                    </div>
-                    <button
-                      onClick={handleConvert}
-                      disabled={converting || starInputNum < STAR_TO_DOLLAR_RATE}
-                      className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-amber-500 hover:bg-amber-600 text-black tracking-wider shadow-md transition-all disabled:opacity-50"
-                    >
-                      {converting ? "..." : `Convert to 💎${dollarOutput}`}
-                    </button>
-                  </div>
-                </div>
 
                 {/* Direct Telegram Star Withdrawal */}
                 <div className="bg-[#141b2b] border border-white/[0.02] rounded-2xl p-4 space-y-3.5 shadow-md">
