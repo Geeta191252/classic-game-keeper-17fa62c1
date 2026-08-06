@@ -10,7 +10,7 @@ import {
   approveWithdrawal, rejectWithdrawal, approveDeposit, rejectDeposit,
   getAnalytics, getGameStats, getGameAnalytics,
   getUpiConfig, saveUpiConfig, getPlayerWins,
-  getFakeFunds, purgeFakeFunds,
+  getFakeFunds, purgeFakeFunds, getTonWallet, saveTonWallet,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
   type GameStatRow, type GameAnalytics, type UpiConfig, type PlayerWinRow,
   type FakeFundUser,
@@ -2826,5 +2826,80 @@ export function PlayerWinsPage() {
         )}
       </Section>
     </>
+  );
+}
+
+/* ============= Owner TON Wallet ============= */
+export function TonWalletPage() {
+  const [address, setAddress] = useState("");
+  const [fromEnv, setFromEnv] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getTonWallet()
+      .then((c) => { if (alive) { setAddress(c.address || ""); setFromEnv(!!c.fromEnv); } })
+      .catch((e) => setMsg({ tone: "err", text: e.message || "Failed to load" }))
+      .finally(() => alive && setLoading(false));
+    return () => { alive = false; };
+  }, []);
+
+  const save = async () => {
+    const a = address.trim();
+    setMsg(null);
+    if (!a || a.length < 40) { setMsg({ tone: "err", text: "Valid TON address daalein (UQ... / EQ...)" }); return; }
+    setSaving(true);
+    try {
+      const r = await saveTonWallet(a);
+      setAddress(r.address);
+      setMsg({ tone: "ok", text: "TON wallet address saved. Deposits ab is wallet par aayenge." });
+    } catch (e: any) {
+      setMsg({ tone: "err", text: e.message || "Save failed" });
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div>
+      <PageHeader title="TON Wallet" subtitle="Owner receiving wallet — user deposits yahan aate hain (auto-credit)" tone="blue" />
+
+      {loading ? (
+        <div className="a-card flex items-center gap-2 text-white/70 text-[13px]">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        </div>
+      ) : (
+        <div className="a-card">
+          <div className="a-label">Owner TON Address</div>
+          <input
+            className="a-input mb-3"
+            placeholder="UQxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            value={address}
+            disabled={fromEnv}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+          {fromEnv && (
+            <div className="text-[12px] mb-3" style={{ color: "var(--a-text-dim)" }}>
+              Ye address server env (OWNER_TON_WALLET) se aa raha hai — badalne ke liye env update karein.
+            </div>
+          )}
+
+          <div className="rounded-xl p-3 mb-4 text-[12px]"
+               style={{ background: "rgba(74,168,255,0.05)", border: "1px solid rgba(74,168,255,0.15)", color: "var(--a-text-dim)" }}>
+            Deposit auto-accept: user TON bhejta hai → blockchain se verify hoke ~20-30 sec me balance add ho jata hai.
+          </div>
+
+          <button className="a-btn" onClick={save} disabled={saving || fromEnv}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Save address
+          </button>
+
+          {msg && (
+            <div className="mt-3 text-[13px]" style={{ color: msg.tone === "ok" ? "var(--a-green)" : "var(--a-red)" }}>
+              {msg.text}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

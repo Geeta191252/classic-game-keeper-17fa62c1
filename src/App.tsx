@@ -51,6 +51,7 @@ const AdminPages = {
   WalletAdjust: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.WalletAdjustPage }))),
   Offers: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.OffersPage }))),
   Analytics: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.AnalyticsPage }))),
+  TonWallet: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.TonWalletPage }))),
   Settings: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.SettingsPage }))),
   Profile: lazy(() => import("./pages/admin/pages").then(m => ({ default: m.ProfilePage }))),
   Support: lazy(() => import("./pages/admin/SupportPage")),
@@ -183,6 +184,7 @@ const App = () => {
                     <Route path="offers" element={<AdminPages.Offers />} />
                     <Route path="support" element={<AdminPages.Support />} />
                     <Route path="analytics" element={<AdminPages.Analytics />} />
+                    <Route path="ton-wallet" element={<AdminPages.TonWallet />} />
                     <Route path="settings" element={<AdminPages.Settings />} />
                     <Route path="profile" element={<AdminPages.Profile />} />
                   </Route>
