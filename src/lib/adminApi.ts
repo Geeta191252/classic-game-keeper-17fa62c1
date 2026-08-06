@@ -222,6 +222,15 @@ export const saveUpiConfig = (cfg: UpiConfig) =>
     body: JSON.stringify(cfg),
   });
 
+// ---------- Owner TON wallet ----------
+export interface TonWalletConfig { address: string; fromEnv?: boolean }
+export const getTonWallet = () => adminFetch<TonWalletConfig>("/admin/ton-wallet");
+export const saveTonWallet = (address: string) =>
+  adminFetch<{ success: true; address: string }>("/admin/ton-wallet", {
+    method: "POST",
+    body: JSON.stringify({ address }),
+  });
+
 
 // ---------- Aviator Fun Controls ----------
 export type AviatorFunCurrency = "dollar" | "rupee" | "star";
