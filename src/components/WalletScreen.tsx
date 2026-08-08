@@ -425,7 +425,6 @@ const WalletScreen = () => {
             description: `${st.tonAmount} TON ≈ 💎${Number(st.credited).toFixed(2)} added to your wallet!`,
           });
           refreshBalance();
-          setTonManual(null);
           return true;
         }
       } catch {}
@@ -437,6 +436,13 @@ const WalletScreen = () => {
     const tonAmt = Number(tonDepositAmount);
     if (!tonAmt || tonAmt <= 0) {
       toast({ title: "Invalid amount", description: "Enter a valid TON amount.", variant: "destructive" });
+      return;
+    }
+
+    // Direct wallet payment only (Telegram Wallet / Tonkeeper via TonConnect)
+    if (!tonAddress) {
+      try { await tonConnectUI.openModal(); } catch {}
+      toast({ title: "Connect your TON wallet", description: "Pehle wallet connect karein, phir Deposit dabayein." });
       return;
     }
 
@@ -453,23 +459,8 @@ const WalletScreen = () => {
       const initData = await initRes.json();
       if (!initRes.ok) throw new Error(initData.error || "Failed to init deposit");
 
-      // Always expose a manual payment fallback (works even if TonConnect bridge fails)
       const payableTon = Number(initData.tonAmount) || tonAmt;
-      setTonManual({
-        address: initData.ownerWallet,
-        comment: initData.depositComment,
-        amount: payableTon,
-        txId: initData.transactionId,
-      });
       pollTonDeposit(initData.transactionId);
-
-      if (!tonAddress) {
-        toast({
-          title: "Manual payment ready",
-          description: "Neeche diye address + comment se TON bhejein, fund auto add ho jayega.",
-        });
-        return;
-      }
 
       const nanoTon = BigInt(Math.round(payableTon * 1e9)).toString();
       const { beginCell } = await import("@ton/core");
@@ -494,7 +485,6 @@ const WalletScreen = () => {
         ],
       });
 
-
       const confirmRes = await fetch(`${apiBase}/ton/confirm-deposit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -509,27 +499,24 @@ const WalletScreen = () => {
 
       if (confirmData.pending) {
         toast({
-          title: "Payment sent ⏳",
+          title: "Payment sent",
           description: "Blockchain confirm hote hi fund apne aap add ho jayega (~30 sec).",
         });
       } else {
         toast({
-          title: "TON Deposit Successful! ✅",
-          description: `${payableTon} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
+          title: "TON Deposit Successful!",
+          description: `${payableTon} TON added \u2248 ${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)}`,
         });
         refreshBalance();
-        setTonManual(null);
       }
       setTonDepositAmount("");
-
-
     } catch (err: any) {
       if (err?.message?.includes("Rejected")) {
         toast({ title: "Cancelled", description: "Transaction was cancelled." });
       } else {
         toast({
           title: "Wallet request failed",
-          description: "Neeche diye TON address + comment se manually bhejein — fund auto add ho jayega.",
+          description: "Wallet me request nahi aayi \u2014 dobara try karein ya wallet reconnect karein.",
           variant: "destructive",
         });
       }
