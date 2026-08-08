@@ -1011,69 +1011,11 @@ const WalletScreen = () => {
                     </div>
                     {!tonAddress && (
                       <p className="text-[9px] text-[#8e97a4]">
-                        Wallet connect nahi hai? Fir bhi Deposit dabayein — manual address + comment mil jayega.
+                        Deposit ke liye pehle apna TON wallet connect karein (Telegram Wallet / Tonkeeper).
                       </p>
                     )}
                   </div>
 
-                  {tonManual && (
-                    <div className="rounded-2xl bg-[#0d121f] p-3 space-y-2 border border-[#0098ea]/30">
-                      <p className="text-[9px] font-extrabold text-[#0098ea] uppercase tracking-wider">
-                        Manual payment (auto credit)
-                      </p>
-                      <p className="text-[9px] text-[#8e97a4]">
-                        Kisi bhi wallet/exchange se <b className="text-white">exactly ye amount</b> bhejein — memo optional hai, amount se hi auto match ho jayega.
-                      </p>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Exact amount</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs font-black text-white flex-1">{tonManual.amount.toFixed(6)} TON</p>
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(tonManual.amount.toFixed(6)); toast({ title: "Amount copied" }); }}
-                            className="text-[9px] font-black uppercase text-[#0098ea]"
-                          >
-                            Copy
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Address</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.address}</p>
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(tonManual.address); toast({ title: "Address copied" }); }}
-                            className="text-[9px] font-black uppercase text-[#0098ea]"
-                          >
-                            Copy
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo (optional)</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.comment}</p>
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(tonManual.comment); toast({ title: "Comment copied" }); }}
-                            className="text-[9px] font-black uppercase text-[#0098ea]"
-                          >
-                            Copy
-                          </button>
-                        </div>
-                      </div>
-                      <a
-                        href={`ton://transfer/${tonManual.address}?amount=${Math.floor(tonManual.amount * 1e9)}&text=${encodeURIComponent(tonManual.comment)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block text-center rounded-xl h-9 leading-9 text-[10px] font-black uppercase bg-[#0098ea] text-white tracking-wider"
-                      >
-                        Open in TON Wallet
-                      </a>
-                      <p className="text-[9px] text-[#8e97a4] text-center">
-                        Payment ke baad ~30 sec me fund apne aap add ho jayega.
-                      </p>
-                    </div>
-                  )}
 
                 </div>
               </motion.div>
