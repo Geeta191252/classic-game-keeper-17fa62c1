@@ -1063,7 +1063,7 @@ const WalletScreen = () => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo</p>
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo (optional)</p>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.comment}</p>
                           <button
