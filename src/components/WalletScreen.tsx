@@ -454,10 +454,11 @@ const WalletScreen = () => {
       if (!initRes.ok) throw new Error(initData.error || "Failed to init deposit");
 
       // Always expose a manual payment fallback (works even if TonConnect bridge fails)
+      const payableTon = Number(initData.tonAmount) || tonAmt;
       setTonManual({
         address: initData.ownerWallet,
         comment: initData.depositComment,
-        amount: tonAmt,
+        amount: payableTon,
         txId: initData.transactionId,
       });
       pollTonDeposit(initData.transactionId);
@@ -470,7 +471,7 @@ const WalletScreen = () => {
         return;
       }
 
-      const nanoTon = BigInt(Math.floor(tonAmt * 1e9)).toString();
+      const nanoTon = BigInt(Math.round(payableTon * 1e9)).toString();
       const { beginCell } = await import("@ton/core");
       const body = beginCell()
         .storeUint(0, 32)
@@ -514,7 +515,7 @@ const WalletScreen = () => {
       } else {
         toast({
           title: "TON Deposit Successful! ✅",
-          description: `${tonAmt} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
+          description: `${payableTon} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
         });
         refreshBalance();
         setTonManual(null);
