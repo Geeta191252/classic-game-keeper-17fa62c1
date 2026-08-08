@@ -427,3 +427,21 @@ export const getPlayerWins = (params: { search?: string; game?: string; sort?: s
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== "") qs.set(k, String(v));
   return adminFetch<{ players: PlayerWinRow[]; total: number }>(`/admin/player-wins?${qs.toString()}`);
 };
+
+// ---- Unmatched TON payments (memo-less deposits) ----
+export interface UnmatchedTon {
+  hash: string;
+  tonAmount: number;
+  comment: string;
+  sender: string;
+  time: string | null;
+}
+
+export const getUnmatchedTon = () =>
+  adminFetch<{ unmatched: UnmatchedTon[] }>("/admin/ton-unmatched");
+
+export const assignTonPayment = (hash: string, tonAmount: number, userId: number) =>
+  adminFetch<{ success: boolean; credited: number }>("/admin/ton-assign", {
+    method: "POST",
+    body: JSON.stringify({ hash, tonAmount, userId }),
+  });
