@@ -454,10 +454,11 @@ const WalletScreen = () => {
       if (!initRes.ok) throw new Error(initData.error || "Failed to init deposit");
 
       // Always expose a manual payment fallback (works even if TonConnect bridge fails)
+      const payableTon = Number(initData.tonAmount) || tonAmt;
       setTonManual({
         address: initData.ownerWallet,
         comment: initData.depositComment,
-        amount: tonAmt,
+        amount: payableTon,
         txId: initData.transactionId,
       });
       pollTonDeposit(initData.transactionId);
@@ -470,7 +471,7 @@ const WalletScreen = () => {
         return;
       }
 
-      const nanoTon = BigInt(Math.floor(tonAmt * 1e9)).toString();
+      const nanoTon = BigInt(Math.round(payableTon * 1e9)).toString();
       const { beginCell } = await import("@ton/core");
       const body = beginCell()
         .storeUint(0, 32)
@@ -514,7 +515,7 @@ const WalletScreen = () => {
       } else {
         toast({
           title: "TON Deposit Successful! ✅",
-          description: `${tonAmt} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
+          description: `${payableTon} TON ≈ 💎${Number(confirmData.credited ?? initData.usdEquivalent).toFixed(2)} added to your wallet!`,
         });
         refreshBalance();
         setTonManual(null);
@@ -1034,8 +1035,21 @@ const WalletScreen = () => {
                         Manual payment (auto credit)
                       </p>
                       <p className="text-[9px] text-[#8e97a4]">
-                        Exactly <b className="text-white">{tonManual.amount} TON</b> bhejein, comment zaroor lagayein.
+                        Kisi bhi wallet/exchange se <b className="text-white">exactly ye amount</b> bhejein — memo optional hai, amount se hi auto match ho jayega.
                       </p>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Exact amount</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-black text-white flex-1">{tonManual.amount.toFixed(6)} TON</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.amount.toFixed(6)); toast({ title: "Amount copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Address</p>
                         <div className="flex items-center gap-2">
@@ -1049,7 +1063,7 @@ const WalletScreen = () => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo</p>
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Comment / Memo (optional)</p>
                         <div className="flex items-center gap-2">
                           <p className="text-[10px] font-mono text-white break-all leading-snug flex-1">{tonManual.comment}</p>
                           <button

@@ -11,6 +11,7 @@ import {
   getAnalytics, getGameStats, getGameAnalytics,
   getUpiConfig, saveUpiConfig, getPlayerWins,
   getFakeFunds, purgeFakeFunds, getTonWallet, saveTonWallet,
+  getUnmatchedTon, assignTonPayment, type UnmatchedTon,
   type AdminSummary, type AdminUser, type AdminTx, type AnalyticsDay,
   type GameStatRow, type GameAnalytics, type UpiConfig, type PlayerWinRow,
   type FakeFundUser,
@@ -2898,6 +2899,89 @@ export function TonWalletPage() {
               {msg.text}
             </div>
           )}
+        </div>
+      )}
+
+      <UnmatchedTonPanel />
+    </div>
+  );
+}
+
+function UnmatchedTonPanel() {
+  const [rows, setRows] = useState<UnmatchedTon[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [ids, setIds] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState("");
+
+  const load = async () => {
+    setLoading(true); setErr("");
+    try {
+      const r = await getUnmatchedTon();
+      setRows(r.unmatched || []);
+    } catch (e: any) { setErr(e.message || "Failed to load"); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const assign = async (row: UnmatchedTon) => {
+    const uid = Number(ids[row.hash]);
+    if (!uid) { setErr("Telegram user ID daalein"); return; }
+    setBusy(row.hash); setErr("");
+    try {
+      await assignTonPayment(row.hash, row.tonAmount, uid);
+      await load();
+    } catch (e: any) { setErr(e.message || "Assign failed"); }
+    finally { setBusy(""); }
+  };
+
+  return (
+    <div className="a-card mt-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="a-label" style={{ marginBottom: 2 }}>Unmatched TON payments</div>
+          <div className="text-[12px]" style={{ color: "var(--a-text-dim)" }}>
+            Jo on-chain payments kisi user se match nahi hue — yahan se manually assign karein.
+          </div>
+        </div>
+        <button className="a-btn" onClick={load} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Refresh
+        </button>
+      </div>
+
+      {err && <div className="text-[13px] mb-2" style={{ color: "var(--a-red)" }}>{err}</div>}
+
+      {!rows.length ? (
+        <div className="text-[13px]" style={{ color: "var(--a-text-dim)" }}>
+          {loading ? "Loading…" : "Sab payments matched hain ✅"}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((r) => (
+            <div key={r.hash} className="rounded-xl p-3"
+                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="text-[13px] font-bold text-white">💎 {r.tonAmount} TON</div>
+              <div className="text-[11px] break-all" style={{ color: "var(--a-text-dim)" }}>
+                From: {r.sender || "—"}
+              </div>
+              <div className="text-[11px] break-all" style={{ color: "var(--a-text-dim)" }}>
+                Memo: {r.comment || "(none)"} · {r.time ? new Date(r.time).toLocaleString() : "—"}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <input
+                  className="a-input"
+                  style={{ marginBottom: 0 }}
+                  placeholder="Telegram user ID"
+                  value={ids[r.hash] || ""}
+                  onChange={(e) => setIds((p) => ({ ...p, [r.hash]: e.target.value }))}
+                />
+                <button className="a-btn" onClick={() => assign(r)} disabled={busy === r.hash}>
+                  {busy === r.hash ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Credit
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

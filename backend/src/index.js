@@ -2008,7 +2008,14 @@ app.post("/api/ton/init-deposit", async (req, res) => {
 
 
     const tonPrice = await getTonUsdPrice();
-    const usdEquivalent = tonAmount * tonPrice;
+
+    // Make the payable amount unique (memo-less matching):
+    // base amount + random micro tail (<= 0.009999 TON) so we can identify the payer
+    // even when the wallet/exchange strips the comment.
+    const baseTon = Math.round(Number(tonAmount) * 100) / 100;
+    const uniqueTail = (Math.floor(Math.random() * 9999) + 1) / 1e6;
+    const payableTon = Math.round((baseTon + uniqueTail) * 1e6) / 1e6;
+    const usdEquivalent = payableTon * tonPrice;
 
     // Create unique deposit comment
     const depositComment = `deposit_${userId}_${Date.now()}`;
@@ -2018,19 +2025,20 @@ app.post("/api/ton/init-deposit", async (req, res) => {
       telegramId: Number(userId),
       type: "ton_deposit",
       currency: "ton",
-      amount: tonAmount,
+      amount: payableTon,
       status: "pending",
-      tonAmount: tonAmount,
+      tonAmount: payableTon,
       tonReceiverAddress: ownerTonWallet,
       depositComment,
       usdEquivalent,
-      description: `TON Deposit: ${tonAmount} TON ≈ $${usdEquivalent.toFixed(2)}`,
+      description: `TON Deposit: ${payableTon} TON ≈ $${usdEquivalent.toFixed(2)}`,
     });
 
     return res.json({
       ownerWallet: ownerTonWallet,
       depositComment,
-      tonAmount,
+      tonAmount: payableTon,
+      requestedTon: baseTon,
       usdEquivalent,
       tonPrice,
       transactionId: tx._id,
@@ -2086,9 +2094,49 @@ async function fetchOwnerIncomingTons(limit = 50) {
       inMsg?.message_content?.decoded?.comment ??
       inMsg?.decoded_body?.text ??
       "";
-    out.push({ comment: String(comment || "").trim(), tonValue: value, hash: t.hash || inMsg.hash || "" });
+    out.push({
+      comment: String(comment || "").trim(),
+      tonValue: value,
+      hash: t.hash || inMsg.hash || "",
+      utime: Number(t.now || t.utime || 0),
+      source: inMsg.source || "",
+    });
   }
   return out;
+}
+
+// Hashes already credited to some user (so one on-chain tx can't be reused)
+async function getUsedTonHashes() {
+  const rows = await Transaction.find({ type: "ton_deposit", tonTxHash: { $ne: null } })
+    .select("tonTxHash")
+    .limit(3000)
+    .lean();
+  return new Set(rows.map((r) => r.tonTxHash).filter(Boolean));
+}
+
+const AMOUNT_EXACT_TOL = 0.0000015; // unique micro-tail match
+const AMOUNT_LOOSE_TOL = 0.02; // 2% fallback (exchange fees / rounding)
+
+// Pick the on-chain payment that belongs to a pending deposit.
+// 1) comment match  2) exact unique-amount match  3) single ±2% candidate
+function matchIncomingForTx(tx, list, used) {
+  const avail = list.filter((m) => m.tonValue > 0 && !used.has(m.hash));
+  if (tx.depositComment) {
+    const byComment = avail.find((m) => m.comment && m.comment === tx.depositComment);
+    if (byComment) return byComment;
+  }
+  const want = Number(tx.tonAmount || tx.amount || 0);
+  if (!want) return null;
+  const createdSec = Math.floor(new Date(tx.createdAt).getTime() / 1000) - 120;
+  const inWindow = avail.filter((m) => !m.utime || m.utime >= createdSec);
+
+  const exact = inWindow.filter((m) => Math.abs(m.tonValue - want) <= AMOUNT_EXACT_TOL);
+  if (exact.length === 1) return exact[0];
+  if (exact.length > 1) return exact[0];
+
+  const loose = inWindow.filter((m) => Math.abs(m.tonValue - want) <= want * AMOUNT_LOOSE_TOL);
+  if (loose.length === 1) return loose[0];
+  return null;
 }
 
 // Credit a pending ton_deposit tx using the real on-chain amount
@@ -2134,7 +2182,8 @@ async function tryVerifyPendingTon(tx) {
     console.error("toncenter fetch failed:", e.message);
     return null;
   }
-  const match = list.find((m) => m.comment && tx.depositComment && m.comment === tx.depositComment);
+  const used = await getUsedTonHashes();
+  const match = matchIncomingForTx(tx, list, used);
   if (!match || match.tonValue <= 0) return null;
   return await creditTonDeposit(tx, match.tonValue, match.hash);
 }
@@ -2211,9 +2260,13 @@ async function tonDepositWatcher() {
 
     const list = await fetchOwnerIncomingTons(100);
     if (!list.length) return;
+    const used = await getUsedTonHashes();
+    // oldest first so the earliest pending deposit claims the payment
+    pending.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     for (const tx of pending) {
-      const match = list.find((m) => m.comment && m.comment === tx.depositComment);
+      const match = matchIncomingForTx(tx, list, used);
       if (match && match.tonValue > 0) {
+        used.add(match.hash);
         await creditTonDeposit(tx, match.tonValue, match.hash);
       }
     }
@@ -2221,6 +2274,52 @@ async function tonDepositWatcher() {
     console.error("TON watcher error:", e.message);
   }
 }
+// Admin: incoming TON payments that could not be matched to any user
+app.get("/api/admin/ton-unmatched", requireAdmin, async (_req, res) => {
+  try {
+    const list = await fetchOwnerIncomingTons(100);
+    const used = await getUsedTonHashes();
+    const unmatched = list
+      .filter((m) => m.tonValue > 0 && !used.has(m.hash))
+      .map((m) => ({
+        hash: m.hash,
+        tonAmount: m.tonValue,
+        comment: m.comment,
+        sender: m.source,
+        time: m.utime ? new Date(m.utime * 1000).toISOString() : null,
+      }));
+    res.json({ unmatched });
+  } catch (e) {
+    res.status(500).json({ error: e.message || "Failed to load unmatched TON payments" });
+  }
+});
+
+// Admin: manually assign an unmatched on-chain payment to a user
+app.post("/api/admin/ton-assign", requireAdmin, async (req, res) => {
+  try {
+    const { hash, tonAmount, userId } = req.body || {};
+    if (!hash || !tonAmount || !userId) return res.status(400).json({ error: "hash, tonAmount, userId required" });
+    const used = await getUsedTonHashes();
+    if (used.has(hash)) return res.status(400).json({ error: "This payment is already credited" });
+
+    const owner = await getOwnerTonWallet();
+    const tx = await Transaction.create({
+      telegramId: Number(userId),
+      type: "ton_deposit",
+      currency: "ton",
+      amount: Number(tonAmount),
+      status: "pending",
+      tonAmount: Number(tonAmount),
+      tonReceiverAddress: owner,
+      depositComment: `manual_${hash.slice(0, 12)}`,
+    });
+    const result = await creditTonDeposit(tx, Number(tonAmount), hash);
+    res.json({ success: true, credited: result?.usd || 0 });
+  } catch (e) {
+    res.status(500).json({ error: e.message || "Failed to assign payment" });
+  }
+});
+
 setInterval(tonDepositWatcher, 20000);
 setTimeout(tonDepositWatcher, 8000);
 
