@@ -1035,8 +1035,21 @@ const WalletScreen = () => {
                         Manual payment (auto credit)
                       </p>
                       <p className="text-[9px] text-[#8e97a4]">
-                        Exactly <b className="text-white">{tonManual.amount} TON</b> bhejein, comment zaroor lagayein.
+                        Kisi bhi wallet/exchange se <b className="text-white">exactly ye amount</b> bhejein — memo optional hai, amount se hi auto match ho jayega.
                       </p>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Exact amount</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-black text-white flex-1">{tonManual.amount.toFixed(6)} TON</p>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(tonManual.amount.toFixed(6)); toast({ title: "Amount copied" }); }}
+                            className="text-[9px] font-black uppercase text-[#0098ea]"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="space-y-1">
                         <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase">Address</p>
                         <div className="flex items-center gap-2">
