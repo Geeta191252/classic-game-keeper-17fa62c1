@@ -240,9 +240,11 @@ const JetXGame = () => {
 
   useEffect(() => () => { stopThrust(); }, [stopThrust]);
 
-  // Poll server state
+  // Poll server state (+ my own bet, so CASH OUT always appears)
   useEffect(() => {
     let cancel = false;
+    const uid = tgUser?.id || "demo";
+    const base = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
     const tick = async () => {
       try {
         const s: JetXState = await fetchJetXState(currency);
@@ -266,12 +268,26 @@ const JetXGame = () => {
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
 
+        // Sync the authoritative bet from the server
+        try {
+          const r = await fetch(`${base}/jetx/my-bet?userId=${uid}&currency=${currency}`);
+          if (r.ok && !cancel) {
+            const j = await r.json();
+            if (j?.bet) {
+              setMyBet((prev) =>
+                prev && prev.cashedOutAt && !j.bet.cashedOutAt
+                  ? prev
+                  : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
+              );
+            }
+          }
+        } catch { /* silent */ }
       } catch { /* silent */ }
     };
     tick();
-    const id = setInterval(tick, 180);
+    const id = setInterval(tick, 300);
     return () => { cancel = true; clearInterval(id); };
-  }, [currency, refreshBalance]);
+  }, [currency, refreshBalance, tgUser?.id]);
 
   const canBet = phase === "betting" && !myBet && !placing;
   const canCashout = phase === "flying" && !!myBet && !myBet.cashedOutAt && !cashing;
