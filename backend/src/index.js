@@ -150,8 +150,30 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-// Hard-locked house profit for ALL games (owner keeps >= 80% of every pool)
-const FORCED_HOUSE_PROFIT = 80;
+// Hard-locked house profit for ALL games (owner keeps >= 40% of every pool)
+const FORCED_HOUSE_PROFIT = 40;
+
+// Shared crash pattern: a few small crashes, then a win round, repeat.
+// 2-4 rounds @ 1.20-1.90x  ->  one 2.00-2.30x  ->  2-3 rounds @ 1.10-1.70x  ->  one 2.00-3.00x
+function buildCrashPattern() {
+  const rnd = (a, b) => Number((a + Math.random() * (b - a)).toFixed(2));
+  const out = [];
+  const n1 = 2 + Math.floor(Math.random() * 3); // 2..4
+  for (let i = 0; i < n1; i++) out.push(rnd(1.20, 1.90));
+  out.push(rnd(2.00, 2.30));
+  const n2 = 2 + Math.floor(Math.random() * 2); // 2..3
+  for (let i = 0; i < n2; i++) out.push(rnd(1.10, 1.70));
+  out.push(rnd(2.00, 3.00));
+  return out;
+}
+
+function nextPatternCrash(pool) {
+  if (!Array.isArray(pool.crashPattern) || pool.crashPattern.length === 0) {
+    pool.crashPattern = buildCrashPattern();
+  }
+  return Number(pool.crashPattern.shift());
+}
+module.exports.nextPatternCrash = nextPatternCrash;
 
 // MongoDB connection
 mongoose
@@ -4130,7 +4152,7 @@ async function jetxComputeCrash(pool) {
     }
   }
 
-  let crash = jetxRandomCrash();
+  let crash = nextPatternCrash(pool);
 
   // House-edge cap using cumulative ledger — enforce owner ≥ profitPct%
   const cumBudget = (pool.cumPool || 0) * (1 - profitPct / 100);
