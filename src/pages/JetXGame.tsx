@@ -240,11 +240,11 @@ const JetXGame = () => {
 
   useEffect(() => () => { stopThrust(); }, [stopThrust]);
 
-  // Poll server state (+ my own bet, so CASH OUT always appears)
+  // Poll server state (fast, lightweight) + interpolate the multiplier locally
+  // between polls so the number never looks laggy.
+  const serverMultRef = useRef({ value: 1, at: 0 });
   useEffect(() => {
     let cancel = false;
-    const uid = tgUser?.id || "demo";
-    const base = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
     const tick = async () => {
       try {
         const s: JetXState = await fetchJetXState(currency);
@@ -261,33 +261,60 @@ const JetXGame = () => {
         }
         // All users see the same live multiplier from the server.
         if (s.phase === "flying" || s.phase === "crashed") {
+          serverMultRef.current = { value: s.multiplier, at: performance.now() };
           setMultiplier(s.multiplier);
         } else {
+          serverMultRef.current = { value: 1, at: performance.now() };
           setMultiplier(1);
         }
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
-
-        // Sync the authoritative bet from the server
-        try {
-          const r = await fetch(`${base}/jetx/my-bet?userId=${uid}&currency=${currency}`);
-          if (r.ok && !cancel) {
-            const j = await r.json();
-            if (j?.bet) {
-              setMyBet((prev) =>
-                prev && prev.cashedOutAt && !j.bet.cashedOutAt
-                  ? prev
-                  : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
-              );
-            }
-          }
-        } catch { /* silent */ }
       } catch { /* silent */ }
     };
     tick();
-    const id = setInterval(tick, 300);
+    const id = setInterval(tick, 250);
     return () => { cancel = true; clearInterval(id); };
-  }, [currency, refreshBalance, tgUser?.id]);
+  }, [currency, refreshBalance]);
+
+  // Local extrapolation of the multiplier at 60fps-ish between server polls.
+  useEffect(() => {
+    if (phase !== "flying") return;
+    const id = setInterval(() => {
+      const { value, at } = serverMultRef.current;
+      if (!at) return;
+      const dt = (performance.now() - at) / 1000;
+      // same exponential growth curve the server uses (~1.075^(1.8t))
+      const next = value * Math.exp(0.13 * Math.min(dt, 1.5));
+      setMultiplier((prev) => (next > prev ? next : prev));
+    }, 60);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  // Separate (slower) poll for our own authoritative bet so the CASH OUT button
+  // never blocks the fast state loop.
+  useEffect(() => {
+    let cancel = false;
+    const uid = tgUser?.id || "demo";
+    const base = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
+    const tick = async () => {
+      try {
+        const r = await fetch(`${base}/jetx/my-bet?userId=${uid}&currency=${currency}`);
+        if (!r.ok || cancel) return;
+        const j = await r.json();
+        if (j?.bet) {
+          setMyBet((prev) =>
+            prev && prev.cashedOutAt && !j.bet.cashedOutAt
+              ? prev
+              : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
+          );
+        }
+      } catch { /* silent */ }
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => { cancel = true; clearInterval(id); };
+  }, [currency, tgUser?.id]);
+
 
   const canBet = phase === "betting" && !myBet && !placing;
   const canCashout = phase === "flying" && !!myBet && !myBet.cashedOutAt && !cashing;

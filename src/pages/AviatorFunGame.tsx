@@ -395,12 +395,17 @@ const AviatorFunGame = () => {
           }
         } else if (s.phase === "flying") {
           if (phaseChanged) startFlyingRound();
-          // Sync local elapsed time to server-reported multiplier
+          // Only re-sync when local animation drifts noticeably from the server,
+          // otherwise let the smooth local loop run (prevents 500ms jitter/lag).
           const m = Math.max(1.0001, s.multiplier);
-          const elapsedMs = (Math.log(m) / Math.log(1.075) / 1.8) * 1000;
-          stateRef.current.timeElapsed = elapsedMs;
-          stateRef.current.currentMultiplier = m;
-          setCurrentMultiplier(Number(m.toFixed(2)));
+          const drift = Math.abs(stateRef.current.currentMultiplier - m);
+          if (phaseChanged || drift > 0.08) {
+            const elapsedMs = (Math.log(m) / Math.log(1.075) / 1.8) * 1000;
+            stateRef.current.timeElapsed = elapsedMs;
+            stateRef.current.currentMultiplier = m;
+            setCurrentMultiplier(Number(m.toFixed(2)));
+          }
+
         } else if (s.phase === "crashed") {
           if (phaseChanged) {
             const finalMult = s.crashAt ?? s.multiplier ?? stateRef.current.currentMultiplier;
