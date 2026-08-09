@@ -24,8 +24,10 @@ export const NO_LOSS_PLAN: LossPlan = { loss: false, crashAfter: Number.POSITIVE
  */
 export function createLossPlan(maxSafeSteps: number = 2, rate: number = HOUSE_LOSS_RATE): LossPlan {
   const loss = shouldForceLoss(rate);
+  // Always allow at least 1 safe step so a round never dies on the very first
+  // action (that feels broken to the player) while the house still wins.
   return {
     loss,
-    crashAfter: loss ? Math.floor(Math.random() * (maxSafeSteps + 1)) : Number.POSITIVE_INFINITY,
+    crashAfter: loss ? 1 + Math.floor(Math.random() * Math.max(1, maxSafeSteps)) : Number.POSITIVE_INFINITY,
   };
 }

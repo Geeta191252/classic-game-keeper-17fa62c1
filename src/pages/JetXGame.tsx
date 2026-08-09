@@ -240,9 +240,11 @@ const JetXGame = () => {
 
   useEffect(() => () => { stopThrust(); }, [stopThrust]);
 
-  // Poll server state
+  // Poll server state (+ my own bet, so CASH OUT always appears)
   useEffect(() => {
     let cancel = false;
+    const uid = tgUser?.id || "demo";
+    const base = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
     const tick = async () => {
       try {
         const s: JetXState = await fetchJetXState(currency);
@@ -266,12 +268,26 @@ const JetXGame = () => {
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
 
+        // Sync the authoritative bet from the server
+        try {
+          const r = await fetch(`${base}/jetx/my-bet?userId=${uid}&currency=${currency}`);
+          if (r.ok && !cancel) {
+            const j = await r.json();
+            if (j?.bet) {
+              setMyBet((prev) =>
+                prev && prev.cashedOutAt && !j.bet.cashedOutAt
+                  ? prev
+                  : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
+              );
+            }
+          }
+        } catch { /* silent */ }
       } catch { /* silent */ }
     };
     tick();
-    const id = setInterval(tick, 180);
+    const id = setInterval(tick, 300);
     return () => { cancel = true; clearInterval(id); };
-  }, [currency, refreshBalance]);
+  }, [currency, refreshBalance, tgUser?.id]);
 
   const canBet = phase === "betting" && !myBet && !placing;
   const canCashout = phase === "flying" && !!myBet && !myBet.cashedOutAt && !cashing;
@@ -356,28 +372,27 @@ const JetXGame = () => {
   }, [phase, startThrust, stopThrust, playCrash]);
 
   // Continuous cloud scroll: speed scales with multiplier. Clouds drift DOWN as rocket rises.
+  // Uses refs so the rAF loop is created ONCE (restarting it every poll made the game stutter).
+  const phaseRef = useRef(phase); phaseRef.current = phase;
+  const multRef = useRef(multiplier); multRef.current = multiplier;
   useEffect(() => {
     const TILE_BACK = 800;
     const TILE_FRONT = 900;
     let raf = 0;
     let last = performance.now();
     const loop = (now: number) => {
-      const dt = (now - last) / 1000;
+      const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      // Base idle drift + multiplier-driven boost (2x faster than before)
-      const boost = phase === "flying" ? 600 + multiplier * 440 : 90;
+      const boost = phaseRef.current === "flying" ? 600 + multRef.current * 440 : 90;
       const frontSpeed = boost;         // front layer faster
       const backSpeed = boost * 0.55;    // back layer slower (parallax)
-      // Positive Y offset = clouds move downward
-      const nb = (cloudBackY.get() + backSpeed * dt) % TILE_BACK;
-      const nf = (cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT;
-      cloudBackY.set(nb);
-      cloudFrontY.set(nf);
+      cloudBackY.set((cloudBackY.get() + backSpeed * dt) % TILE_BACK);
+      cloudFrontY.set((cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [phase, multiplier, cloudBackY, cloudFrontY]);
+  }, [cloudBackY, cloudFrontY]);
 
   return (
     <div

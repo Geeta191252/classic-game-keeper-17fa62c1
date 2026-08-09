@@ -833,13 +833,14 @@ const TwistGame = () => {
 
     if (isStartingNewRound) {
       try {
-        const rigRes = await fetch("/api/game/rig");
-        const rigData = await rigRes.json();
-        isRiggedRef.current = rigData.rigged === true;
+        const base = (import.meta as any).env?.VITE_API_BASE_URL || `${window.location.origin}/api`;
+        const rigRes = await fetch(`${base}/game/rig`);
+        const rigData = rigRes.ok ? await rigRes.json() : null;
+        isRiggedRef.current = rigData?.rigged === true;
       } catch (e) {
         isRiggedRef.current = false;
       }
-      // 80% house edge: most rounds are pre-decided as a loss
+      // House edge: most rounds are pre-decided as a loss (never on step 1)
       lossPlanRef.current = createLossPlan(2);
       twistStepRef.current = 0;
 

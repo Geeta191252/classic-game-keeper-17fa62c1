@@ -4151,7 +4151,8 @@ async function jetxComputeCrash(pool) {
     const roundCap = roundBudget / (roundBetSum * 0.98);
     if (roundCap < crash) crash = Math.max(1.0, Number(roundCap.toFixed(2)));
   }
-  pool.finalCrash = Number(crash.toFixed(2));
+  // Never crash instantly — players must always get a real cash-out window.
+  pool.finalCrash = Number(Math.max(1.25, crash).toFixed(2));
 }
 
 async function jetxStartFlying(currency) {
