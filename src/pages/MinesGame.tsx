@@ -242,21 +242,21 @@ const MinesGame = () => {
   return (
     <div className="min-h-screen flex flex-col overflow-y-auto" style={{ background: "linear-gradient(180deg, hsl(260 55% 22%) 0%, hsl(250 60% 10%) 100%)" }}>
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ background: "hsla(260, 40%, 30%, 0.6)" }}>
+      <div className="flex items-center justify-between px-2 py-1.5" style={{ background: "hsla(260, 40%, 30%, 0.6)" }}>
         <div className="flex items-center gap-1">
           {[
             { icon: Home, action: () => navigate("/") },
             { icon: soundOn ? Volume2 : VolumeX, action: () => setSoundOn(p => !p) },
           ].map((item, i) => (
-            <button key={i} onClick={item.action} className="h-9 w-9 rounded-lg border-2 flex items-center justify-center"
+            <button key={i} onClick={item.action} className="h-8 w-8 rounded-lg border-2 flex items-center justify-center"
               style={{ borderColor: "hsla(260, 40%, 50%, 0.5)", background: "hsla(260, 40%, 35%, 0.3)" }}>
-              <item.icon className="h-4 w-4" style={{ color: "hsl(260, 20%, 85%)" }} />
+              <item.icon className="h-3.5 w-3.5" style={{ color: "hsl(260, 20%, 85%)" }} />
             </button>
           ))}
         </div>
-        <div className="rounded-lg px-3 py-1.5 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
-          <p className="text-[10px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
-          <p className="font-bold text-sm leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
+        <div className="rounded-lg px-2 py-1 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
+          <p className="text-[9px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
+          <p className="font-bold text-xs leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
         </div>
         <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting" && phase !== "lost" && phase !== "cashed"} />
       </div>
