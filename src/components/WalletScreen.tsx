@@ -414,8 +414,8 @@ const WalletScreen = () => {
   });
 
   const pollTonDeposit = async (txId: string) => {
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 6000));
+    // Check every 1 second so funds appear instantly after payment success
+    for (let i = 0; i < 600; i++) {
       try {
         const st = await fetch(`${apiBase}/ton/deposit-status/${txId}`).then((r) => r.json());
         if (st?.status === "completed") {
@@ -426,10 +426,13 @@ const WalletScreen = () => {
           refreshBalance();
           return true;
         }
+        if (st?.status === "failed") return false;
       } catch {}
+      await new Promise((r) => setTimeout(r, 1000));
     }
     return false;
   };
+
 
   const handleTonDeposit = async () => {
     const tonAmt = Number(tonDepositAmount);
