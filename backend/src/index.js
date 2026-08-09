@@ -2077,13 +2077,20 @@ const TONCENTER_BASE = process.env.TONCENTER_BASE || "https://toncenter.com/api/
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || "";
 
 // Fetch recent incoming transactions of owner wallet -> [{ comment, tonValue, hash }]
+let _tonListCache = { at: 0, key: "", data: [] };
 async function fetchOwnerIncomingTons(limit = 50) {
   const owner = await getOwnerTonWallet();
   if (!owner) return [];
+  const cacheKey = `${owner}:${limit}`;
+  // Short cache so 1s polling from many clients doesn't hit toncenter rate limits
+  if (_tonListCache.key === cacheKey && Date.now() - _tonListCache.at < 1500) {
+    return _tonListCache.data;
+  }
   const url = `${TONCENTER_BASE}/transactions?account=${encodeURIComponent(owner)}&limit=${limit}&sort=desc`;
   const headers = TONCENTER_KEY ? { "X-API-Key": TONCENTER_KEY } : {};
   const r = await fetch(url, { headers });
   if (!r.ok) throw new Error(`toncenter ${r.status}`);
+
   const data = await r.json();
   const out = [];
   for (const t of data?.transactions || []) {
