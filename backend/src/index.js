@@ -2329,8 +2329,14 @@ app.post("/api/admin/ton-assign", requireAdmin, async (req, res) => {
   }
 });
 
-setInterval(tonDepositWatcher, 20000);
-setTimeout(tonDepositWatcher, 8000);
+// Fast auto-credit: check chain every second (list is cached ~1.5s to stay under API limits)
+let _tonWatcherBusy = false;
+setInterval(async () => {
+  if (_tonWatcherBusy) return;
+  _tonWatcherBusy = true;
+  try { await tonDepositWatcher(); } finally { _tonWatcherBusy = false; }
+}, 1000);
+setTimeout(tonDepositWatcher, 3000);
 
 
 // POST /api/ton/withdraw - Withdraw dollars via TON
