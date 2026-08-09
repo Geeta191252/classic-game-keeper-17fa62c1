@@ -242,41 +242,41 @@ const MinesGame = () => {
   return (
     <div className="min-h-screen flex flex-col overflow-y-auto" style={{ background: "linear-gradient(180deg, hsl(260 55% 22%) 0%, hsl(250 60% 10%) 100%)" }}>
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-3 py-2" style={{ background: "hsla(260, 40%, 30%, 0.6)" }}>
+      <div className="flex items-center justify-between px-2 py-1.5" style={{ background: "hsla(260, 40%, 30%, 0.6)" }}>
         <div className="flex items-center gap-1">
           {[
             { icon: Home, action: () => navigate("/") },
             { icon: soundOn ? Volume2 : VolumeX, action: () => setSoundOn(p => !p) },
           ].map((item, i) => (
-            <button key={i} onClick={item.action} className="h-9 w-9 rounded-lg border-2 flex items-center justify-center"
+            <button key={i} onClick={item.action} className="h-8 w-8 rounded-lg border-2 flex items-center justify-center"
               style={{ borderColor: "hsla(260, 40%, 50%, 0.5)", background: "hsla(260, 40%, 35%, 0.3)" }}>
-              <item.icon className="h-4 w-4" style={{ color: "hsl(260, 20%, 85%)" }} />
+              <item.icon className="h-3.5 w-3.5" style={{ color: "hsl(260, 20%, 85%)" }} />
             </button>
           ))}
         </div>
-        <div className="rounded-lg px-3 py-1.5 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
-          <p className="text-[10px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
-          <p className="font-bold text-sm leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
+        <div className="rounded-lg px-2 py-1 text-right" style={{ background: "hsla(0, 0%, 100%, 0.85)" }}>
+          <p className="text-[9px] leading-tight" style={{ color: "hsl(0, 0%, 50%)" }}>Round</p>
+          <p className="font-bold text-xs leading-tight" style={{ color: "hsl(0, 0%, 20%)" }}>#{round}</p>
         </div>
         <GameCurrencyChips mode={currencyMode} onChange={setCurrencyMode} disabled={phase !== "betting" && phase !== "lost" && phase !== "cashed"} />
       </div>
 
       {/* Title */}
-      <div className="text-center pt-3 pb-1">
-        <h1 className="text-2xl font-bold" style={{ color: "hsl(45, 90%, 70%)" }}>💣 Mines</h1>
-        <p className="text-xs mt-1" style={{ color: "hsl(260, 20%, 70%)" }}>
+      <div className="text-center pt-2 pb-0.5">
+        <h1 className="text-xl font-bold" style={{ color: "hsl(45, 90%, 70%)" }}>💣 Mines</h1>
+        <p className="text-[10px] mt-0.5" style={{ color: "hsl(260, 20%, 70%)" }}>
           {phase === "playing" ? `Next: ${nextMultiplier.toFixed(2)}x • Current: ${currentMultiplier.toFixed(2)}x` : "Reveal tiles, avoid mines!"}
         </p>
       </div>
 
       {/* Multiplier bar during play */}
       {phase === "playing" && safePicks > 0 && (
-        <div className="px-4 mb-2">
-          <div className="rounded-xl p-2 flex items-center justify-between" style={{ background: "hsla(120, 60%, 30%, 0.4)", border: "1px solid hsla(120, 60%, 50%, 0.3)" }}>
-            <span className="text-xs font-bold" style={{ color: "hsl(120, 60%, 70%)" }}>
+        <div className="px-3 mb-1.5">
+          <div className="rounded-lg p-1.5 flex items-center justify-between" style={{ background: "hsla(120, 60%, 30%, 0.4)", border: "1px solid hsla(120, 60%, 50%, 0.3)" }}>
+            <span className="text-[10px] font-bold" style={{ color: "hsl(120, 60%, 70%)" }}>
               💎 {safePicks} safe • {currentMultiplier.toFixed(2)}x
             </span>
-            <span className="text-sm font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>
+            <span className="text-xs font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>
               {"💎"}{(selectedBet * currentMultiplier).toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}
             </span>
           </div>
@@ -284,15 +284,15 @@ const MinesGame = () => {
       )}
 
       {/* Grid */}
-      <div className="px-4 flex justify-center">
-        <div className="grid grid-cols-5 gap-2 w-full max-w-[320px]">
+      <div className="px-3 flex justify-center">
+        <div className="grid grid-cols-5 gap-1.5 w-full max-w-[280px]">
           {grid.map((cell, i) => (
             <motion.button
               key={i}
               whileTap={cell === "hidden" && phase === "playing" ? { scale: 0.9 } : {}}
               onClick={() => revealCell(i)}
               disabled={cell !== "hidden" || phase !== "playing"}
-              className="aspect-square rounded-xl flex items-center justify-center text-lg font-bold transition-all relative overflow-hidden"
+              className="aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all relative overflow-hidden"
               style={{
                 background:
                   cell === "hidden"
@@ -310,24 +310,24 @@ const MinesGame = () => {
                   ? "2px solid hsla(0, 70%, 55%, 0.5)"
                   : "2px solid hsla(0, 0%, 30%, 0.3)",
                 boxShadow: cell === "hidden" && phase === "playing"
-                  ? "0 4px 12px hsla(260, 50%, 20%, 0.5)"
+                  ? "0 3px 10px hsla(260, 50%, 20%, 0.5)"
                   : "none",
               }}
             >
               <AnimatePresence>
                 {cell === "safe" && (
                   <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", damping: 12 }}>
-                    <Diamond className="h-6 w-6" style={{ color: "hsl(160, 80%, 65%)" }} />
+                    <Diamond className="h-5 w-5" style={{ color: "hsl(160, 80%, 65%)" }} />
                   </motion.div>
                 )}
                 {(cell === "mine" || cell === "revealed-mine") && (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12 }}>
-                    <Bomb className="h-6 w-6" style={{ color: cell === "mine" ? "hsl(45, 90%, 65%)" : "hsl(0, 50%, 55%)" }} />
+                    <Bomb className="h-5 w-5" style={{ color: cell === "mine" ? "hsl(45, 90%, 65%)" : "hsl(0, 50%, 55%)" }} />
                   </motion.div>
                 )}
                 {cell === "hidden" && phase === "playing" && (
                   <motion.div animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}
-                    className="w-3 h-3 rounded-full" style={{ background: "hsla(260, 50%, 65%, 0.5)" }} />
+                    className="w-2.5 h-2.5 rounded-full" style={{ background: "hsla(260, 50%, 65%, 0.5)" }} />
                 )}
               </AnimatePresence>
             </motion.button>
@@ -338,26 +338,26 @@ const MinesGame = () => {
       {/* Result Display */}
       <AnimatePresence>
         {phase === "lost" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-3">
-            <p className="text-xl font-bold" style={{ color: "hsl(0, 70%, 65%)" }}>💥 Boom! Lost {"💎"}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}</p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-2">
+            <p className="text-lg font-bold" style={{ color: "hsl(0, 70%, 65%)" }}>💥 Boom! Lost {"💎"}{selectedBet}{activeWallet === "star" ? " ⭐" : ""}</p>
           </motion.div>
         )}
         {phase === "cashed" && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-3">
-            <p className="text-xl font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>🎉 Cashed Out {"💎"}{winAmount.toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}!</p>
-            <p className="text-sm" style={{ color: "hsl(120, 50%, 65%)" }}>{currentMultiplier.toFixed(2)}x multiplier</p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-center my-2">
+            <p className="text-lg font-bold" style={{ color: "hsl(50, 90%, 65%)" }}>🎉 Cashed Out {"💎"}{winAmount.toFixed(2)}{activeWallet === "star" ? " ⭐" : ""}!</p>
+            <p className="text-xs" style={{ color: "hsl(120, 50%, 65%)" }}>{currentMultiplier.toFixed(2)}x multiplier</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Action Button */}
-      <div className="px-4 mt-2">
+      <div className="px-3 mt-1.5">
         {phase === "betting" || phase === "lost" || phase === "cashed" ? (
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={startGame}
             disabled={currentBalance < selectedBet}
-            className="w-full py-4 rounded-2xl text-lg font-bold"
+            className="w-full py-3 rounded-2xl text-base font-bold"
             style={{
               background: currentBalance >= selectedBet
                 ? "linear-gradient(135deg, hsl(260, 70%, 55%), hsl(300, 70%, 50%))"
@@ -372,7 +372,7 @@ const MinesGame = () => {
             whileTap={{ scale: 0.95 }}
             onClick={cashOut}
             disabled={safePicks === 0}
-            className="w-full py-4 rounded-2xl text-lg font-bold"
+            className="w-full py-3 rounded-2xl text-base font-bold"
             style={{
               background: safePicks > 0
                 ? "linear-gradient(135deg, hsl(120, 60%, 40%), hsl(160, 60%, 35%))"
@@ -387,14 +387,14 @@ const MinesGame = () => {
 
       {/* Bet Controls (only in betting phase) */}
       {(phase === "betting" || phase === "lost" || phase === "cashed") && (
-        <div className="px-4 mt-3 space-y-2">
+        <div className="px-3 mt-2 space-y-2">
           {/* Mine count selector */}
-          <div className="rounded-2xl p-2" style={{ background: "hsla(0, 0%, 12%, 0.9)" }}>
-            <p className="text-xs font-bold mb-1.5 px-1" style={{ color: "hsl(0, 0%, 70%)" }}>💣 Mines Count</p>
-            <div className="flex gap-2">
+          <div className="rounded-xl p-1.5" style={{ background: "hsla(0, 0%, 12%, 0.9)" }}>
+            <p className="text-[10px] font-bold mb-1 px-1" style={{ color: "hsl(0, 0%, 70%)" }}>💣 Mines Count</p>
+            <div className="flex gap-1.5">
               {MINE_OPTIONS.map(m => (
                 <button key={m} onClick={() => setMineCount(m)}
-                  className="flex-1 rounded-xl py-2 text-sm font-bold transition-all"
+                  className="flex-1 rounded-lg py-1.5 text-xs font-bold transition-all"
                   style={{
                     background: mineCount === m ? "hsl(0, 65%, 45%)" : "hsla(0, 0%, 25%, 0.8)",
                     color: mineCount === m ? "white" : "hsl(0, 0%, 75%)",
@@ -407,22 +407,22 @@ const MinesGame = () => {
           </div>
 
           {/* Bet amount */}
-          <div className="rounded-2xl p-2" style={{ background: "hsla(0, 0%, 12%, 0.9)" }}>
+          <div className="rounded-xl p-1.5" style={{ background: "hsla(0, 0%, 12%, 0.9)" }}>
             <div className="flex items-center justify-between rounded-xl overflow-hidden" style={{ background: "hsla(0, 0%, 25%, 0.8)" }}>
               <button onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, -1))}
-                className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>−</button>
+                className="w-12 h-10 flex items-center justify-center text-xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>−</button>
               <div className="flex-1 text-center">
-                <span className="text-xl font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
+                <span className="text-lg font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
                   {formatBet(selectedBet, currencyMode)}
                 </span>
               </div>
               <button onClick={() => setSelectedBet(prev => stepBet(prev, currencyMode, 1))}
-                className="w-14 h-12 flex items-center justify-center text-2xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>+</button>
+                className="w-12 h-10 flex items-center justify-center text-xl font-bold" style={{ color: "hsl(0, 0%, 70%)" }}>+</button>
             </div>
-            <div className="grid grid-cols-4 gap-2 mt-2">
+            <div className="grid grid-cols-4 gap-1.5 mt-1.5">
               {betPresets(currencyMode).map(bet => (
                 <button key={bet} onClick={() => setSelectedBet(clampBet(bet, currencyMode))}
-                  className="rounded-xl py-2.5 text-sm font-bold transition-all"
+                  className="rounded-lg py-2 text-xs font-bold transition-all"
                   style={{
                     background: "hsla(0, 0%, 30%, 0.8)",
                     color: "hsl(0, 0%, 80%)",
