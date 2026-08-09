@@ -2077,13 +2077,20 @@ const TONCENTER_BASE = process.env.TONCENTER_BASE || "https://toncenter.com/api/
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || "";
 
 // Fetch recent incoming transactions of owner wallet -> [{ comment, tonValue, hash }]
+let _tonListCache = { at: 0, key: "", data: [] };
 async function fetchOwnerIncomingTons(limit = 50) {
   const owner = await getOwnerTonWallet();
   if (!owner) return [];
+  const cacheKey = `${owner}:${limit}`;
+  // Short cache so 1s polling from many clients doesn't hit toncenter rate limits
+  if (_tonListCache.key === cacheKey && Date.now() - _tonListCache.at < 1500) {
+    return _tonListCache.data;
+  }
   const url = `${TONCENTER_BASE}/transactions?account=${encodeURIComponent(owner)}&limit=${limit}&sort=desc`;
   const headers = TONCENTER_KEY ? { "X-API-Key": TONCENTER_KEY } : {};
   const r = await fetch(url, { headers });
   if (!r.ok) throw new Error(`toncenter ${r.status}`);
+
   const data = await r.json();
   const out = [];
   for (const t of data?.transactions || []) {
@@ -2102,7 +2109,9 @@ async function fetchOwnerIncomingTons(limit = 50) {
       source: inMsg.source || "",
     });
   }
+  _tonListCache = { at: Date.now(), key: cacheKey, data: out };
   return out;
+
 }
 
 // Hashes already credited to some user (so one on-chain tx can't be reused)
@@ -2320,8 +2329,14 @@ app.post("/api/admin/ton-assign", requireAdmin, async (req, res) => {
   }
 });
 
-setInterval(tonDepositWatcher, 20000);
-setTimeout(tonDepositWatcher, 8000);
+// Fast auto-credit: check chain every second (list is cached ~1.5s to stay under API limits)
+let _tonWatcherBusy = false;
+setInterval(async () => {
+  if (_tonWatcherBusy) return;
+  _tonWatcherBusy = true;
+  try { await tonDepositWatcher(); } finally { _tonWatcherBusy = false; }
+}, 1000);
+setTimeout(tonDepositWatcher, 3000);
 
 
 // POST /api/ton/withdraw - Withdraw dollars via TON
