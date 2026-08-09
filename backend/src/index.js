@@ -2109,7 +2109,9 @@ async function fetchOwnerIncomingTons(limit = 50) {
       source: inMsg.source || "",
     });
   }
+  _tonListCache = { at: Date.now(), key: cacheKey, data: out };
   return out;
+
 }
 
 // Hashes already credited to some user (so one on-chain tx can't be reused)
