@@ -143,7 +143,7 @@ async function phaseTick(currency) {
         if (!b.cashedOutAt && b.amount > maxRemainingBet) maxRemainingBet = b.amount;
       }
       if (maxRemainingBet > 0 && maxRemainingBet * s.crashAt > remainingBudget) {
-        const dynCap = Math.max(1.0, remainingBudget / maxRemainingBet);
+        const dynCap = Math.max(1.10, remainingBudget / maxRemainingBet);
         if (dynCap < s.crashAt) s.crashAt = Number(dynCap.toFixed(2));
       }
       const roundBudget = (s.totalPool || 0) * (1 - profitPct / 100);
@@ -155,7 +155,7 @@ async function phaseTick(currency) {
           .filter((b) => !b.cashedOutAt)
           .reduce((a, b) => a + b.amount, 0);
         if (remainingBetSum > 0 && remainingBetSum * s.crashAt > roundRemaining) {
-          const roundCap = Math.max(1.0, roundRemaining / remainingBetSum);
+          const roundCap = Math.max(1.10, roundRemaining / remainingBetSum);
           if (roundCap < s.crashAt) s.crashAt = Number(roundCap.toFixed(2));
         }
       }

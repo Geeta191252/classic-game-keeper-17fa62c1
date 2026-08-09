@@ -173,7 +173,6 @@ function nextPatternCrash(pool) {
   }
   return Number(pool.crashPattern.shift());
 }
-module.exports.nextPatternCrash = nextPatternCrash;
 
 // MongoDB connection
 mongoose
@@ -4174,7 +4173,7 @@ async function jetxComputeCrash(pool) {
     if (roundCap < crash) crash = Math.max(1.0, Number(roundCap.toFixed(2)));
   }
   // Never crash instantly — players must always get a real cash-out window.
-  pool.finalCrash = Number(Math.max(1.25, crash).toFixed(2));
+  pool.finalCrash = Number(Math.max(1.10, crash).toFixed(2));
 }
 
 async function jetxStartFlying(currency) {
