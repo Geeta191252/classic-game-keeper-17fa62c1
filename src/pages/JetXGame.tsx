@@ -372,28 +372,27 @@ const JetXGame = () => {
   }, [phase, startThrust, stopThrust, playCrash]);
 
   // Continuous cloud scroll: speed scales with multiplier. Clouds drift DOWN as rocket rises.
+  // Uses refs so the rAF loop is created ONCE (restarting it every poll made the game stutter).
+  const phaseRef = useRef(phase); phaseRef.current = phase;
+  const multRef = useRef(multiplier); multRef.current = multiplier;
   useEffect(() => {
     const TILE_BACK = 800;
     const TILE_FRONT = 900;
     let raf = 0;
     let last = performance.now();
     const loop = (now: number) => {
-      const dt = (now - last) / 1000;
+      const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      // Base idle drift + multiplier-driven boost (2x faster than before)
-      const boost = phase === "flying" ? 600 + multiplier * 440 : 90;
+      const boost = phaseRef.current === "flying" ? 600 + multRef.current * 440 : 90;
       const frontSpeed = boost;         // front layer faster
       const backSpeed = boost * 0.55;    // back layer slower (parallax)
-      // Positive Y offset = clouds move downward
-      const nb = (cloudBackY.get() + backSpeed * dt) % TILE_BACK;
-      const nf = (cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT;
-      cloudBackY.set(nb);
-      cloudFrontY.set(nf);
+      cloudBackY.set((cloudBackY.get() + backSpeed * dt) % TILE_BACK);
+      cloudFrontY.set((cloudFrontY.get() + frontSpeed * dt) % TILE_FRONT);
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [phase, multiplier, cloudBackY, cloudFrontY]);
+  }, [cloudBackY, cloudFrontY]);
 
   return (
     <div
