@@ -235,27 +235,13 @@ function randDigits(len) {
 }
 
 function buildFakeWithdrawal() {
-  const kind = randChoice(["crypto", "crypto", "crypto", "upi", "star"]);
+  const kind = randChoice(["ton", "ton", "star"]);
   let amount, network, usdValue, txId;
-  if (kind === "crypto") {
-    const coin = randChoice([
-      { n: "TON", price: 5.2, dec: 7, min: 0.002, max: 2.5 },
-      { n: "BTC", price: 68000, dec: 8, min: 0.00005, max: 0.002 },
-      { n: "LTC", price: 85, dec: 6, min: 0.02, max: 1.2 },
-      { n: "SOL", price: 160, dec: 5, min: 0.01, max: 0.8 },
-      { n: "TRX", price: 0.13, dec: 4, min: 5, max: 200 },
-      { n: "DOGE", price: 0.16, dec: 4, min: 5, max: 300 },
-    ]);
-    amount = randFloat(coin.min, coin.max, coin.dec);
-    network = coin.n;
-    usdValue = Number((amount * coin.price).toFixed(4));
+  if (kind === "ton") {
+    amount = randFloat(0.5, 45, 4);
+    network = "TON";
+    usdValue = Number((amount * 5.2).toFixed(4));
     txId = randHex(64);
-  } else if (kind === "upi") {
-    const inr = randFloat(50, 4500, 2);
-    amount = inr;
-    network = "INR";
-    usdValue = Number((inr / 83).toFixed(4));
-    txId = randDigits(12);
   } else {
     const stars = Math.floor(randFloat(25, 1500, 0));
     amount = stars;
@@ -270,6 +256,7 @@ function buildFakeWithdrawal() {
     txId,
   });
 }
+
 
 function shortWithdrawalTx(txId) {
   if (!txId) return "";
