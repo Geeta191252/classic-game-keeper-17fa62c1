@@ -1222,7 +1222,15 @@ const WalletScreen = () => {
 
                   {tonAddress ? (
                     <div className="space-y-1.5">
-                      <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet (Min ${cryptoWithdrawMin})</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet (Min ${cryptoWithdrawMin})</p>
+                        <button
+                          onClick={() => setTonWithdrawAmount(String(Math.floor(dollarWinnings * 100) / 100))}
+                          className="shrink-0 rounded-lg px-2 py-1 text-[9px] font-black uppercase bg-[#0098ea]/15 text-[#38bdf8] border border-[#0098ea]/30"
+                        >
+                          Winner available 💎{dollarWinnings.toFixed(2)}
+                        </button>
+                      </div>
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Input
