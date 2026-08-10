@@ -159,7 +159,6 @@ const App = () => {
                   <Route path="/carnival-spin" element={framed(<CarnivalSpinGame />)} />
                   <Route path="/mines" element={framed(<MinesGame />)} />
                   <Route path="/aviator-fun" element={framed(<AviatorFunGame />)} />
-                  <Route path="/plinko" element={framed(<PlinkoGame />)} />
                   <Route path="/chicken-road" element={framed(<ChickenRoadGame />)} />
                   <Route path="/chicken-classic" element={framed(<ChickenClassicGame />)} />
                   <Route path="/jetx" element={framed(<JetXGame />)} />
