@@ -19,7 +19,7 @@ const FOOD_ITEMS = [
   { emoji: "🥕", name: "Carrot", multiplier: 5 },
 ];
 
-const BET_OPTIONS_USD = [0.2, 1, 5, 20];
+const BET_OPTIONS_USD = [0.2, 0.4, 1, 2];
 const BET_OPTIONS_STAR = [10, 50, 100, 500];
 
 const DOLLAR_PLAYERS = [
