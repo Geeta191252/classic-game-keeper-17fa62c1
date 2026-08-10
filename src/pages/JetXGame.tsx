@@ -375,11 +375,11 @@ const JetXGame = () => {
     { mode: "STAR", label: "★" },
   ];
 
-  // Rocket flight math — keep rocket strictly BELOW the "FLYING HIGH" badge.
-  // Cap max bottom at ~28% so it never overlaps the badge/multiplier area.
+  // Rocket flight math — keep rocket well below the "FLYING HIGH" badge.
+  // Compact stage: smaller rocket + limited rise so it never overlaps the multiplier.
   const progress = phase === "flying" ? Math.min(1, Math.log(Math.max(1, multiplier)) / Math.log(3)) : 0;
-  const rocketBottomPct = phase === "crashed" ? 120 : 6 + progress * 22;
-  const flameHvh = phase === "flying" ? 6 + progress * 6 : phase === "betting" ? 3.5 : 2;
+  const rocketBottomPct = phase === "crashed" ? 120 : 6 + progress * 14;
+  const flameHvh = phase === "flying" ? 5 + progress * 5 : phase === "betting" ? 3 : 2;
 
   // Drive smooth rocket bottom. On first mount while already flying, snap
   // (no spring-up from 6%) so returning users see the rocket exactly where
