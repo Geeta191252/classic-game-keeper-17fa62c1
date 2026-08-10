@@ -28,7 +28,6 @@ const DiceMasterGame = lazy(() => import("./pages/DiceMasterGame"));
 const CarnivalSpinGame = lazy(() => import("./pages/CarnivalSpinGame"));
 const MinesGame = lazy(() => import("./pages/MinesGame"));
 const AviatorFunGame = lazy(() => import("./pages/AviatorFunGame"));
-const PlinkoGame = lazy(() => import("./pages/PlinkoGame"));
 const ChickenRoadGame = lazy(() => import("./pages/ChickenRoadGame"));
 const ChickenClassicGame = lazy(() => import("./pages/ChickenClassicGame"));
 const TwistGame = lazy(() => import("./pages/TwistGame"));
@@ -66,7 +65,6 @@ const STARTAPP_GAME_ROUTES: Record<string, string> = {
   g_dice: "/dice-master",
   g_carnival: "/carnival-spin",
   g_greedy: "/greedy-king",
-  g_plinko: "/plinko",
   g_chicken: "/chicken-road",
   g_chicken_classic: "/chicken-classic",
   g_jetx: "/jetx",
@@ -98,7 +96,6 @@ const prefetchGames = () => {
     () => import("./pages/MinesGame"),
     () => import("./pages/DiceMasterGame"),
     () => import("./pages/CarnivalSpinGame"),
-    () => import("./pages/PlinkoGame"),
     () => import("./pages/ChickenRoadGame"),
     () => import("./pages/ChickenClassicGame"),
     () => import("./pages/TwistGame"),
@@ -161,7 +158,6 @@ const App = () => {
                   <Route path="/carnival-spin" element={framed(<CarnivalSpinGame />)} />
                   <Route path="/mines" element={framed(<MinesGame />)} />
                   <Route path="/aviator-fun" element={framed(<AviatorFunGame />)} />
-                  <Route path="/plinko" element={framed(<PlinkoGame />)} />
                   <Route path="/chicken-road" element={framed(<ChickenRoadGame />)} />
                   <Route path="/chicken-classic" element={framed(<ChickenClassicGame />)} />
                   <Route path="/jetx" element={framed(<JetXGame />)} />

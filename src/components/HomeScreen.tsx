@@ -32,7 +32,6 @@ import gameDice from "@/assets/dice.webp";
 import gameCarnivalSpin from "@/assets/carnival.webp";
 import gameMines from "@/assets/mines.webp";
 import gameAviator from "@/assets/aviator.jpg";
-import gamePlinko from "@/assets/plinko.webp";
 import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
@@ -143,7 +142,6 @@ const HomeScreen = () => {
   const goToCarnivalSpin = () => navigate("/carnival-spin");
   const goToMines = () => navigate("/mines");
   const goToAviatorFun = () => navigate("/aviator-fun");
-  const goToPlinko = () => navigate("/plinko");
   const goToChickenRoad = () => navigate("/chicken-road");
   const goToChickenClassic = () => navigate("/chicken-classic");
   const goToGoblinTower = () => navigate("/goblin-tower");
@@ -164,7 +162,7 @@ const HomeScreen = () => {
     { key: "tournaments", label: "Tournaments", icon: Trophy },
   ];
 
-  // Full Games list categorized
+  // Full Games list categorized (Plinko Pegs hidden)
   const baseGames: GameEntry[] = [
     { id: "greedy", name: "Greedy King", image: greedyKingThumb, category: "Wheel", tab: "wheel", badge: "MULTIPLIER", badgeColor: "#eab308", priority: true, action: goToGreedyKing },
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
@@ -173,7 +171,6 @@ const HomeScreen = () => {
     { id: "jetx", name: "JetX", image: jetxLogoCard, category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", fit: "contain", priority: true, action: goToJetX },
     { id: "chicken-road", name: "Chicken Road", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToChickenRoad },
     { id: "chicken-classic", name: "Chicken Classic", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "CLASSIC", badgeColor: "#6366f1", action: goToChickenClassic },
-    { id: "plinko", name: "Plinko Pegs", image: gamePlinko, category: "Slots", tab: "slots", badge: "EASY", badgeColor: "#10b981", action: goToPlinko },
     { id: "goblin", name: "Goblin Tower", image: gameGoblin, category: "Slots", tab: "slots", badge: "EARLY ACCESS", badgeColor: "#8b5cf6", action: goToGoblinTower },
     { id: "carnival", name: "Carnival Spin", image: gameCarnivalSpin, category: "Wheel", tab: "wheel", badge: "SPIN", badgeColor: "#3b82f6", action: goToCarnivalSpin },
   ];
