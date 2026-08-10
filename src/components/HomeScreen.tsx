@@ -35,7 +35,6 @@ import gameAviator from "@/assets/aviator.jpg";
 import gamePlinko from "@/assets/plinko.webp";
 import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
-import gameTwist from "@/assets/twist.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
 
 
@@ -147,7 +146,6 @@ const HomeScreen = () => {
   const goToPlinko = () => navigate("/plinko");
   const goToChickenRoad = () => navigate("/chicken-road");
   const goToChickenClassic = () => navigate("/chicken-classic");
-  const goToTwist = () => navigate("/twist");
   const goToGoblinTower = () => navigate("/goblin-tower");
   const goToJetX = () => navigate("/jetx");
   
@@ -407,8 +405,8 @@ const HomeScreen = () => {
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-[40%] flex items-center justify-center pointer-events-none">
                 <img 
-                  src={gameTwist} 
-                  alt="Original Twist" 
+                  src={greedyKingThumb} 
+                  alt="Greedy King" 
                   className="h-[95%] w-auto object-contain opacity-85 translate-x-4 rotate-12 scale-110" 
                 />
               </div>
