@@ -533,7 +533,7 @@ const WalletScreen = () => {
       toast({ title: "Minimum 💎10", description: "Minimum withdrawal is 💎10.", variant: "destructive" });
       return;
     }
-    if (dollarAmt > dollarBalance) {
+    if (dollarAmt > totalDollarWallet) {
       toast({ title: "Insufficient balance", description: "You don't have enough dollar balance.", variant: "destructive" });
       return;
     }
