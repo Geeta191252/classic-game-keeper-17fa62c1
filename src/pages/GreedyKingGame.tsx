@@ -6,7 +6,7 @@ import { playBetSound, playSpinSound, playWinSound, playLoseSound, playCountdown
 import { useBalanceContext } from "@/contexts/BalanceContext";
 import { getTelegram, fetchGreedyKingState, placeGreedyKingBet, fetchMyGreedyKingBets, type CurrencyType, type GreedyKingState } from "@/lib/telegram";
 import GameCurrencyChips from "@/components/GameCurrencyChips";
-import { GameCurrencyMode, modeToWallet } from "@/lib/gameCurrency";
+import { GameCurrencyMode, modeToWallet, stepBet, clampBet } from "@/lib/gameCurrency";
 
 const FOOD_ITEMS = [
   { emoji: "🌭", name: "Hot Dog", multiplier: 10 },
