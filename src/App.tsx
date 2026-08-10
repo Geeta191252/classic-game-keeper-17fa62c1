@@ -65,7 +65,6 @@ const STARTAPP_GAME_ROUTES: Record<string, string> = {
   g_dice: "/dice-master",
   g_carnival: "/carnival-spin",
   g_greedy: "/greedy-king",
-  g_plinko: "/plinko",
   g_chicken: "/chicken-road",
   g_chicken_classic: "/chicken-classic",
   g_jetx: "/jetx",
