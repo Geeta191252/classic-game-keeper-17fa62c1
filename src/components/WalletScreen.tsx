@@ -126,6 +126,7 @@ const WalletScreen = () => {
 
   const [tonDepositAmount, setTonDepositAmount] = useState("");
   const [tonWithdrawAmount, setTonWithdrawAmount] = useState("");
+  const [tonWithdrawAddress, setTonWithdrawAddress] = useState("");
   const [tonProcessing, setTonProcessing] = useState(false);
   const [tonPrice, setTonPrice] = useState<number | null>(null);
 
@@ -284,6 +285,14 @@ const WalletScreen = () => {
     if (walletTab === "deposit") setDepositStep("menu");
     else setWithdrawStep("menu");
   }, [walletTab]);
+
+  // Auto-fill withdrawal address with the connected wallet address so users can
+  // keep it, or replace it with any other TON address they want to withdraw to.
+  useEffect(() => {
+    if (tonAddress && !tonWithdrawAddress) {
+      setTonWithdrawAddress(tonAddress);
+    }
+  }, [tonAddress]);
 
   // 10-minute UPI deposit countdown — auto-closes dialog when expired so admin
   // panel + user history don't fill up with abandoned requests.
@@ -537,8 +546,16 @@ const WalletScreen = () => {
       toast({ title: "Insufficient balance", description: "You don't have enough dollar balance.", variant: "destructive" });
       return;
     }
-    if (!tonAddress) {
-      toast({ title: "Wallet not connected", description: "Connect your TON wallet first.", variant: "destructive" });
+
+    const destAddress = tonWithdrawAddress.trim();
+    if (!destAddress) {
+      toast({ title: "TON address required", description: "Enter the destination TON wallet address.", variant: "destructive" });
+      return;
+    }
+    // Basic TON address format validation (user-friendly address is 48 chars, starts with EQ/UQ/kQ for base64url)
+    const tonAddrRegex = /^[EUKQ][Qf][A-Za-z0-9_-]{46}$/;
+    if (!tonAddrRegex.test(destAddress)) {
+      toast({ title: "Invalid TON address", description: "Enter a valid TON wallet address (e.g. EQ... or UQ...).", variant: "destructive" });
       return;
     }
 
@@ -550,14 +567,14 @@ const WalletScreen = () => {
       const res = await fetch(`${apiBase}/ton/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, dollarAmount: dollarAmt, tonWalletAddress: tonAddress }),
+        body: JSON.stringify({ userId, dollarAmount: dollarAmt, tonWalletAddress: destAddress }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Withdrawal failed");
 
       toast({
         title: "Withdrawal Submitted! ✅",
-        description: `💎${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to your wallet.`,
+        description: `💎${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to ${destAddress.slice(0, 6)}...${destAddress.slice(-4)}.`,
       });
       setTonWithdrawAmount("");
       refreshBalance();
@@ -1221,9 +1238,9 @@ const WalletScreen = () => {
                   </div>
 
                   {tonAddress ? (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet (Min ${cryptoWithdrawMin})</p>
+                        <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to TON address (Min ${cryptoWithdrawMin})</p>
                         <button
                           onClick={() => setTonWithdrawAmount(String(Math.floor(dollarWinnings * 100) / 100))}
                           className="shrink-0 rounded-lg px-2 py-1 text-[9px] font-black uppercase bg-[#0098ea]/15 text-[#38bdf8] border border-[#0098ea]/30"
@@ -1231,6 +1248,31 @@ const WalletScreen = () => {
                           Winner available 💎{dollarWinnings.toFixed(2)}
                         </button>
                       </div>
+
+                      {/* TON destination address input */}
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase tracking-wider">TON wallet address</p>
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <Input
+                              type="text"
+                              placeholder="Enter destination TON address (EQ... / UQ...)"
+                              value={tonWithdrawAddress}
+                              onChange={(e) => setTonWithdrawAddress(e.target.value)}
+                              className="pr-16 rounded-xl bg-[#0d121f] h-9 text-[10px] border-white/[0.02] text-white placeholder-slate-500 font-mono"
+                            />
+                            {tonAddress && (
+                              <button
+                                onClick={() => setTonWithdrawAddress(tonAddress)}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2 py-0.5 text-[8px] font-black uppercase bg-[#0098ea]/15 text-[#38bdf8] border border-[#0098ea]/30"
+                              >
+                                My
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Input
@@ -1246,7 +1288,7 @@ const WalletScreen = () => {
                         </div>
                         <button
                           onClick={handleTonWithdraw}
-                          disabled={tonProcessing || !tonWithdrawAmount}
+                          disabled={tonProcessing || !tonWithdrawAmount || !tonWithdrawAddress.trim()}
                           className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                         >
                           {tonProcessing ? "..." : "Withdraw"}
