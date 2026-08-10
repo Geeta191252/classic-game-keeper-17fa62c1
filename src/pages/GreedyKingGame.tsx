@@ -89,9 +89,13 @@ const GreedyKingGame = () => {
   const prevPhaseRef = useRef<string>("betting");
   const prevRoundRef = useRef<number>(0);
   const spinDoneRef = useRef(false);
+  const myBetsRef = useRef<number[]>(FOOD_ITEMS.map(() => 0));
+  useEffect(() => { myBetsRef.current = myBets; }, [myBets]);
+  // bets snapshot for the round being shown in the result popup
+  const [roundBetTotal, setRoundBetTotal] = useState(0);
 
   const totalUserBet = myBets.reduce((a, b) => a + b, 0);
-  const hasBet = totalUserBet > 0;
+  const hasBet = phase === "result" ? roundBetTotal > 0 : totalUserBet > 0;
 
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id || "demo";
