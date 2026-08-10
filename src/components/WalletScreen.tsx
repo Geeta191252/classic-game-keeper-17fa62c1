@@ -1397,7 +1397,15 @@ const WalletScreen = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider mb-1 block">Amount of Stars</label>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <label className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider block">Amount of Stars</label>
+                        <button
+                          onClick={() => setStarWithdrawAmount(String(Math.floor(starWinnings)))}
+                          className="shrink-0 rounded-lg px-2 py-1 text-[9px] font-black uppercase bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                        >
+                          Winner available ⭐{Math.floor(starWinnings)}
+                        </button>
+                      </div>
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Input
