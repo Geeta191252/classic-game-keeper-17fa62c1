@@ -317,7 +317,7 @@ const JetXGame = () => {
           setMyBet((prev) =>
             prev && prev.cashedOutAt && !j.bet.cashedOutAt
               ? prev
-              : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
+              : { amount: toDisplayAmount(j.bet.amount, currencyMode), cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
           );
         }
       } catch { /* silent */ }
@@ -325,7 +325,7 @@ const JetXGame = () => {
     tick();
     const id = setInterval(tick, 1000);
     return () => { cancel = true; clearInterval(id); };
-  }, [currency, tgUser?.id]);
+  }, [currency, currencyMode, tgUser?.id]);
 
 
   const canBet = phase === "betting" && !myBet && !placing;
@@ -926,7 +926,7 @@ const JetXGame = () => {
               background: "linear-gradient(180deg,#ef4444,#7f1d1d)",
               boxShadow: "0 10px 24px rgba(239,68,68,0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
             }}>
-            {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `Waiting for takeoff...`}
+                    {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `BET LOCKED • FLYING IN ${countdown}s`}
           </div>
         ) : (
           <motion.button

@@ -356,25 +356,49 @@ export const placeJetXBet = async (data: {
   currency: CurrencyType;
   firstName?: string;
 }): Promise<{ success: boolean; roundNumber: number } & Partial<BalancePayload>> => {
-  const res = await fetch(`${API_BASE_URL}/jetx/bet`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.error || "Failed to place bet");
-  return publishBalancePayload(json);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${API_BASE_URL}/jetx/bet`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || "Failed to place bet");
+    return publishBalancePayload(json);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Bet request timed out. Please try again.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 };
 
 export const cashOutJetX = async (userId: number | string, currency: CurrencyType): Promise<{ success: boolean; multiplier: number; winAmount: number } & Partial<BalancePayload>> => {
-  const res = await fetch(`${API_BASE_URL}/jetx/cashout`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId, currency }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.error || "Failed to cash out");
-  return publishBalancePayload(json);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`${API_BASE_URL}/jetx/cashout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, currency }),
+      signal: controller.signal,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json?.error || "Failed to cash out");
+    return publishBalancePayload(json);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Cashout request timed out. Please try again.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 };
 
 // ============================================
