@@ -1238,9 +1238,9 @@ const WalletScreen = () => {
                   </div>
 
                   {tonAddress ? (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to connected TON wallet (Min ${cryptoWithdrawMin})</p>
+                        <p className="text-[9px] font-extrabold text-[#8e97a4] uppercase tracking-wider">Withdraw to TON address (Min ${cryptoWithdrawMin})</p>
                         <button
                           onClick={() => setTonWithdrawAmount(String(Math.floor(dollarWinnings * 100) / 100))}
                           className="shrink-0 rounded-lg px-2 py-1 text-[9px] font-black uppercase bg-[#0098ea]/15 text-[#38bdf8] border border-[#0098ea]/30"
@@ -1248,6 +1248,31 @@ const WalletScreen = () => {
                           Winner available 💎{dollarWinnings.toFixed(2)}
                         </button>
                       </div>
+
+                      {/* TON destination address input */}
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-extrabold text-[#8e97a4] uppercase tracking-wider">TON wallet address</p>
+                        <div className="flex gap-2">
+                          <div className="flex-1 relative">
+                            <Input
+                              type="text"
+                              placeholder="Enter destination TON address (EQ... / UQ...)"
+                              value={tonWithdrawAddress}
+                              onChange={(e) => setTonWithdrawAddress(e.target.value)}
+                              className="pr-16 rounded-xl bg-[#0d121f] h-9 text-[10px] border-white/[0.02] text-white placeholder-slate-500 font-mono"
+                            />
+                            {tonAddress && (
+                              <button
+                                onClick={() => setTonWithdrawAddress(tonAddress)}
+                                className="absolute right-1 top-1/2 -translate-y-1/2 rounded-lg px-2 py-0.5 text-[8px] font-black uppercase bg-[#0098ea]/15 text-[#38bdf8] border border-[#0098ea]/30"
+                              >
+                                My
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="flex gap-2">
                         <div className="flex-1 relative">
                           <Input
@@ -1263,7 +1288,7 @@ const WalletScreen = () => {
                         </div>
                         <button
                           onClick={handleTonWithdraw}
-                          disabled={tonProcessing || !tonWithdrawAmount}
+                          disabled={tonProcessing || !tonWithdrawAmount || !tonWithdrawAddress.trim()}
                           className="rounded-xl h-9 px-4 text-[10px] font-black uppercase bg-[#00a2e8] hover:bg-[#0091d0] text-white tracking-wider shadow-md shadow-[#00a2e8]/20 transition-all disabled:opacity-50"
                         >
                           {tonProcessing ? "..." : "Withdraw"}
