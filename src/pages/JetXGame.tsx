@@ -659,7 +659,7 @@ const JetXGame = () => {
           {/* Rocket + flame */}
           <motion.div
             className="absolute pointer-events-none left-1/2"
-            style={{ width: "20%", x: "-50%", bottom: bottomStyle }}
+            style={{ width: "15%", x: "-50%", bottom: bottomStyle }}
             animate={{
               y: phase === "betting" ? [0, -4, 0, 3, 0] : phase === "flying" ? [0, -2, 0, 2, 0] : 0,
             }}
