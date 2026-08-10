@@ -530,10 +530,10 @@ const JetXGame = () => {
       </div>
 
       {/* ── STAGE (edge-to-edge) ── */}
-      <div className="relative z-10 mt-2">
+      <div className="relative z-10 mt-1.5">
         <div
-          className="relative overflow-hidden mx-3 rounded-[22px] jetx-glass-strong"
-          style={{ aspectRatio: "9 / 8" }}
+          className="relative overflow-hidden mx-2 rounded-2xl jetx-glass-strong"
+          style={{ aspectRatio: "9 / 5" }}
         >
           {/* Solid blue night sky base */}
           <div
@@ -578,36 +578,33 @@ const JetXGame = () => {
             }}
           />
 
-
-
-
           {/* Round ID */}
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-xl text-[10px] font-black jetx-glass">
-            <div className="text-[8px] text-emerald-300/80 uppercase tracking-wider">Round</div>
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-lg text-[9px] font-black jetx-glass">
+            <div className="text-[7px] text-emerald-300/80 uppercase tracking-wider">Round</div>
             <div className="text-emerald-200">#{100000 + roundNumber}</div>
           </div>
-          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-xl text-[10px] font-black flex items-center gap-1.5 jetx-glass">
-            <Users className="h-3 w-3 text-white/70" />
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-lg text-[9px] font-black flex items-center gap-1 jetx-glass">
+            <Users className="h-2.5 w-2.5 text-white/70" />
             <div>
               <div className="text-white leading-tight">{totalPlayers}</div>
-              <div className="text-[8px] text-white/50 uppercase leading-tight">Live</div>
+              <div className="text-[7px] text-white/50 uppercase leading-tight">Live</div>
             </div>
           </div>
 
           {/* Multiplier / Countdown */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-[16%] w-full text-center pointer-events-none">
+          <div className="absolute left-1/2 -translate-x-1/2 top-[14%] w-full text-center pointer-events-none">
             <AnimatePresence mode="wait">
               {phase === "betting" && (
                 <motion.div key="b" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                  <div className="text-[10px] text-white/60 uppercase tracking-[0.28em] mb-1 font-black">Next round in</div>
+                  <div className="text-[9px] text-white/60 uppercase tracking-[0.28em] mb-1 font-black">Next round in</div>
                   <div
-                    className="text-[56px] font-black leading-none italic"
+                    className="text-[40px] font-black leading-none italic"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
                       background: "linear-gradient(180deg,#fde047,#eab308,#7c4a05)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 8px 24px rgba(250,204,21,0.5))",
+                      filter: "drop-shadow(0 6px 18px rgba(250,204,21,0.5))",
                     }}
                   >
                     {countdown}
@@ -617,22 +614,22 @@ const JetXGame = () => {
               {phase === "flying" && (
                 <motion.div key="f" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
                   <motion.div
-                    className="text-[52px] font-black leading-none italic"
+                    className="text-[36px] font-black leading-none italic"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
                       background: "linear-gradient(180deg,#ffffff,#fde047,#eab308)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 6px 22px rgba(250,204,21,0.7)) drop-shadow(0 0 12px rgba(255,255,255,0.35))",
+                      filter: "drop-shadow(0 4px 16px rgba(250,204,21,0.7)) drop-shadow(0 0 10px rgba(255,255,255,0.35))",
                     }}
                   >
                     {multText}
                   </motion.div>
                   <div
-                    className="inline-flex items-center gap-1.5 mt-3 px-3 py-1 rounded-full text-[11px] font-black text-emerald-50"
+                    className="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black text-emerald-50"
                     style={{
                       background: "linear-gradient(180deg,rgba(34,197,94,0.9),rgba(22,101,52,0.9))",
-                      boxShadow: "0 6px 16px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+                      boxShadow: "0 4px 12px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
                     }}
                   >
                     FLYING HIGH 🚀
@@ -641,15 +638,15 @@ const JetXGame = () => {
               )}
               {phase === "crashed" && (
                 <motion.div key="c" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                  <div className="text-[10px] text-red-300 font-black uppercase tracking-[0.28em] mb-1">💥 Crashed</div>
+                  <div className="text-[9px] text-red-300 font-black uppercase tracking-[0.28em] mb-1">💥 Crashed</div>
                   <div
-                    className="text-[52px] font-black italic leading-none"
+                    className="text-[36px] font-black italic leading-none"
                     style={{
                       fontFamily: "'Arial Black', sans-serif",
                       background: "linear-gradient(180deg,#fecaca,#ef4444,#7f1d1d)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
-                      filter: "drop-shadow(0 6px 22px rgba(239,68,68,0.7))",
+                      filter: "drop-shadow(0 4px 16px rgba(239,68,68,0.7))",
                     }}
                   >
                     {(crashAt ?? multiplier).toFixed(2)}x
@@ -662,9 +659,9 @@ const JetXGame = () => {
           {/* Rocket + flame */}
           <motion.div
             className="absolute pointer-events-none left-1/2"
-            style={{ width: "26%", x: "-50%", bottom: bottomStyle }}
+            style={{ width: "20%", x: "-50%", bottom: bottomStyle }}
             animate={{
-              y: phase === "betting" ? [0, -6, 0, 4, 0] : phase === "flying" ? [0, -2, 0, 2, 0] : 0,
+              y: phase === "betting" ? [0, -4, 0, 3, 0] : phase === "flying" ? [0, -2, 0, 2, 0] : 0,
             }}
             transition={{
               y: { duration: phase === "flying" ? 0.6 : 2.4, repeat: Infinity, ease: "easeInOut" },
@@ -679,13 +676,13 @@ const JetXGame = () => {
               className="w-full block relative"
               style={{
                 filter:
-                  "drop-shadow(0 12px 18px rgba(0,0,0,0.75)) drop-shadow(0 0 14px rgba(120,180,255,0.35)) drop-shadow(0 0 8px rgba(249,115,22,0.35))",
+                  "drop-shadow(0 8px 12px rgba(0,0,0,0.75)) drop-shadow(0 0 10px rgba(120,180,255,0.35)) drop-shadow(0 0 6px rgba(249,115,22,0.35))",
               }}
             />
             {/* Flame plume — compact soft glowing 3D plume */}
             <div
               className="absolute left-1/2 -translate-x-1/2"
-              style={{ top: "92%", width: "16%", height: `${flameHvh}vh`, maxHeight: "12vh" }}
+              style={{ top: "92%", width: "14%", height: `${flameHvh}vh`, maxHeight: "48px" }}
             >
               {/* wide ambient glow */}
               <motion.div
@@ -693,7 +690,7 @@ const JetXGame = () => {
                   position: "absolute", inset: "-5% -35% 5% -35%",
                   background:
                     "radial-gradient(ellipse at 50% 15%, rgba(251,191,36,0.45) 0%, rgba(249,115,22,0.22) 30%, rgba(234,88,12,0.08) 55%, transparent 75%)",
-                  filter: "blur(12px)",
+                  filter: "blur(10px)",
                 }}
                 animate={{ opacity: [0.75, 1, 0.8, 1] }}
                 transition={{ duration: 0.35, repeat: Infinity }}
@@ -705,7 +702,7 @@ const JetXGame = () => {
                   background:
                     "radial-gradient(ellipse at 50% 8%, #fde68a 0%, #fbbf24 18%, #f97316 45%, #ea580c 72%, rgba(194,65,12,0) 100%)",
                   clipPath: "polygon(50% 0%, 92% 12%, 100% 40%, 88% 72%, 62% 96%, 50% 100%, 38% 96%, 12% 72%, 0% 40%, 8% 12%)",
-                  filter: "blur(5px) drop-shadow(0 0 18px rgba(249,115,22,0.65))",
+                  filter: "blur(4px) drop-shadow(0 0 14px rgba(249,115,22,0.65))",
                   transformOrigin: "top center",
                 }}
                 animate={{ scaleY: [1, 1.08, 0.95, 1.05, 1], scaleX: [1, 0.97, 1.04, 0.98, 1] }}
@@ -741,7 +738,7 @@ const JetXGame = () => {
                 style={{
                   position: "absolute", top: "-8%", left: "26%", right: "26%", height: "16%",
                   background: "radial-gradient(ellipse, #ffffff 0%, #fef3c7 40%, transparent 75%)",
-                  filter: "blur(6px)",
+                  filter: "blur(5px)",
                 }}
                 animate={{ opacity: [0.9, 1, 0.85, 1] }}
                 transition={{ duration: 0.15, repeat: Infinity }}
@@ -754,11 +751,11 @@ const JetXGame = () => {
                     position: "absolute",
                     top: "20%",
                     left: `${20 + i * 15}%`,
-                    width: 4, height: 4, borderRadius: "50%",
+                    width: 3, height: 3, borderRadius: "50%",
                     background: "#fde047",
-                    boxShadow: "0 0 8px #fbbf24, 0 0 4px #ffffff",
+                    boxShadow: "0 0 6px #fbbf24, 0 0 3px #ffffff",
                   }}
-                  animate={{ y: [0, 60 + i * 10, 120], opacity: [1, 0.8, 0], x: [0, (i % 2 ? 8 : -8), (i % 2 ? 16 : -16)] }}
+                  animate={{ y: [0, 40 + i * 8, 80], opacity: [1, 0.8, 0], x: [0, (i % 2 ? 6 : -6), (i % 2 ? 12 : -12)] }}
                   transition={{ duration: 0.9 + i * 0.15, repeat: Infinity, delay: i * 0.18, ease: "easeOut" }}
                 />
               ))}
