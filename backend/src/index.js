@@ -2355,7 +2355,7 @@ app.post("/api/ton/withdraw", async (req, res) => {
       return res.status(400).json({ error: "Missing userId, dollarAmount, or tonWalletAddress" });
     }
     if (dollarAmount < 10) {
-      return res.status(400).json({ error: "Minimum withdrawal is $10" });
+      return res.status(400).json({ error: "Minimum withdrawal is 10 TON" });
     }
 
     const user = await getOrCreateUser(userId);
@@ -2364,7 +2364,9 @@ app.post("/api/ton/withdraw", async (req, res) => {
     }
 
     const tonPrice = await getTonUsdPrice();
-    const tonAmount = dollarAmount / tonPrice;
+    // Wallet balances are denominated in TON (💎), so the requested amount IS TON
+    const tonAmount = Number(dollarAmount);
+    const usdValue = tonAmount * tonPrice;
 
     // Deduct from winning
     user.dollarWinning -= dollarAmount;
@@ -2378,15 +2380,15 @@ app.post("/api/ton/withdraw", async (req, res) => {
       amount: -dollarAmount,
       tonAmount,
       tonReceiverAddress: tonWalletAddress,
-      usdEquivalent: dollarAmount,
+      usdEquivalent: usdValue,
       status: "pending",
-      description: `TON Withdraw: $${dollarAmount} ≈ ${tonAmount.toFixed(4)} TON → ${tonWalletAddress.slice(0, 8)}...`,
+      description: `TON Withdraw: ${tonAmount.toFixed(4)} TON (≈ $${usdValue.toFixed(2)}) → ${tonWalletAddress.slice(0, 8)}...`,
     });
 
     // Notify owner via Telegram
     try {
       await bot.sendMessage(6965488457, 
-        `💰 TON Withdrawal Request!\n\nUser: ${userId}\nAmount: $${dollarAmount} ≈ ${tonAmount.toFixed(4)} TON\nSend to: \`${tonWalletAddress}\`\nTON Price: $${tonPrice.toFixed(2)}`,
+        `💰 TON Withdrawal Request!\n\nUser: ${userId}\nAmount: ${tonAmount.toFixed(4)} TON (≈ $${usdValue.toFixed(2)})\nSend to: \`${tonWalletAddress}\`\nTON Price: $${tonPrice.toFixed(2)}`,
         { parse_mode: "Markdown" }
       );
     } catch (e) {
