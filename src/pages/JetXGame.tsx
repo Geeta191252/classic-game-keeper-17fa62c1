@@ -443,59 +443,59 @@ const JetXGame = () => {
 
 
       {/* ── HEADER ── */}
-      <div className="relative z-10 px-4 pt-3 pb-2">
-        <div className="flex items-center justify-between gap-3">
+      <div className="relative z-10 px-3 pt-2 pb-1.5">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => navigate("/")}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center active:scale-90 transition jetx-glass"
+            className="w-9 h-9 rounded-xl flex items-center justify-center active:scale-90 transition jetx-glass"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </button>
 
           <div className="flex-1 flex justify-center">
             <h1
-              className="text-[30px] font-black italic tracking-tight leading-none"
+              className="text-[22px] font-black italic tracking-tight leading-none"
               style={{
                 fontFamily: "'Arial Black', system-ui, sans-serif",
                 background: "linear-gradient(180deg,#ffffff 0%,#dbeafe 55%,#93a4c9 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 3px 10px rgba(120,150,255,0.35))",
+                filter: "drop-shadow(0 2px 6px rgba(120,150,255,0.35))",
               }}
             >
               Jet<span style={{
                 background: "linear-gradient(180deg,#fde047 0%,#eab308 55%,#a16207 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                filter: "drop-shadow(0 0 14px rgba(250,204,21,0.75))",
+                filter: "drop-shadow(0 0 10px rgba(250,204,21,0.75))",
               }}>X</span>
             </h1>
           </div>
 
-          <button className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass">
-            <HelpCircle className="h-5 w-5 text-sky-300" />
+          <button className="w-9 h-9 rounded-xl flex items-center justify-center jetx-glass">
+            <HelpCircle className="h-4 w-4 text-sky-300" />
           </button>
         </div>
 
         {/* Wallet + currency + volume */}
-        <div className="flex items-center justify-between gap-2 mt-3">
-          <div className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-2xl jetx-glass">
+        <div className="flex items-center justify-between gap-2 mt-2">
+          <div className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-xl jetx-glass">
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              className="w-7 h-7 rounded-lg flex items-center justify-center"
               style={{
                 background: "linear-gradient(180deg,#22c55e,#166534)",
-                boxShadow: "0 4px 10px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
+                boxShadow: "0 3px 8px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.3)",
               }}
             >
-              <Wallet className="h-4 w-4 text-white" />
+              <Wallet className="h-3.5 w-3.5 text-white" />
             </div>
             <div>
-              <div className="text-[13px] font-black leading-tight">{fmt(displayBalance)}</div>
-              <div className="text-[9px] text-white/50 uppercase tracking-wider leading-tight">Balance</div>
+              <div className="text-[12px] font-black leading-tight">{fmt(displayBalance)}</div>
+              <div className="text-[8px] text-white/50 uppercase tracking-wider leading-tight">Balance</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-2xl jetx-glass">
+          <div className="flex items-center gap-1 p-0.5 rounded-xl jetx-glass">
             {currencyOptions.map((o) => {
               const active = currencyMode === o.mode;
               return (
@@ -503,14 +503,14 @@ const JetXGame = () => {
                   key={o.mode}
                   onClick={() => setCurrencyMode(o.mode)}
                   disabled={phase !== "betting"}
-                  className="w-8 h-8 rounded-xl font-black text-sm disabled:opacity-50 transition"
+                  className="w-7 h-7 rounded-lg font-black text-xs disabled:opacity-50 transition"
                   style={{
                     background: active
                       ? "linear-gradient(180deg,#fde047,#a16207)"
                       : "transparent",
                     color: active ? "#111" : "#fff",
                     boxShadow: active
-                      ? "0 4px 12px rgba(234,179,8,0.5), inset 0 1px 0 rgba(255,255,255,0.5)"
+                      ? "0 3px 8px rgba(234,179,8,0.5), inset 0 1px 0 rgba(255,255,255,0.5)"
                       : "none",
                   }}
                 >
@@ -522,9 +522,9 @@ const JetXGame = () => {
 
           <button
             onClick={() => { const c = ensureAudio(); if (c && c.state === "suspended") c.resume(); }}
-            className="w-11 h-11 rounded-2xl flex items-center justify-center jetx-glass"
+            className="w-9 h-9 rounded-xl flex items-center justify-center jetx-glass"
           >
-            <Volume2 className="h-4 w-4 text-sky-300" />
+            <Volume2 className="h-3.5 w-3.5 text-sky-300" />
           </button>
         </div>
       </div>
