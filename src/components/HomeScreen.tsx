@@ -142,7 +142,6 @@ const HomeScreen = () => {
   const goToCarnivalSpin = () => navigate("/carnival-spin");
   const goToMines = () => navigate("/mines");
   const goToAviatorFun = () => navigate("/aviator-fun");
-  const goToPlinko = () => navigate("/plinko");
   const goToChickenRoad = () => navigate("/chicken-road");
   const goToChickenClassic = () => navigate("/chicken-classic");
   const goToGoblinTower = () => navigate("/goblin-tower");
