@@ -453,7 +453,7 @@ const GreedyKingGame = () => {
                   }}>
                   {currencyMode === "STAR"
                     ? `${bet >= 1000 ? `${bet / 1000}K` : bet}⭐`
-                    : `${bet >= 1000 ? `${bet / 1000}K` : bet}${currencyMode === "INR" ? "₹" : "$"}`}
+                    : `${bet.toFixed(2)} TON`}
                 </div>
               </button>
             );
