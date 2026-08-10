@@ -294,7 +294,7 @@ const JetXGame = () => {
         const next = value * Math.exp(0.05 * Math.min(dt, 1));
         multMv.set(next);
         const liveProgress = Math.min(1, Math.log(Math.max(1, next)) / Math.log(3));
-        bottomMv.set(6 + liveProgress * 22);
+        bottomMv.set(6 + liveProgress * 14);
       }
       raf = requestAnimationFrame(animate);
     };
