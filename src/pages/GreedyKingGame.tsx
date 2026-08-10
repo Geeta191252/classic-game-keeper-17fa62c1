@@ -147,14 +147,16 @@ const GreedyKingGame = () => {
               const won = FOOD_ITEMS[state.winnerIndex];
               setCurrentWinner({ item: won, index: state.winnerIndex });
             }
-            // Calculate user's win/loss
-            const myTotalBet = myBets.reduce((a, b) => a + b, 0);
+            // Calculate user's win/loss (use ref so we never read stale bets)
+            const betsSnapshot = myBetsRef.current;
+            const myTotalBet = betsSnapshot.reduce((a, b) => a + b, 0);
+            setRoundBetTotal(myTotalBet);
             if (myTotalBet > 0 && state.winnerIndex !== null) {
-              const betOnWinner = myBets[state.winnerIndex];
+              const betOnWinner = betsSnapshot[state.winnerIndex] || 0;
               if (betOnWinner > 0) {
                 const amt = betOnWinner * FOOD_ITEMS[state.winnerIndex].multiplier;
                 setWinAmount(amt);
-                setTotalLost(myTotalBet - betOnWinner);
+                setTotalLost(0);
                 setTodayProfits(p => p + amt - myTotalBet);
                 if (soundRef.current) playWinSound();
               } else {
