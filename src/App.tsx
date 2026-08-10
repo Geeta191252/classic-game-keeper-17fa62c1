@@ -96,7 +96,6 @@ const prefetchGames = () => {
     () => import("./pages/MinesGame"),
     () => import("./pages/DiceMasterGame"),
     () => import("./pages/CarnivalSpinGame"),
-    () => import("./pages/PlinkoGame"),
     () => import("./pages/ChickenRoadGame"),
     () => import("./pages/ChickenClassicGame"),
     () => import("./pages/TwistGame"),
