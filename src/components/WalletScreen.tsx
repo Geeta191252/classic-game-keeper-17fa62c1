@@ -546,8 +546,16 @@ const WalletScreen = () => {
       toast({ title: "Insufficient balance", description: "You don't have enough dollar balance.", variant: "destructive" });
       return;
     }
-    if (!tonAddress) {
-      toast({ title: "Wallet not connected", description: "Connect your TON wallet first.", variant: "destructive" });
+
+    const destAddress = tonWithdrawAddress.trim();
+    if (!destAddress) {
+      toast({ title: "TON address required", description: "Enter the destination TON wallet address.", variant: "destructive" });
+      return;
+    }
+    // Basic TON address format validation (user-friendly address is 48 chars, starts with EQ/UQ/kQ for base64url)
+    const tonAddrRegex = /^[EUKQ][Qf][A-Za-z0-9_-]{46}$/;
+    if (!tonAddrRegex.test(destAddress)) {
+      toast({ title: "Invalid TON address", description: "Enter a valid TON wallet address (e.g. EQ... or UQ...).", variant: "destructive" });
       return;
     }
 
@@ -559,14 +567,14 @@ const WalletScreen = () => {
       const res = await fetch(`${apiBase}/ton/withdraw`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, dollarAmount: dollarAmt, tonWalletAddress: tonAddress }),
+        body: JSON.stringify({ userId, dollarAmount: dollarAmt, tonWalletAddress: destAddress }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Withdrawal failed");
 
       toast({
         title: "Withdrawal Submitted! ✅",
-        description: `💎${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to your wallet.`,
+        description: `💎${dollarAmt} ≈ ${data.tonAmount.toFixed(4)} TON will be sent to ${destAddress.slice(0, 6)}...${destAddress.slice(-4)}.`,
       });
       setTonWithdrawAmount("");
       refreshBalance();
