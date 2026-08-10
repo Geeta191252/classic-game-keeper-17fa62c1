@@ -4167,7 +4167,7 @@ async function jetxStartFlying(currency) {
   const s = jetxState[currency];
   s.phase = "flying";
   s.phaseStartTime = Date.now();
-  s.crashPosition = 0.99;
+  s.crashPosition = 1.00;
   s.totalPaidOut = 0;
   await jetxComputeCrash(s);
 
