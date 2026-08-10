@@ -549,11 +549,11 @@ const GreedyKingGame = () => {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   {winAmount > 0 ? (
                     <p className="text-center font-bold text-lg mt-1" style={{ color: "hsl(140, 60%, 35%)" }}>
-                      🎉 You won {winAmount} gems!
+                      🎉 You won {currencyMode === "STAR" ? `${Math.round(winAmount)} ⭐` : `${winAmount.toFixed(2)} TON`}!
                     </p>
                   ) : (
                     <p className="text-center font-bold text-lg mt-1" style={{ color: "hsl(0, 60%, 45%)" }}>
-                      😅 You lost {totalLost} gems
+                      😅 You lost {currencyMode === "STAR" ? `${Math.round(totalLost)} ⭐` : `${totalLost.toFixed(2)} TON`}
                     </p>
                   )}
                 </motion.div>
