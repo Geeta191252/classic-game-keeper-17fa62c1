@@ -32,7 +32,6 @@ import gameDice from "@/assets/dice.webp";
 import gameCarnivalSpin from "@/assets/carnival.webp";
 import gameMines from "@/assets/mines.webp";
 import gameAviator from "@/assets/aviator.jpg";
-import gamePlinko from "@/assets/plinko.webp";
 import gameChickenRoad from "@/assets/chicken.webp";
 import gameGoblin from "@/assets/goblin.webp";
 import jetxLogoCard from "@/assets/jetx-logo-card.webp";
