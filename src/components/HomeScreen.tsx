@@ -168,16 +168,15 @@ const HomeScreen = () => {
 
   // Full Games list categorized
   const baseGames: GameEntry[] = [
+    { id: "greedy", name: "Greedy King", image: greedyKingThumb, category: "Wheel", tab: "wheel", badge: "MULTIPLIER", badgeColor: "#eab308", priority: true, action: goToGreedyKing },
     { id: "mines", name: "Mines", image: gameMines, category: "Originals", tab: "originals", badge: "NEW", badgeColor: "#10b981", action: goToMines },
     { id: "dice", name: "Dice Master", image: gameDice, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToDiceMaster },
-    { id: "twist", name: "Twist Rings", image: gameTwist, category: "Originals", tab: "originals", badge: "HOT", badgeColor: "#ef4444", action: goToTwist },
     { id: "aviator-fun", name: "Aviator Fun", image: gameAviator, category: "Crash", tab: "crash", badge: "TURBO", badgeColor: "#f97316", action: goToAviatorFun },
     { id: "jetx", name: "JetX", image: jetxLogoCard, category: "Crash", tab: "crash", badge: "3D", badgeColor: "#eab308", fit: "contain", priority: true, action: goToJetX },
     { id: "chicken-road", name: "Chicken Road", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "POPULAR", badgeColor: "#ec4899", action: goToChickenRoad },
     { id: "chicken-classic", name: "Chicken Classic", image: gameChickenRoad, category: "Crash", tab: "crash", badge: "CLASSIC", badgeColor: "#6366f1", action: goToChickenClassic },
     { id: "plinko", name: "Plinko Pegs", image: gamePlinko, category: "Slots", tab: "slots", badge: "EASY", badgeColor: "#10b981", action: goToPlinko },
     { id: "goblin", name: "Goblin Tower", image: gameGoblin, category: "Slots", tab: "slots", badge: "EARLY ACCESS", badgeColor: "#8b5cf6", action: goToGoblinTower },
-    { id: "greedy", name: "Greedy King", image: greedyKingThumb, category: "Wheel", tab: "wheel", badge: "MULTIPLIER", badgeColor: "#eab308", action: goToGreedyKing },
     { id: "carnival", name: "Carnival Spin", image: gameCarnivalSpin, category: "Wheel", tab: "wheel", badge: "SPIN", badgeColor: "#3b82f6", action: goToCarnivalSpin },
   ];
 
