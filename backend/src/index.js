@@ -4102,6 +4102,7 @@ function makeJetxPool() {
     cumPaid: 0,
     manualQueue: [],
     manualOverride: false,
+    starting: false,
     profitPct: FORCED_HOUSE_PROFIT,
   };
 }
@@ -4165,11 +4166,21 @@ async function jetxComputeCrash(pool) {
 
 async function jetxStartFlying(currency) {
   const s = jetxState[currency];
+  if (s.starting || s.phase !== "betting") return;
+  s.starting = true;
+  // Finish the async crash calculation before exposing the flying phase. This
+  // prevents clients showing a frozen 1.00x while the settings query is pending.
+  try {
+    await jetxComputeCrash(s);
+  } catch (error) {
+    console.error("JetX crash calculation error:", error);
+    s.finalCrash = 1.20;
+  }
   s.phase = "flying";
   s.phaseStartTime = Date.now();
-  s.crashPosition = 0.99;
+  s.crashPosition = 1.00;
   s.totalPaidOut = 0;
-  await jetxComputeCrash(s);
+  s.starting = false;
 
   if (s.flyTimer) clearInterval(s.flyTimer);
   s.flyTimer = setInterval(() => {
@@ -4221,12 +4232,13 @@ function jetxResetRound(currency) {
   s.crashPosition = 0.99;
   s.finalCrash = 1;
   s.manualOverride = false;
+  s.starting = false;
 }
 
 function jetxSupervisor(currency) {
   const s = jetxState[currency];
   const now = Date.now();
-  if (s.phase === "betting" && now - s.phaseStartTime >= JETX_BETTING_MS) {
+  if (s.phase === "betting" && !s.starting && now - s.phaseStartTime >= JETX_BETTING_MS) {
     jetxStartFlying(currency).catch((e) => console.error("JetX fly start:", e));
   } else if (s.phase === "crashed" && now - s.phaseStartTime >= JETX_CRASHED_MS) {
     jetxResetRound(currency);

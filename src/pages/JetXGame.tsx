@@ -240,11 +240,12 @@ const JetXGame = () => {
 
   useEffect(() => () => { stopThrust(); }, [stopThrust]);
 
-  // Poll server state (fast, lightweight) + interpolate the multiplier locally
-  // between polls so the number never looks laggy.
+  // Poll server state sequentially. A setInterval allowed slow mobile requests to
+  // overlap and resolve out of order, which made the flight pause and then jump.
   const serverMultRef = useRef({ value: 1, at: 0 });
   useEffect(() => {
     let cancel = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const tick = async () => {
       try {
         const s: JetXState = await fetchJetXState(currency);
@@ -270,25 +271,36 @@ const JetXGame = () => {
         if (lastPhaseRef.current !== s.phase && s.phase === "crashed") refreshBalance();
         lastPhaseRef.current = s.phase;
       } catch { /* silent */ }
+      finally {
+        if (!cancel) timer = setTimeout(tick, 350);
+      }
     };
     tick();
-    const id = setInterval(tick, 250);
-    return () => { cancel = true; clearInterval(id); };
+    return () => {
+      cancel = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [currency, refreshBalance]);
 
-  // Local extrapolation of the multiplier at 60fps-ish between server polls.
+  // Animate MotionValues directly instead of calling React setState every 60ms.
+  // Re-rendering this large scene on every frame was the main post-bet freeze.
   useEffect(() => {
     if (phase !== "flying") return;
-    const id = setInterval(() => {
+    let raf = 0;
+    const animate = () => {
       const { value, at } = serverMultRef.current;
-      if (!at) return;
-      const dt = (performance.now() - at) / 1000;
-      // same exponential growth curve the server uses (~1.075^(1.8t))
-      const next = value * Math.exp(0.13 * Math.min(dt, 1.5));
-      setMultiplier((prev) => (next > prev ? next : prev));
-    }, 60);
-    return () => clearInterval(id);
-  }, [phase]);
+      if (at) {
+        const dt = (performance.now() - at) / 1000;
+        const next = value * Math.exp(0.05 * Math.min(dt, 1));
+        multMv.set(next);
+        const liveProgress = Math.min(1, Math.log(Math.max(1, next)) / Math.log(3));
+        bottomMv.set(6 + liveProgress * 22);
+      }
+      raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [phase, multMv, bottomMv]);
 
   // Separate (slower) poll for our own authoritative bet so the CASH OUT button
   // never blocks the fast state loop.
@@ -305,7 +317,7 @@ const JetXGame = () => {
           setMyBet((prev) =>
             prev && prev.cashedOutAt && !j.bet.cashedOutAt
               ? prev
-              : { amount: j.bet.amount, cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
+              : { amount: toDisplayAmount(j.bet.amount, currencyMode), cashedOutAt: j.bet.cashedOutAt, winAmount: j.bet.winAmount }
           );
         }
       } catch { /* silent */ }
@@ -313,7 +325,7 @@ const JetXGame = () => {
     tick();
     const id = setInterval(tick, 1000);
     return () => { cancel = true; clearInterval(id); };
-  }, [currency, tgUser?.id]);
+  }, [currency, currencyMode, tgUser?.id]);
 
 
   const canBet = phase === "betting" && !myBet && !placing;
@@ -328,7 +340,6 @@ const JetXGame = () => {
     try {
       await placeJetXBet({ userId: tgUser?.id || "demo", amount: nativeBet, currency, firstName: tgUser?.first_name });
       setMyBet({ amount: betAmount, cashedOutAt: null, winAmount: 0 });
-      refreshBalance();
       toast.success(`Bet ${fmt(betAmount)} placed`);
     } catch (e: any) {
       toast.error(e?.message || "Bet failed");
@@ -343,7 +354,6 @@ const JetXGame = () => {
     try {
       const res = await cashOutJetX(tgUser?.id || "demo", currency);
       setMyBet((prev) => prev ? { ...prev, cashedOutAt: res.multiplier, winAmount: res.winAmount } : prev);
-      refreshBalance();
       toast.success(`Won ${fmt(toDisplayAmount(res.winAmount, currencyMode))} @ ${res.multiplier.toFixed(2)}x`);
     } catch (e: any) {
       toast.error(e?.message || "Cashout failed");
@@ -916,7 +926,7 @@ const JetXGame = () => {
               background: "linear-gradient(180deg,#ef4444,#7f1d1d)",
               boxShadow: "0 10px 24px rgba(239,68,68,0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
             }}>
-            {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `Waiting for takeoff...`}
+                    {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `BET LOCKED • FLYING IN ${countdown}s`}
           </div>
         ) : (
           <motion.button
