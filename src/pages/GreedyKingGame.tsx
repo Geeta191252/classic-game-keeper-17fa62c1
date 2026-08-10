@@ -89,9 +89,13 @@ const GreedyKingGame = () => {
   const prevPhaseRef = useRef<string>("betting");
   const prevRoundRef = useRef<number>(0);
   const spinDoneRef = useRef(false);
+  const myBetsRef = useRef<number[]>(FOOD_ITEMS.map(() => 0));
+  useEffect(() => { myBetsRef.current = myBets; }, [myBets]);
+  // bets snapshot for the round being shown in the result popup
+  const [roundBetTotal, setRoundBetTotal] = useState(0);
 
   const totalUserBet = myBets.reduce((a, b) => a + b, 0);
-  const hasBet = totalUserBet > 0;
+  const hasBet = phase === "result" ? roundBetTotal > 0 : totalUserBet > 0;
 
   const tg = getTelegram();
   const userId = tg?.initDataUnsafe?.user?.id || "demo";
@@ -143,14 +147,16 @@ const GreedyKingGame = () => {
               const won = FOOD_ITEMS[state.winnerIndex];
               setCurrentWinner({ item: won, index: state.winnerIndex });
             }
-            // Calculate user's win/loss
-            const myTotalBet = myBets.reduce((a, b) => a + b, 0);
+            // Calculate user's win/loss (use ref so we never read stale bets)
+            const betsSnapshot = myBetsRef.current;
+            const myTotalBet = betsSnapshot.reduce((a, b) => a + b, 0);
+            setRoundBetTotal(myTotalBet);
             if (myTotalBet > 0 && state.winnerIndex !== null) {
-              const betOnWinner = myBets[state.winnerIndex];
+              const betOnWinner = betsSnapshot[state.winnerIndex] || 0;
               if (betOnWinner > 0) {
                 const amt = betOnWinner * FOOD_ITEMS[state.winnerIndex].multiplier;
                 setWinAmount(amt);
-                setTotalLost(myTotalBet - betOnWinner);
+                setTotalLost(0);
                 setTodayProfits(p => p + amt - myTotalBet);
                 if (soundRef.current) playWinSound();
               } else {
@@ -543,11 +549,11 @@ const GreedyKingGame = () => {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                   {winAmount > 0 ? (
                     <p className="text-center font-bold text-lg mt-1" style={{ color: "hsl(140, 60%, 35%)" }}>
-                      🎉 You won {winAmount} gems!
+                      🎉 You won {currencyMode === "STAR" ? `${Math.round(winAmount)} ⭐` : `${winAmount.toFixed(2)} TON`}!
                     </p>
                   ) : (
                     <p className="text-center font-bold text-lg mt-1" style={{ color: "hsl(0, 60%, 45%)" }}>
-                      😅 You lost {totalLost} gems
+                      😅 You lost {currencyMode === "STAR" ? `${Math.round(totalLost)} ⭐` : `${totalLost.toFixed(2)} TON`}
                     </p>
                   )}
                 </motion.div>
