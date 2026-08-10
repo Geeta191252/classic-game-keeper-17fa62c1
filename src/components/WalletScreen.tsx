@@ -286,6 +286,14 @@ const WalletScreen = () => {
     else setWithdrawStep("menu");
   }, [walletTab]);
 
+  // Auto-fill withdrawal address with the connected wallet address so users can
+  // keep it, or replace it with any other TON address they want to withdraw to.
+  useEffect(() => {
+    if (tonAddress && !tonWithdrawAddress) {
+      setTonWithdrawAddress(tonAddress);
+    }
+  }, [tonAddress]);
+
   // 10-minute UPI deposit countdown — auto-closes dialog when expired so admin
   // panel + user history don't fill up with abandoned requests.
   useEffect(() => {
