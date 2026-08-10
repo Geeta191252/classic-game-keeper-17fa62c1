@@ -432,32 +432,61 @@ const GreedyKingGame = () => {
         </div>
 
         {/* Bet Amount Options */}
-        <div className="w-full mt-3 rounded-2xl p-3 flex gap-2 justify-center"
+        <div className="w-full mt-3 rounded-2xl p-3 space-y-2"
           style={{ background: "linear-gradient(180deg, hsl(200, 65%, 55%), hsl(210, 65%, 45%))" }}
         >
-          {BET_OPTIONS.map((bet) => {
-            const isActive = selectedBet === bet;
-            return (
-              <button key={bet} onClick={() => phase === "betting" && setSelectedBet(bet)}
-                className={`flex-1 rounded-xl p-2 flex flex-col items-center border-2 transition-all ${phase !== "betting" ? "opacity-50" : ""}`}
-                style={{
-                  borderColor: isActive ? "hsl(50, 90%, 55%)" : "hsla(200, 50%, 70%, 0.4)",
-                  background: isActive ? "hsl(0, 65%, 50%)" : "hsla(200, 50%, 60%, 0.4)",
-                  transform: isActive ? "scale(1.05)" : "scale(1)",
-                }}
-              >
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold"
+          {/* +/- current bet display */}
+          <div className="flex items-center justify-between rounded-xl overflow-hidden"
+            style={{ background: "hsla(0, 0%, 15%, 0.8)" }}
+          >
+            <button
+              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => clampBet(stepBet(prev, currencyMode, -1), currencyMode)); }}
+              disabled={phase !== "betting"}
+              className="w-14 h-12 flex items-center justify-center text-2xl font-bold transition-colors active:scale-95"
+              style={{ color: "hsl(0, 0%, 70%)", background: "hsla(0, 0%, 25%, 0.8)" }}
+            >−</button>
+            <div className="flex-1 text-center">
+              <span className="text-xl font-bold" style={{ color: "hsl(50, 90%, 60%)" }}>
+                {currencyMode === "STAR"
+                  ? `${selectedBet} ⭐`
+                  : `${selectedBet.toFixed(2)} TON`}
+              </span>
+            </div>
+            <button
+              onClick={() => { if (phase !== "betting") return; setSelectedBet(prev => clampBet(stepBet(prev, currencyMode, 1), currencyMode)); }}
+              disabled={phase !== "betting"}
+              className="w-14 h-12 flex items-center justify-center text-2xl font-bold transition-colors active:scale-95"
+              style={{ color: "hsl(0, 0%, 70%)", background: "hsla(0, 0%, 25%, 0.8)" }}
+            >+</button>
+          </div>
+
+          {/* Preset bet buttons */}
+          <div className="grid grid-cols-4 gap-2">
+            {BET_OPTIONS.map((bet) => {
+              const isActive = selectedBet === bet;
+              return (
+                <button key={bet} onClick={() => phase === "betting" && setSelectedBet(bet)}
+                  disabled={phase !== "betting"}
+                  className={`flex flex-col items-center justify-center rounded-xl p-2 border-2 transition-all ${phase !== "betting" ? "opacity-50" : ""}`}
                   style={{
-                    background: isActive ? "hsl(50, 90%, 55%)" : "hsla(50, 70%, 60%, 0.6)",
-                    color: isActive ? "hsl(0, 60%, 30%)" : "hsl(210, 40%, 20%)",
-                  }}>
-                  {currencyMode === "STAR"
-                    ? `${bet >= 1000 ? `${bet / 1000}K` : bet}⭐`
-                    : `${bet.toFixed(2)} TON`}
-                </div>
-              </button>
-            );
-          })}
+                    borderColor: isActive ? "hsl(50, 90%, 55%)" : "hsla(200, 50%, 70%, 0.4)",
+                    background: isActive ? "hsl(0, 65%, 50%)" : "hsla(200, 50%, 60%, 0.4)",
+                    transform: isActive ? "scale(1.05)" : "scale(1)",
+                  }}
+                >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold"
+                    style={{
+                      background: isActive ? "hsl(50, 90%, 55%)" : "hsla(50, 70%, 60%, 0.6)",
+                      color: isActive ? "hsl(0, 60%, 30%)" : "hsl(210, 40%, 20%)",
+                    }}>
+                    {currencyMode === "STAR"
+                      ? `${bet >= 1000 ? `${bet / 1000}K` : bet}⭐`
+                      : `${bet.toFixed(2)} TON`}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
 
