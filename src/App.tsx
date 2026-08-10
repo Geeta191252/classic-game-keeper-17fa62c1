@@ -28,7 +28,6 @@ const DiceMasterGame = lazy(() => import("./pages/DiceMasterGame"));
 const CarnivalSpinGame = lazy(() => import("./pages/CarnivalSpinGame"));
 const MinesGame = lazy(() => import("./pages/MinesGame"));
 const AviatorFunGame = lazy(() => import("./pages/AviatorFunGame"));
-const PlinkoGame = lazy(() => import("./pages/PlinkoGame"));
 const ChickenRoadGame = lazy(() => import("./pages/ChickenRoadGame"));
 const ChickenClassicGame = lazy(() => import("./pages/ChickenClassicGame"));
 const TwistGame = lazy(() => import("./pages/TwistGame"));
