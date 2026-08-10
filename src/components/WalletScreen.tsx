@@ -126,6 +126,7 @@ const WalletScreen = () => {
 
   const [tonDepositAmount, setTonDepositAmount] = useState("");
   const [tonWithdrawAmount, setTonWithdrawAmount] = useState("");
+  const [tonWithdrawAddress, setTonWithdrawAddress] = useState("");
   const [tonProcessing, setTonProcessing] = useState(false);
   const [tonPrice, setTonPrice] = useState<number | null>(null);
 
