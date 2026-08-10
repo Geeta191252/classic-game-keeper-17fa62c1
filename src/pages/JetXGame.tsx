@@ -765,17 +765,17 @@ const JetXGame = () => {
       </div>
 
       {/* ── HISTORY CHIPS ── */}
-      <div className="relative z-10 flex gap-1.5 px-4 mt-3 overflow-x-auto scrollbar-hide pb-1">
+      <div className="relative z-10 flex gap-1.5 px-3 mt-2 overflow-x-auto scrollbar-hide pb-1">
         {history.slice(0, 10).map((h, i) => {
           const c = CHIP_COLORS[i % CHIP_COLORS.length];
           return (
             <div
               key={i}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-black text-white whitespace-nowrap"
+              className="px-2 py-0.5 rounded-md text-[10px] font-black text-white whitespace-nowrap"
               style={{
                 background: c.bg,
                 border: `1px solid ${c.ring}`,
-                boxShadow: "0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
+                boxShadow: "0 3px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
                 textShadow: "0 1px 2px rgba(0,0,0,0.6)",
               }}
             >
@@ -786,41 +786,41 @@ const JetXGame = () => {
       </div>
 
       {/* ── CONTROL PANELS ── */}
-      <div className="relative z-10 px-3 mt-3 grid grid-cols-2 gap-2">
-        <div className="rounded-2xl p-2.5 jetx-glass">
-          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Bet Amount</div>
-          <div className="flex items-center gap-1.5">
+      <div className="relative z-10 px-2.5 mt-2 grid grid-cols-2 gap-2">
+        <div className="rounded-xl p-2 jetx-glass">
+          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1">Bet Amount</div>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setBetAmount(v => stepBet(v, currencyMode, -1))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+              className="w-7 h-8 rounded-md flex items-center justify-center active:scale-90 jetx-glass"
             >
-              <Minus className="h-3.5 w-3.5" />
+              <Minus className="h-3 w-3" />
             </button>
             <input
               type="number"
               value={betAmount}
               onChange={e => setBetAmount(clampBet(Number(e.target.value) || 0, currencyMode))}
-              className="flex-1 bg-transparent text-center text-base font-black outline-none w-0"
+              className="flex-1 bg-transparent text-center text-sm font-black outline-none w-0"
             />
             <button
               onClick={() => setBetAmount(v => stepBet(v, currencyMode, 1))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+              className="w-7 h-8 rounded-md flex items-center justify-center active:scale-90 jetx-glass"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3 w-3" />
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-1 mt-1.5">
+          <div className="grid grid-cols-5 gap-1 mt-1">
             {betPresets(currencyMode).map(p => (
               <button
                 key={p}
                 onClick={() => setBetAmount(clampBet(p, currencyMode))}
-                className="text-[9px] font-black py-1 rounded-md transition"
+                className="text-[8px] font-black py-0.5 rounded transition"
                 style={{
                   background: betAmount === p
                     ? "linear-gradient(180deg,#22c55e,#166534)"
                     : "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: betAmount === p ? "0 4px 10px rgba(34,197,94,0.4)" : "none",
+                  boxShadow: betAmount === p ? "0 3px 8px rgba(34,197,94,0.4)" : "none",
                 }}
               >
                 {modeSymbol}{p}
@@ -829,35 +829,35 @@ const JetXGame = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl p-2.5 jetx-glass">
-          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1.5">Auto Cashout</div>
-          <div className="flex items-center gap-1.5">
+        <div className="rounded-xl p-2 jetx-glass">
+          <div className="text-[9px] text-white/60 font-black uppercase tracking-wider text-center mb-1">Auto Cashout</div>
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setAutoCashout(v => Math.max(1.1, +(v - 0.1).toFixed(2)))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+              className="w-7 h-8 rounded-md flex items-center justify-center active:scale-90 jetx-glass"
             >
-              <Minus className="h-3.5 w-3.5" />
+              <Minus className="h-3 w-3" />
             </button>
-            <div className="flex-1 text-center text-base font-black">{autoCashout.toFixed(2)}x</div>
+            <div className="flex-1 text-center text-sm font-black">{autoCashout.toFixed(2)}x</div>
             <button
               onClick={() => setAutoCashout(v => +(v + 0.1).toFixed(2))}
-              className="w-8 h-9 rounded-lg flex items-center justify-center active:scale-90 jetx-glass"
+              className="w-7 h-8 rounded-md flex items-center justify-center active:scale-90 jetx-glass"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3 w-3" />
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-1 mt-1.5">
+          <div className="grid grid-cols-4 gap-1 mt-1">
             {CASHOUT_PRESETS.map(p => (
               <button
                 key={p}
                 onClick={() => setAutoCashout(p)}
-                className="text-[9px] font-black py-1 rounded-md transition"
+                className="text-[8px] font-black py-0.5 rounded transition"
                 style={{
                   background: autoCashout === p
                     ? "linear-gradient(180deg,#22c55e,#166534)"
                     : "rgba(255,255,255,0.05)",
                   border: "1px solid rgba(255,255,255,0.08)",
-                  boxShadow: autoCashout === p ? "0 4px 10px rgba(34,197,94,0.4)" : "none",
+                  boxShadow: autoCashout === p ? "0 3px 8px rgba(34,197,94,0.4)" : "none",
                 }}
               >
                 {p.toFixed(2)}x
@@ -868,23 +868,23 @@ const JetXGame = () => {
       </div>
 
       {/* Auto bet row */}
-      <div className="relative z-10 px-3 mt-2">
-        <div className="flex items-center justify-between rounded-2xl p-2.5 jetx-glass">
-          <div className="text-[10px] text-white/70 font-black uppercase tracking-wider">Auto Bet</div>
+      <div className="relative z-10 px-2.5 mt-1.5">
+        <div className="flex items-center justify-between rounded-xl p-2 jetx-glass">
+          <div className="text-[9px] text-white/70 font-black uppercase tracking-wider">Auto Bet</div>
           <button
             onClick={() => setAutoBet(v => !v)}
-            className="relative w-14 h-7 rounded-full transition-colors"
+            className="relative w-12 h-6 rounded-full transition-colors"
             style={{
               background: autoBet ? "linear-gradient(180deg,#22c55e,#166534)" : "linear-gradient(180deg,#374151,#111)",
               boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
             }}
           >
             <div
-              className="absolute top-0.5 w-6 h-6 rounded-full bg-white transition-transform"
-              style={{ transform: autoBet ? "translateX(28px)" : "translateX(2px)", boxShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+              className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+              style={{ transform: autoBet ? "translateX(24px)" : "translateX(2px)", boxShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
             />
           </button>
-          <div className="flex items-center gap-1 text-[11px] font-black">
+          <div className="flex items-center gap-1 text-[10px] font-black">
             <span className="text-white/60">×</span>
             <span>2.0</span>
             <Info className="h-3 w-3 text-white/40" />
@@ -893,35 +893,35 @@ const JetXGame = () => {
       </div>
 
       {/* Main action */}
-      <div className="relative z-10 px-3 mt-3 pb-4">
+      <div className="relative z-10 px-2.5 mt-2 pb-3">
         {canCashout ? (
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={handleCashout}
             disabled={cashing}
-            className="w-full py-4 rounded-2xl relative overflow-hidden"
+            className="w-full py-3 rounded-xl relative overflow-hidden"
             style={{
               background: "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)",
-              boxShadow: "0 10px 24px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)",
+              boxShadow: "0 8px 20px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)",
               border: "1px solid #fde047",
             }}
           >
-            <div className="text-black font-black text-xl leading-tight">CASH OUT</div>
-            <div className="text-black font-black text-lg">{fmt(potentialWin)}</div>
+            <div className="text-black font-black text-lg leading-tight">CASH OUT</div>
+            <div className="text-black font-black text-base">{fmt(potentialWin)}</div>
           </motion.button>
         ) : myBet?.cashedOutAt ? (
-          <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
+          <div className="w-full py-3 rounded-xl text-center font-black text-base"
             style={{
               background: "linear-gradient(180deg,#22c55e,#166534)",
-              boxShadow: "0 10px 24px rgba(34,197,94,0.4), inset 0 2px 0 rgba(255,255,255,0.3)",
+              boxShadow: "0 8px 20px rgba(34,197,94,0.4), inset 0 2px 0 rgba(255,255,255,0.3)",
             }}>
             ✓ Won {fmt(toDisplayAmount(myBet.winAmount, currencyMode))} @ {myBet.cashedOutAt.toFixed(2)}x
           </div>
         ) : myBet ? (
-          <div className="w-full py-4 rounded-2xl text-center font-black text-lg"
+          <div className="w-full py-3 rounded-xl text-center font-black text-base"
             style={{
               background: "linear-gradient(180deg,#ef4444,#7f1d1d)",
-              boxShadow: "0 10px 24px rgba(239,68,68,0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
+              boxShadow: "0 8px 20px rgba(239,68,68,0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
             }}>
                     {phase === "crashed" ? `💥 Lost ${fmt(myBet.amount)}` : `BET LOCKED • FLYING IN ${countdown}s`}
           </div>
@@ -930,18 +930,18 @@ const JetXGame = () => {
             whileTap={{ scale: 0.97 }}
             onClick={handleBet}
             disabled={!canBet}
-            className="w-full py-4 rounded-2xl relative overflow-hidden disabled:opacity-60"
+            className="w-full py-3 rounded-xl relative overflow-hidden disabled:opacity-60"
             style={{
               background: canBet
                 ? "linear-gradient(180deg,#fef08a 0%,#facc15 30%,#eab308 70%,#a16207 100%)"
                 : "linear-gradient(180deg,#374151,#111)",
               boxShadow: canBet
-                ? "0 10px 24px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)"
+                ? "0 8px 20px rgba(234,179,8,0.55), inset 0 2px 0 rgba(255,255,255,0.55)"
                 : "0 4px 0 #000",
               border: canBet ? "1px solid #fde047" : "1px solid rgba(255,255,255,0.1)",
             }}
           >
-            <div className={`font-black text-xl ${canBet ? "text-black" : "text-white/60"}`}>
+            <div className={`font-black text-lg ${canBet ? "text-black" : "text-white/60"}`}>
               {placing
                 ? "PLACING..."
                 : phase === "betting"
@@ -955,19 +955,19 @@ const JetXGame = () => {
       </div>
 
       {/* Players table */}
-      <div className="relative z-10 px-3 pb-8">
-        <div className="rounded-2xl overflow-hidden jetx-glass">
-          <div className="grid grid-cols-4 gap-1 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white/50 border-b border-white/5">
+      <div className="relative z-10 px-2.5 pb-6">
+        <div className="rounded-xl overflow-hidden jetx-glass">
+          <div className="grid grid-cols-4 gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-white/50 border-b border-white/5">
             <div>Players ({totalPlayers})</div>
             <div className="text-center">Bet</div>
             <div className="text-center">Cash Out</div>
             <div className="text-right">Win</div>
           </div>
           {myBet ? (
-            <div className="grid grid-cols-4 gap-1 px-3 py-2.5 text-[11px] font-bold items-center"
+            <div className="grid grid-cols-4 gap-1 px-2.5 py-2 text-[10px] font-bold items-center"
               style={{ background: "rgba(34,197,94,0.08)" }}>
-              <div className="flex items-center gap-1.5 truncate">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black"
+              <div className="flex items-center gap-1 truncate">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black"
                   style={{ background: "linear-gradient(180deg,#a855f7,#6b21a8)" }}>You</div>
               </div>
               <div className="text-center">{fmt(myBet.amount)}</div>
@@ -979,7 +979,7 @@ const JetXGame = () => {
               </div>
             </div>
           ) : (
-            <div className="px-3 py-6 text-center text-white/40 text-xs">No bets yet — place yours!</div>
+            <div className="px-2.5 py-4 text-center text-white/40 text-xs">No bets yet — place yours!</div>
           )}
         </div>
       </div>
