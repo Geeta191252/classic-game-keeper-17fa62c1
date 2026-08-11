@@ -377,6 +377,7 @@ export interface SupportMsg {
   telegramId: number;
   sender: "user" | "admin";
   text: string;
+  image?: string;
   adminName?: string;
   createdAt: string;
 }
