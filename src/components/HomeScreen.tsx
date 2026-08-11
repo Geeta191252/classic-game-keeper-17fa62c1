@@ -510,6 +510,58 @@ const HomeScreen = () => {
               </section>
             )}
 
+            {/* Wheel Section — Lucky Wheels at top */}
+            {(filter === "all" || filter === "wheel") && (
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-extrabold text-xs tracking-wide uppercase text-white flex items-center gap-1.5">
+                    <span>🎡</span> Lucky Wheels ({gamesList.filter(g => g.tab === "wheel").length})
+                  </h2>
+                </div>
+                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+                  {filteredGames.filter(g => g.tab === "wheel").map((g) => (
+                    <GameTile
+                      key={g.id}
+                      image={g.image}
+                      name={g.name}
+                      category={g.category}
+                      badge={g.badge}
+                      badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
+                      onClick={g.action}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Crash Section — placed right under Lucky Wheels */}
+            {(filter === "all" || filter === "crash") && (
+              <section className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-extrabold text-xs tracking-wide uppercase text-white flex items-center gap-1.5">
+                    <span>🚀</span> Crash Multipliers ({gamesList.filter(g => g.tab === "crash").length})
+                  </h2>
+                </div>
+                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
+                  {filteredGames.filter(g => g.tab === "crash").map((g) => (
+                    <GameTile
+                      key={g.id}
+                      image={g.image}
+                      name={g.name}
+                      category={g.category}
+                      badge={g.badge}
+                      badgeColor={g.badgeColor}
+                      fit={g.fit}
+                      priority={g.priority}
+                      onClick={g.action}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Originals Section */}
             {(filter === "all" || filter === "originals") && (
               <section className="space-y-2">
@@ -544,32 +596,6 @@ const HomeScreen = () => {
               </section>
             )}
 
-            {/* Crash Section */}
-            {(filter === "all" || filter === "crash") && (
-              <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-extrabold text-xs tracking-wide uppercase text-white flex items-center gap-1.5">
-                    <span>🚀</span> Crash Multipliers ({gamesList.filter(g => g.tab === "crash").length})
-                  </h2>
-                </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
-                  {filteredGames.filter(g => g.tab === "crash").map((g) => (
-                    <GameTile
-                      key={g.id}
-                      image={g.image}
-                      name={g.name}
-                      category={g.category}
-                      badge={g.badge}
-                      badgeColor={g.badgeColor}
-                      fit={g.fit}
-                      priority={g.priority}
-                      onClick={g.action}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Slots Section */}
             {(filter === "all" || filter === "slots") && (
               <section className="space-y-2">
@@ -580,32 +606,6 @@ const HomeScreen = () => {
                 </div>
                 <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
                   {filteredGames.filter(g => g.tab === "slots").map((g) => (
-                    <GameTile
-                      key={g.id}
-                      image={g.image}
-                      name={g.name}
-                      category={g.category}
-                      badge={g.badge}
-                      badgeColor={g.badgeColor}
-                      fit={g.fit}
-                      priority={g.priority}
-                      onClick={g.action}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Wheel Section */}
-            {(filter === "all" || filter === "wheel") && (
-              <section className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-extrabold text-xs tracking-wide uppercase text-white flex items-center gap-1.5">
-                    <span>🎡</span> Lucky Wheels ({gamesList.filter(g => g.tab === "wheel").length})
-                  </h2>
-                </div>
-                <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
-                  {filteredGames.filter(g => g.tab === "wheel").map((g) => (
                     <GameTile
                       key={g.id}
                       image={g.image}
