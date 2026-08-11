@@ -7,7 +7,8 @@ const supportMessageSchema = new mongoose.Schema(
     firstName: String,
     lastName: String,
     sender: { type: String, enum: ["user", "admin"], required: true },
-    text: { type: String, required: true },
+    text: { type: String, default: "" },
+    image: { type: String }, // base64 data URL (optional photo)
     adminName: String,
     // read = true means the OTHER side has seen it.
     // For sender=user: unread by admin until admin reads the thread.
