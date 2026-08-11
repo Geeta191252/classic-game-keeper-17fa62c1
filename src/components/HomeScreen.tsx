@@ -394,10 +394,10 @@ const HomeScreen = () => {
                 <h3 className="font-black text-sm text-white leading-tight">Royal King Originals</h3>
                 <p className="text-[9px] text-[#8e97a4] leading-normal">Provably fair multiplier matches. Play and cash out instantly!</p>
                 <button 
-                  onClick={playRandomGame}
+                  onClick={goToGreedyKing}
                   className="flex items-center gap-1.5 bg-[#00a2e8] hover:bg-[#0091d0] text-white text-[9px] font-black px-3 py-1.5 rounded-lg uppercase tracking-wider transition-all"
                 >
-                  <Play className="h-2.5 w-2.5 fill-white" /> Play Random
+                  <Play className="h-2.5 w-2.5 fill-white" /> Play Now
                 </button>
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-[40%] flex items-center justify-center pointer-events-none">
