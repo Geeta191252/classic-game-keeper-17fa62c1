@@ -5639,11 +5639,15 @@ try {
 // User sends a support message
 app.post("/api/support/send", async (req, res) => {
   try {
-    const { telegramId, username, firstName, lastName, text } = req.body || {};
-    if (!telegramId || !text || !String(text).trim()) {
-      return res.status(400).json({ error: "telegramId and text are required" });
+    const { telegramId, username, firstName, lastName, text, image } = req.body || {};
+    const clean = String(text || "").trim().slice(0, 2000);
+    let photo = typeof image === "string" && image.startsWith("data:image/") ? image : null;
+    if (photo && photo.length > 7_000_000) {
+      return res.status(400).json({ error: "Image too large (max ~5MB)" });
     }
-    const clean = String(text).trim().slice(0, 2000);
+    if (!telegramId || (!clean && !photo)) {
+      return res.status(400).json({ error: "telegramId and text or image are required" });
+    }
     const msg = await SupportMessage.create({
       telegramId: Number(telegramId),
       username: username || undefined,
@@ -5651,6 +5655,7 @@ app.post("/api/support/send", async (req, res) => {
       lastName: lastName || undefined,
       sender: "user",
       text: clean,
+      image: photo || undefined,
       read: false,
     });
 
@@ -5658,11 +5663,13 @@ app.post("/api/support/send", async (req, res) => {
     try {
       if (OWNER_TELEGRAM_ID && bot) {
         const who = firstName || username || `id ${telegramId}`;
-        await bot.sendMessage(
-          OWNER_TELEGRAM_ID,
-          `📩 <b>New support message</b>\n👤 ${who} (<code>${telegramId}</code>)\n💬 ${clean}`,
-          { parse_mode: "HTML" }
-        );
+        const caption = `📩 <b>New support message</b>\n👤 ${who} (<code>${telegramId}</code>)\n💬 ${clean || "(photo)"}`;
+        if (photo) {
+          const buf = Buffer.from(photo.split(",")[1] || "", "base64");
+          await bot.sendPhoto(OWNER_TELEGRAM_ID, buf, { caption, parse_mode: "HTML" }, { filename: "support.jpg", contentType: "image/jpeg" });
+        } else {
+          await bot.sendMessage(OWNER_TELEGRAM_ID, caption, { parse_mode: "HTML" });
+        }
       }
     } catch (e) { /* ignore */ }
 
