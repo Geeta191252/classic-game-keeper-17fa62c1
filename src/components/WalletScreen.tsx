@@ -74,14 +74,20 @@ const formatTransactionAmount = (value: unknown, isPositive: boolean) => {
 };
 
 const formatTransactionTime = (value: unknown) => {
-  const raw = safeText(value, "Just now");
-  try {
-    if (raw.includes("T") || raw.includes("-") || typeof value === "number" || value instanceof Date) {
-      const date = new Date(value as string | number | Date);
-      return isNaN(date.getTime()) ? raw : date.toLocaleString();
-    }
-  } catch { /* ignore */ }
-  return raw;
+  if (value === null || value === undefined || value === "") return "";
+  const raw = safeText(value);
+  const date = new Date(value as string | number | Date);
+  if (isNaN(date.getTime())) return raw;
+  const diff = Date.now() - date.getTime();
+  if (diff < 0) return date.toLocaleString();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+  return date.toLocaleString();
 };
 
 const WalletScreen = () => {
@@ -1496,7 +1502,7 @@ const WalletScreen = () => {
             const isCancelled = txType.includes("cancel");
             const displayAmount = formatTransactionAmount(tx?.amount, isPositive);
             const currencySymbol = safeText(tx?.currency, "💲");
-            const timeDisplay = formatTransactionTime(tx?.time);
+            const timeDisplay = formatTransactionTime(tx?.time ?? (tx as { createdAt?: string })?.createdAt ?? (tx as { date?: string })?.date);
 
             const iconColor = isCancelled ? "bg-amber-500/10 border border-amber-500/20" : isPositive ? "bg-emerald-500/10 border border-emerald-500/20" : "bg-red-500/10 border border-red-500/20";
             const textColor = isCancelled ? "text-amber-400" : isPositive ? "text-emerald-400" : "text-red-400";
