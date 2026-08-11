@@ -834,9 +834,15 @@ app.post("/api/transactions", async (req, res) => {
       return res.json({ transactions: [] });
     }
 
-    const transactions = await Transaction.find({ telegramId: numericId, status: "completed" })
+    const txDocs = await Transaction.find({ telegramId: numericId, status: "completed" })
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean();
+
+    const transactions = txDocs.map((t) => ({
+      ...t,
+      time: t.createdAt,
+    }));
 
     return res.json({ transactions });
   } catch (error) {
