@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, LifeBuoy, Loader2 } from "lucide-react";
+import { X, Send, LifeBuoy, Loader2, ImagePlus, Trash2 } from "lucide-react";
 import { getTelegramUser } from "@/lib/telegram";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `${window.location.origin}/api`;
@@ -9,6 +9,7 @@ interface SupportMsg {
   _id: string;
   sender: "user" | "admin";
   text: string;
+  image?: string;
   createdAt: string;
   adminName?: string;
 }
@@ -22,6 +23,8 @@ const SupportModal = ({ open, onClose }: Props) => {
   const [messages, setMessages] = useState<SupportMsg[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const user = getTelegramUser();
@@ -48,23 +51,38 @@ const SupportModal = ({ open, onClose }: Props) => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const pickPhoto = (file?: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image too large (max 5MB).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
   const send = async () => {
     const clean = text.trim();
-    if (!clean || sending) return;
+    if ((!clean && !photo) || sending) return;
     if (!telegramId) {
       alert("Open this inside Telegram to use support.");
       return;
     }
     setSending(true);
+    const img = photo;
     // optimistic
     const optimistic: SupportMsg = {
       _id: `tmp-${Date.now()}`,
       sender: "user",
       text: clean,
+      image: img || undefined,
       createdAt: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimistic]);
     setText("");
+    setPhoto(null);
     try {
       await fetch(`${API_BASE_URL}/support/send`, {
         method: "POST",
@@ -75,6 +93,7 @@ const SupportModal = ({ open, onClose }: Props) => {
           firstName: user?.first_name,
           lastName: user?.last_name,
           text: clean,
+          image: img || undefined,
         }),
       });
       load();
@@ -153,6 +172,15 @@ const SupportModal = ({ open, onClose }: Props) => {
                           {m.adminName ? "Admin" : "Support"}
                         </div>
                       )}
+                      {m.image && (
+                        <img
+                          src={m.image}
+                          alt="Support attachment"
+                          loading="lazy"
+                          onClick={() => window.open(m.image, "_blank")}
+                          className="mb-1 max-h-48 w-full object-cover rounded-xl cursor-pointer"
+                        />
+                      )}
                       {m.text}
                       <div className={`text-[9px] mt-1 opacity-60 ${mine ? "text-white" : "text-slate-400"}`}>
                         {new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -166,7 +194,32 @@ const SupportModal = ({ open, onClose }: Props) => {
 
             {/* Composer */}
             <div className="p-3 border-t border-white/10 bg-[#0b101a]">
+              {photo && (
+                <div className="relative mb-2 inline-block">
+                  <img src={photo} alt="Selected attachment" className="h-20 w-20 object-cover rounded-xl border border-white/10" />
+                  <button
+                    onClick={() => setPhoto(null)}
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
               <div className="flex items-end gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { pickPhoto(e.target.files?.[0]); e.target.value = ""; }}
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="h-10 w-10 rounded-full bg-[#141b2b] border border-white/10 flex items-center justify-center text-[#00a2e8]"
+                  aria-label="Attach photo"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                </button>
                 <textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
@@ -179,7 +232,7 @@ const SupportModal = ({ open, onClose }: Props) => {
                 />
                 <button
                   onClick={send}
-                  disabled={sending || !text.trim()}
+                  disabled={sending || (!text.trim() && !photo)}
                   className="h-10 w-10 rounded-full bg-[#00a2e8] disabled:opacity-40 flex items-center justify-center text-white"
                 >
                   {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

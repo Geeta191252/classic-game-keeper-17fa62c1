@@ -163,6 +163,15 @@ export default function SupportPage() {
                         <div className={`text-[9px] font-bold uppercase mb-0.5 ${admin ? "text-white/70" : "text-[#4de3d3]"}`}>
                           {admin ? (m.adminName || "Admin") : label(active)}
                         </div>
+                        {m.image && (
+                          <img
+                            src={m.image}
+                            alt="Support attachment"
+                            loading="lazy"
+                            onClick={() => window.open(m.image, "_blank")}
+                            className="mb-1 max-h-60 rounded-xl cursor-pointer"
+                          />
+                        )}
                         {m.text}
                         <div className={`text-[9px] mt-1 opacity-60 ${admin ? "text-white" : "text-slate-400"}`}>
                           {new Date(m.createdAt).toLocaleString()}
